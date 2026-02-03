@@ -1,497 +1,1097 @@
-// Prisma schema for MongoDB
-// CAP'Lecture Maroc Platform - Défi de Lecture
-// Docs: https://www.prisma.io/docs/orm/overview/databases/mongodb
+// Prisma Schema pour PostgreSQL
+// Plateforme RENFORD - Mise en relation Établissements Sportifs & Freelancers
+// Documentation: https://www.prisma.io/docs/orm/overview/databases/postgresql
 
 generator client {
     provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "mongodb"
+    provider = "postgresql"
     url      = env("DATABASE_URL")
 }
 
-// ======================
-// HIÉRARCHIE GÉOGRAPHIQUE
-// ======================
-
-model Region {
-    id  String @id @default(auto()) @map("_id") @db.ObjectId
-    nom String @unique
-
-    coordinateurs Utilisateur[]
-
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
-
-    provinces Province[]
-
-    @@map("regions")
-}
-
-model Province {
-    id  String @id @default(auto()) @map("_id") @db.ObjectId
-    nom String
-
-    regionId String @db.ObjectId
-    region   Region @relation(fields: [regionId], references: [id], onDelete: Cascade)
-
-    coordinateurs Utilisateur[]
-
-    dateCreation   DateTime        @default(now())
-    dateMiseAJour  DateTime        @updatedAt
-    etablissements Etablissement[]
-
-    @@index([regionId])
-    @@map("provinces")
-}
-
-model Etablissement {
-    id                    String @id @default(auto()) @map("_id") @db.ObjectId
-    nom                   String
-    numeroImmatriculation String @unique
-
-    typeEtablissement TypeEtablissement    @default(primaire)
-    secteur           SecteurEtablissement @default(public)
-    nombreEleves      Int                  @default(0)
-
-    provinceId String   @db.ObjectId
-    province   Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
-
-    adresse String?
-
-    nomComplet String?
-    email      String?
-    telephone  String?
-
-    active Boolean @default(true)
-
-    approuve   Boolean   @default(false)
-    approuveLe DateTime?
-
-    superviseurs Utilisateur[]
-    eleves       Eleve[]
-
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
-
-    @@index([provinceId])
-    @@index([approuve])
-    @@map("etablissements")
-}
-
-enum TypeEtablissement {
-    primaire
-    college
-    lycee
-    autre
-}
-
-enum SecteurEtablissement {
-    public
-    prive
-    autre
-}
-
-// ======================
-// UTILISATEURS
-// ======================
+// ============================================================================
+// TABLE: Utilisateurs (base commune pour tous les types)
+// ============================================================================
 
 model Utilisateur {
-    id       String          @id @default(auto()) @map("_id") @db.ObjectId
-    email    String          @unique
-    password String?
-    role     RoleUtilisateur
+    id              String          @id @default(uuid())
+    email           String          @unique
+    motDePasse      String?
+    typeUtilisateur TypeUtilisateur
 
+    // Informations personnelles
     nom          String
     prenom       String
     telephone    String?
     avatarChemin String?
 
-    statut StatutCompte @default(actif)
+    // Statut du compte
+    statutCompte StatutCompte @default(en_attente_verification)
 
-    // Champs d'authentification
-    emailVerifie              Boolean   @default(false)
-    emailVerifieA             DateTime?
-    emailVerificationCode     String?
-    emailVerificationCreation DateTime?
-    reinitPasswordCode        String?
-    reinitPasswordCreation    DateTime?
+    // Authentification
+    emailVerifie  Boolean   @default(false)
+    emailVerifieA DateTime?
 
-    derniereConnexionA DateTime?
+    codeVerificationEmail String?
+    dateCreationCodeVerif DateTime?
 
-    // ======================
-    // RELATIONS VERS PROFILS (one-to-one)
-    // ======================
+    codeReinitialisationMdp String?
+    dateCreationCodeReinit  DateTime?
 
-    regionId String? @db.ObjectId
-    region   Region? @relation(fields: [regionId], references: [id], onDelete: Cascade)
+    // Métadonnées
+    derniereConnexion DateTime?
+    dateCreation      DateTime  @default(now())
+    dateMiseAJour     DateTime  @updatedAt
 
-    provinceId String?   @db.ObjectId
-    province   Province? @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+    // Relations
+    firebaseAuth        FirebaseAuthInfo?
+    profilEtablissement ProfilEtablissement?
+    profilRenford       ProfilRenford?
 
-    etablissementId String?        @db.ObjectId
-    etablissement   Etablissement? @relation(fields: [etablissementId], references: [id], onDelete: Cascade)
+    notificationsRecues   Notification[] @relation("destinataireNotification")
+    notificationsEnvoyees Notification[] @relation("expediteurNotification")
 
-    intitule_poste String?
+    evaluationsEmises Evaluation[] @relation("auteurEvaluation")
+    evaluationsRecues Evaluation[] @relation("cibleEvaluation")
 
-    eleve Eleve?
+    messagesEnvoyes Message[] @relation("expediteurMessage")
+    messagesRecus   Message[] @relation("destinataireMessage")
 
-    // ======================
-    // RELATIONS
-    // ======================
+    journalActivites JournalActivite[]
+    sessionsRefresh  SessionRefresh[]
 
-    resumesCoriges Resume[] @relation("correcteur")
-
-    notificationsEnvoyees Notification[] @relation("expediteur")
-    notificationsRecues   Notification[] @relation("destinataire")
-    messagesEnvoyes       Message[]      @relation("expediteurMessage")
-    messagesRecus         Message[]      @relation("destinataireMessage")
-
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
-
-    @@index([role])
-    @@index([statut])
-    @@index([reinitPasswordCode])
+    @@index([email])
+    @@index([typeUtilisateur])
+    @@index([statutCompte])
     @@map("utilisateurs")
 }
 
-enum RoleUtilisateur {
-    admin
-    coordinateur_national
-    coordinateur_regional
-    coordinateur_provincial
-    superviseur
-    eleve
+// Enums utilisées par Utilisateur
+enum TypeUtilisateur {
+    etablissement
+    renford
+    administrateur
 }
 
 enum StatutCompte {
     actif
-    inactif
     suspendu
+    banni
+    en_attente_verification
+    desactive
 }
 
-// ======================
-// PROFILS PAR RÔLE (Relational Models)
-// ======================
+// ============================================================================
+// TABLE: Firebase Auth Info (authentification Google via Firebase)
+// ============================================================================
 
-model Eleve {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
+model FirebaseAuthInfo {
+    id String @id @default(uuid())
 
-    utilisateurId String      @unique @db.ObjectId
+    utilisateurId String      @unique
     utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
-    etablissementId String        @db.ObjectId
-    etablissement   Etablissement @relation(fields: [etablissementId], references: [id], onDelete: Cascade)
+    uid           String    @unique // Firebase UID
+    emailVerified Boolean?
+    picture       String?
+    provider      String?   @default("google")
+    signInTime    DateTime?
 
-    dateNaissance DateTime
-    genre         Genre
-    niveau        NiveauScolaire
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
 
-    passeportActuel TypePasseport @default(rouge)
+    @@index([uid])
+    @@map("firebase_auth_info")
+}
+
+// ============================================================================
+// TABLE: Profil Établissement (données spécifiques aux établissements)
+// ============================================================================
+
+model ProfilEtablissement {
+    id            String      @id @default(uuid())
+    utilisateurId String      @unique
+    utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+    // Informations légales (obligatoires)
+    raisonSociale String // Raison sociale *
+    siret         String // Numéro SIRET (14 chiffres) *
+
+    // Adresse de l'établissement (obligatoire)
+    adresse    String // Adresse *
+    codePostal String // Code postal *
+    ville      String // Ville *
+
+    // Type d'établissement
+    typeEtablissement TypeEtablissement?
+
+    // Adresse du siège (optionnel, si différent de l'établissement)
+    adresseSiege    String?
+    codePostalSiege String?
+    villeSiege      String?
+
+    // Contact
+    emailPrincipal      String?
+    telephonePrincipal  String?
+    nomContactPrincipal String?
+
+    // Métadonnées
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
 
     // Relations
-    lectures       Lecture[]
-    resumes        Resume[]
-    passeports     PasseportHistorique[]
-    participations Participant[]
+    etablissements        Etablissement[]
+    informationsBancaires InformationsBancaires?
 
+    @@map("profils_etablissement")
+}
+
+// ============================================================================
+// TABLE: Établissements (sites/succursales physiques)
+// ============================================================================
+
+model Etablissement {
+    id String @id @default(uuid())
+
+    profilEtablissementId String
+    profilEtablissement   ProfilEtablissement @relation(fields: [profilEtablissementId], references: [id], onDelete: Cascade)
+
+    // Informations
+    nom               String
+    typeEtablissement TypeEtablissement
+    roleEtablissement RoleEtablissement @default(principal)
+
+    // Adresse complète
+    adresse       String
+    adresseLigne2 String?
+    codePostal    String
+    ville         String
+    departement   DepartementIDF
+    pays          String         @default("France")
+    latitude      Float?
+    longitude     Float?
+
+    // Contact
+    telephone String?
+    email     String?
+
+    // Hiérarchie (pour chaînes avec établissements principal/secondaires)
+    etablissementPrincipalId  String?
+    etablissementPrincipal    Etablissement?  @relation("HierarchieEtablissement", fields: [etablissementPrincipalId], references: [id])
+    etablissementsSecondaires Etablissement[] @relation("HierarchieEtablissement")
+
+    // Nom du groupe (si établissement secondaire sans principal inscrit)
+    nomGroupePrincipal String?
+
+    // Statut
+    actif Boolean @default(true)
+
+    // Métadonnées
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
 
-    @@index([etablissementId])
-    @@index([passeportActuel])
-    @@map("eleves")
+    // Relations
+    missions        Mission[]
+    favorisRenfords FavoriRenford[]
+
+    @@index([profilEtablissementId])
+    @@index([departement])
+    @@index([typeEtablissement])
+    @@index([roleEtablissement])
+    @@map("etablissements")
 }
 
-enum Genre {
-    garcon
-    fille
+// Enums utilisées par Etablissement
+enum TypeEtablissement {
+    salle_sport_gymnase
+    centre_fitness
+    studio_yoga
+    studio_pilates
+    centre_bien_etre
+    club_escalade
+    centre_sports_aquatiques
+    ecole_danse
+    centre_formation_sportive
+    club_sport_combat
+    centre_arts_martiaux
+    complexe_multisports
+    club_golf
+    club_tennis
+    centre_athletisme
+    etablissement_sports_extremes
+    centre_equestre
+    club_cyclisme
+    club_course_pied
+    club_tir_arc
+    club_voile_nautique
+    centre_musculation
+    centre_reeducation
+    stade_arene
+    association_sportive
+    complexe_loisirs
+    academie_sportive
+    ecole_surf
 }
 
-enum NiveauScolaire {
-    // Primaire
-    cp
-    ce1
-    ce2
-    cm1
-    cm2
-    sixieme_primaire
-    // Collège
-    premiere_college
-    deuxieme_college
-    troisieme_college
-    // Lycée
-    tronc_commun
-    premiere_bac
-    deuxieme_bac
+enum RoleEtablissement {
+    principal
+    secondaire
 }
 
-// ======================
-// LIVRES & CATÉGORIES
-// ======================
-
-model Livre {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
-
-    titre       String
-    auteur      String
-    description String?
-    couverture  String? // URL image
-
-    nombrePages Int
-    categorie   CategorieLivre
-
-    langue           String  @default("ar")
-    isbn             String?
-    editeur          String?
-    anneePublication Int?
-
-    disponible Boolean @default(true)
-    fichierPdf String? // URL si lecture en ligne
-
-    dateCreation  DateTime  @default(now())
-    dateMiseAJour DateTime  @updatedAt
-    resumes       Resume[]
-    lectures      Lecture[]
-
-    @@index([categorie])
-    @@index([disponible])
-    @@map("livres")
+enum DepartementIDF {
+    paris_75
+    seine_et_marne_77
+    yvelines_78
+    essonne_91
+    hauts_de_seine_92
+    seine_saint_denis_93
+    val_de_marne_94
+    val_doise_95
 }
 
-enum CategorieLivre {
-    premiere_etape // 5-20 pages (CP-CE2)
-    deuxieme_etape // 21-30 pages (CM1-6ème)
-    troisieme_etape // 31-50 pages (Collège)
-    quatrieme_etape // 51-100 pages (Lycée)
-    autres_textes // Variable
-}
+// ============================================================================
+// TABLE: Profil Renford (Freelancer sportif)
+// ============================================================================
 
-// ======================
-// LECTURES & RÉSUMÉS
-// ======================
+model ProfilRenford {
+    id            String      @id @default(uuid())
+    utilisateurId String      @unique
+    utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
-model Lecture {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
+    // Profil public
+    titreProfil       String?
+    descriptionProfil String? @db.Text
+    photoProfilChemin String?
 
-    eleveId String @db.ObjectId
-    eleve   Eleve  @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+    // Informations légales
+    siret                 String? // Numéro SIRET (14 chiffres)
+    siretEnCoursObtention Boolean @default(false) // Numéro en cours d'obtention
+    attestationStatut     Boolean @default(false) // J'atteste être auto-entrepreneur/EI/EIRL/SASU/EURL
 
-    livreId String @db.ObjectId
-    livre   Livre  @relation(fields: [livreId], references: [id], onDelete: Cascade)
+    // Informations personnelles
+    dateNaissance DateTime? @db.Date
 
-    dateDebut    DateTime      @default(now())
-    dateFin      DateTime?
-    statut       StatutLecture @default(en_cours)
-    progression  Int           @default(0) // pourcentage 0-100
-    tempsLecture Int           @default(0) // minutes
+    // Localisation
+    adresse    String?
+    codePostal String?
+    ville      String?
+    pays       String? @default("France")
 
-    resume Resume?
+    // Zone de déplacement (en KM)
+    zoneDeplacement Int?
 
+    // Certification
+    statutCertification StatutCertification @default(en_attente)
+    dateCertification   DateTime?
+
+    // Documents obligatoires
+    carteIdentiteChemin          String?
+    attestationVigilanceChemin   String? // Optionnel
+    justificatifsDiplomesChemins String[] // Array de chemins
+    justificatifsCarteProChemins String[] // Array de chemins
+
+    // Expérience
+    niveauExperience NiveauExperience?
+
+    // Tarification (au moins un requis côté front, tous optionnels en DB)
+    tarifHoraire     Decimal? @db.Decimal(8, 2)
+    tarifJournee     Decimal? @db.Decimal(8, 2)
+    tarifDemiJournee Decimal? @db.Decimal(8, 2)
+
+    // Informations bancaires
+    iban String?
+
+    // Disponibilité
+    joursDisponibles       JourSemaine[] // Jours disponibles dans la semaine
+    disponibiliteIllimitee Boolean       @default(true) // Je suis disponible pour une durée illimitée
+    dateDebutDispo         DateTime?
+    dateFinDispo           DateTime?
+
+    // Statistiques calculées
+    nombreMissionsCompletees Int      @default(0)
+    noteMoyenne              Float?
+    chiffreAffairesTotal     Decimal? @db.Decimal(12, 2)
+
+    // Métadonnées
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
 
-    @@unique([eleveId, livreId])
-    @@index([eleveId])
-    @@index([livreId])
-    @@index([statut])
-    @@map("lectures")
+    // Relations
+    typesPostes              RenfordTypePoste[]
+    specialisations          RenfordSpecialisation[]
+    diplomes                 RenfordDiplome[]
+    documentsRenford         DocumentRenford[]
+    missionsAssignees        MissionRenford[]
+    favorisParEtablissements FavoriRenford[]
+    preferencesMission       PreferenceMission[]
+
+    @@index([statutCertification])
+    @@index([niveauExperience])
+    @@map("profils_renford")
 }
 
-enum StatutLecture {
-    en_cours
-    termine
-    abandonne
-}
-
-model Resume {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
-
-    lectureId String  @unique @db.ObjectId
-    lecture   Lecture @relation(fields: [lectureId], references: [id], onDelete: Cascade)
-
-    eleveId String @db.ObjectId
-    eleve   Eleve  @relation(fields: [eleveId], references: [id], onDelete: Cascade)
-
-    livreId String @db.ObjectId
-    livre   Livre  @relation(fields: [livreId], references: [id], onDelete: Cascade)
-
-    typeResume     TypeResume
-    contenu        String? // texte du résumé
-    fichierUrl     String? // URL si audio/fichier uploadé
-    audioTranscrit String? // transcription audio
-
-    statut      StatutResume @default(en_attente)
-    note        Int? // sur 100
-    commentaire String? // feedback du correcteur
-
-    correcteur   Utilisateur? @relation("correcteur", fields: [correcteurId], references: [id])
-    correcteurId String?      @db.ObjectId
-
-    dateCorrection DateTime?
-
-    dateSoumission DateTime @default(now())
-
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
-
-    @@index([eleveId])
-    @@index([livreId])
-    @@index([statut])
-    @@index([correcteurId])
-    @@map("resumes")
-}
-
-enum TypeResume {
-    ecrit
-    audio
-    fichier
-}
-
-enum StatutResume {
+// Enums utilisées par ProfilRenford
+enum StatutCertification {
     en_attente
-    valide
-    refuse
-    revision
+    certifie
+    rejete
 }
 
-// ======================
-// PASSEPORTS
-// ======================
-
-enum TypePasseport {
-    rouge // 0-10 livres
-    vert // 11-20 livres
-    bleu // 21-30 livres
-    gris // 31-40 livres
-    or // 41-50 livres
+enum NiveauExperience {
+    debutant // Moins de 2 ans
+    confirme // Entre 5 et 10 ans
+    expert // Plus de 10 ans
 }
 
-model PasseportHistorique {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
+enum JourSemaine {
+    lundi
+    mardi
+    mercredi
+    jeudi
+    vendredi
+    samedi
+    dimanche
+}
 
-    eleveId String @db.ObjectId
-    eleve   Eleve  @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+// ============================================================================
+// TABLE: Types de postes du Renford (relation many-to-many)
+// ============================================================================
 
-    typePasseport  TypePasseport
-    dateObtention  DateTime      @default(now())
-    livresLusTotal Int
+model RenfordTypePoste {
+    id              String        @id @default(uuid())
+    profilRenfordId String
+    profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
+
+    typePoste TypePoste
 
     dateCreation DateTime @default(now())
 
-    @@index([eleveId])
-    @@index([typePasseport])
-    @@map("passeports_historique")
+    @@unique([profilRenfordId, typePoste])
+    @@map("renford_types_postes")
 }
 
-// ======================
-// ÉLIMINATOIRES & COMPÉTITIONS
-// ======================
+// ============================================================================
+// TABLE: Spécialisations du Renford
+// ============================================================================
 
-model Competition {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
+model RenfordSpecialisation {
+    id              String        @id @default(uuid())
+    profilRenfordId String
+    profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
 
-    nom         String
-    description String?
-    annee       String // ex: "2025-2026"
+    typePoste         TypePoste // Catégorie parente
+    nomSpecialisation String // Ex: "Hatha Yoga", "Boxe anglaise", etc.
 
-    niveau NiveauCompetition
-    statut StatutCompetition @default(planifiee)
+    dateCreation DateTime @default(now())
 
-    dateDebut DateTime
-    dateFin   DateTime
+    @@unique([profilRenfordId, typePoste, nomSpecialisation])
+    @@index([typePoste])
+    @@map("renford_specialisations")
+}
 
-    participants Participant[]
+// Enum utilisée par RenfordTypePoste et RenfordSpecialisation
+enum TypePoste {
+    pilates
+    yoga
+    fitness_musculation
+    escalade
+    boxe
+    danse
+    gymnastique
+    tennis
+    apa // Activité Physique Adaptée
+}
+
+// ============================================================================
+// TABLE: Diplômes du Renford
+// ============================================================================
+
+model RenfordDiplome {
+    id              String        @id @default(uuid())
+    profilRenfordId String
+    profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
+
+    // Type: BPJEPS, DEJEPS, DESJEPS, Licence STAPS, Master STAPS, CQP, BEES, etc.
+    typeDiplome            String
+    nomDiplome             String
+    mention                String?
+    specialite             String?
+    anneeObtention         Int?
+    etablissementFormation String?
+
+    // Document justificatif
+    documentId String?
+    document   DocumentRenford? @relation(fields: [documentId], references: [id])
+
+    verifie          Boolean   @default(false)
+    dateVerification DateTime?
 
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
 
-    @@index([niveau])
+    @@index([profilRenfordId])
+    @@index([typeDiplome])
+    @@map("renford_diplomes")
+}
+
+// ============================================================================
+// TABLE: Documents du Renford (diplômes, carte pro, assurance, vigilance)
+// ============================================================================
+
+model DocumentRenford {
+    id              String        @id @default(uuid())
+    profilRenfordId String
+    profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
+
+    typeDocument  TypeDocument
+    nomFichier    String
+    cheminFichier String
+    tailleFichier Int? // en bytes
+    mimeType      String?
+
+    statut         StatutDocument @default(en_attente_signature)
+    dateExpiration DateTime?
+
+    // Vérification manuelle par Renford
+    verifie                 Boolean   @default(false)
+    dateVerification        DateTime?
+    commentaireVerification String?
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    // Relations
+    diplomes RenfordDiplome[]
+
+    @@index([profilRenfordId])
+    @@index([typeDocument])
+    @@map("documents_renford")
+}
+
+// Enums utilisées par DocumentRenford
+enum TypeDocument {
+    devis
+    contrat_prestation
+    facture
+    attestation_mission
+    attestation_vigilance
+    bordereau_paiement
+    diplome
+    carte_pro
+    justificatif_assurance
+    note_frais
+}
+
+enum StatutDocument {
+    brouillon
+    en_attente_signature
+    signe
+    archive
+    expire
+}
+
+// ============================================================================
+// TABLE: Informations bancaires Établissement
+// ============================================================================
+
+model InformationsBancaires {
+    id                    String              @id @default(uuid())
+    profilEtablissementId String              @unique
+    profilEtablissement   ProfilEtablissement @relation(fields: [profilEtablissementId], references: [id], onDelete: Cascade)
+
+    nomTitulaireCompte String
+    iban               String
+    bic                String?
+
+    // Informations de facturation
+    nomFacturation        String?
+    adresseFacturation    String?
+    adresseFacturation2   String?
+    codePostalFacturation String?
+    villeFacturation      String?
+    paysFacturation       String? @default("France")
+    siretFacturation      String?
+
+    // Intégration Stripe
+    stripeCustomerId      String?
+    stripePaymentMethodId String?
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@map("informations_bancaires")
+}
+
+// ============================================================================
+// TABLE: Missions
+// ============================================================================
+
+model Mission {
+    id        String @id @default(uuid())
+    reference String @unique @default(uuid())
+
+    // Établissement demandeur
+    etablissementId String
+    etablissement   Etablissement @relation(fields: [etablissementId], references: [id])
+
+    // Mode de mission (FLEX ou COACH)
+    modeMission ModeMission   @default(flex)
+    statut      StatutMission @default(envoyee)
+
+    // Détails de la mission
+    titre                    String?
+    description              String?           @db.Text
+    typePosteRecherche       TypePoste
+    specialisationRecherchee String?
+    niveauExperienceRequis   NiveauExperience?
+
+    // Dates et horaires
+    dateDebut         DateTime
+    dateFin           DateTime
+    nombreHeuresTotal Decimal? @db.Decimal(6, 2)
+
+    // Tarification
+    methodeTarification MethodeTarification  @default(horaire)
+    trancheTarifHoraire TrancheTarifHoraire?
+    tarifHorairePrecis  Decimal?             @db.Decimal(8, 2)
+    montantForfaitaire  Decimal?             @db.Decimal(10, 2)
+    nombreParticipants  Int? // Pour tarif dégressif
+
+    // Montants calculés
+    montantEstimeHT   Decimal? @db.Decimal(10, 2)
+    montantCommission Decimal? @db.Decimal(10, 2)
+    montantTotalTTC   Decimal? @db.Decimal(10, 2)
+
+    // Équipement requis (liste stockée en JSON array)
+    materielRequis String[]
+
+    // Notes de frais
+    notesFraisPrisesEnCharge Boolean @default(false)
+
+    // Diplôme spécifique requis (optionnel, mode COACH)
+    diplomeRequis String?
+
+    // Niveau du cours (mode COACH)
+    niveauCours String?
+
+    // Métadonnées
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    // Relations
+    plagesHoraires       PlageHoraireMission[]
+    renfordsAssignes     MissionRenford[]
+    documents            DocumentMission[]
+    paiements            Paiement[]
+    evaluations          Evaluation[]
+    demandesModification DemandeModification[]
+    annulation           AnnulationMission?
+
+    @@index([etablissementId])
     @@index([statut])
-    @@map("competitions")
+    @@index([modeMission])
+    @@index([typePosteRecherche])
+    @@index([dateDebut])
+    @@index([dateFin])
+    @@map("missions")
 }
 
-enum NiveauCompetition {
-    etablissement
-    provincial
-    regional
-    national
+// Enums utilisées par Mission
+enum ModeMission {
+    flex // Missions express/ponctuelles
+    coach // Missions longue durée contractualisées
 }
 
-enum StatutCompetition {
-    planifiee
+enum StatutMission {
+    envoyee
+    en_cours_de_matching
+    proposee
+    acceptee
+    contrat_signe
+    payee
     en_cours
+    a_valider
+    validee
     terminee
+    archivee
     annulee
 }
 
-model Participant {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
+enum MethodeTarification {
+    horaire
+    forfait
+    degressif
+}
 
-    competitionId String      @db.ObjectId
-    competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+enum TrancheTarifHoraire {
+    moins_de_45
+    entre_45_et_59
+    plus_de_60
+}
 
-    eleveId String @db.ObjectId
-    eleve   Eleve  @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+// ============================================================================
+// TABLE: Plages horaires de mission (détail jour par jour)
+// ============================================================================
 
-    rang            Int?
-    score           Int?
-    selectionne     Boolean  @default(false) // pour niveau suivant
-    dateInscription DateTime @default(now())
+model PlageHoraireMission {
+    id        String  @id @default(uuid())
+    missionId String
+    mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+    date       DateTime @db.Date
+    heureDebut String // Format "HH:MM"
+    heureFin   String // Format "HH:MM"
+
+    dateCreation DateTime @default(now())
+
+    @@index([missionId])
+    @@index([date])
+    @@map("plages_horaires_mission")
+}
+
+// ============================================================================
+// TABLE: Association Mission-Renford (assignations, shortlist)
+// ============================================================================
+
+model MissionRenford {
+    id        String  @id @default(uuid())
+    missionId String
+    mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+    profilRenfordId String
+    profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id])
+
+    // Statut de cette assignation
+    statut StatutMissionRenford @default(propose)
+
+    // Shortlist (pour mode COACH - 1 à 3 profils)
+    estShortliste  Boolean @default(false)
+    ordreShortlist Int?
+
+    // Dates clés
+    dateProposition  DateTime  @default(now())
+    dateReponse      DateTime?
+    dateContratSigne DateTime?
+
+    // Visio pré-mission (mode COACH)
+    lienVisio      String?
+    dateVisio      DateTime?
+    visioEffectuee Boolean   @default(false)
+
+    // Tarif négocié final
+    tarifNegocie Decimal? @db.Decimal(8, 2)
 
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
 
-    @@unique([competitionId, eleveId])
-    @@index([competitionId])
-    @@index([eleveId])
-    @@map("participants")
+    @@unique([missionId, profilRenfordId])
+    @@index([missionId])
+    @@index([profilRenfordId])
+    @@index([statut])
+    @@map("missions_renfords")
 }
 
-// ======================
-// MESSAGERIE & CHAT
-// ======================
+// Enum utilisée par MissionRenford
+enum StatutMissionRenford {
+    propose
+    accepte
+    refuse
+    shortliste
+    selectionne
+    contrat_envoye
+    contrat_signe
+    en_cours
+    termine
+    annule
+}
+
+// ============================================================================
+// TABLE: Documents de mission (devis, contrat, facture, attestations)
+// ============================================================================
+
+model DocumentMission {
+    id        String  @id @default(uuid())
+    missionId String
+    mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+    typeDocument  TypeDocument
+    nomFichier    String
+    cheminFichier String
+    tailleFichier Int?
+    mimeType      String?
+
+    statut StatutDocument @default(brouillon)
+
+    // Signature électronique (Yousign, PandaDoc, DocuSign)
+    signatureExterneId   String? // ID chez le fournisseur de signature
+    fournisseurSignature String? // "yousign", "pandadoc", "docusign"
+    dateSigne            DateTime?
+    signeParId           String? // ID utilisateur signataire
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([missionId])
+    @@index([typeDocument])
+    @@index([statut])
+    @@map("documents_mission")
+}
+
+// ============================================================================
+// TABLE: Paiements (Stripe)
+// ============================================================================
+
+model Paiement {
+    id        String @id @default(uuid())
+    reference String @unique @default(uuid())
+
+    missionId String
+    mission   Mission @relation(fields: [missionId], references: [id])
+
+    // Montants
+    montantHT         Decimal @db.Decimal(10, 2)
+    montantTVA        Decimal @db.Decimal(10, 2)
+    montantTTC        Decimal @db.Decimal(10, 2)
+    montantCommission Decimal @db.Decimal(10, 2)
+    montantNetRenford Decimal @db.Decimal(10, 2)
+
+    statut StatutPaiement @default(en_attente)
+
+    // Intégration Stripe
+    stripePaymentIntentId String?
+    stripeChargeId        String?
+    stripeTransferId      String? // Transfer vers le compte Connect du Renford
+
+    // Dates
+    dateCreation   DateTime  @default(now())
+    dateCapture    DateTime? // Quand les fonds sont capturés
+    dateLiberation DateTime? // Quand les fonds sont transférés au Renford
+
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([missionId])
+    @@index([statut])
+    @@index([stripePaymentIntentId])
+    @@map("paiements")
+}
+
+// Enum utilisée par Paiement
+enum StatutPaiement {
+    en_attente
+    en_cours
+    bloque // Fonds bloqués en attente de validation
+    libere // Fonds libérés au Renford
+    rembourse
+    echoue
+    conteste
+}
+
+// ============================================================================
+// TABLE: Évaluations (bidirectionnelles)
+// ============================================================================
+
+model Evaluation {
+    id        String  @id @default(uuid())
+    missionId String
+    mission   Mission @relation(fields: [missionId], references: [id])
+
+    auteurId String
+    auteur   Utilisateur @relation("auteurEvaluation", fields: [auteurId], references: [id])
+
+    cibleId String
+    cible   Utilisateur @relation("cibleEvaluation", fields: [cibleId], references: [id])
+
+    // Type d'évaluation
+    typeEvaluation TypeEvaluation
+
+    // Notes
+    noteGlobale    Int // 1-5 étoiles
+    qualiteService QualiteService?
+    notePlateforme Int? // 1-5 étoiles (satisfaction Renford)
+
+    // Questions spécifiques
+    prestationRepondAttentes Boolean?
+    motifInsatisfaction      String?  @db.Text
+    ajouterAuxFavoris        Boolean?
+    recommande               Boolean? // Recommanderiez-vous ?
+
+    // Aspects satisfaisants (choix multiple)
+    aspectsSatisfaisants String[]
+
+    // Commentaire libre
+    commentaire String? @db.Text
+
+    // Signalement de problèmes
+    absenceSignalee Boolean @default(false)
+    detailsAbsence  Json? // {dateDebut, dateFin, motif, commentaire}
+
+    ajustementDureeSignale Boolean @default(false)
+    detailsAjustement      Json? // {nouvelleHeureDebut, nouvelleHeureFin, motif, commentaire}
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@unique([missionId, auteurId])
+    @@index([missionId])
+    @@index([cibleId])
+    @@index([typeEvaluation])
+    @@map("evaluations")
+}
+
+// Enums utilisées par Evaluation
+enum TypeEvaluation {
+    etablissement_vers_renford
+    renford_vers_etablissement
+}
+
+enum QualiteService {
+    excellent
+    tres_bien
+    bien
+    moyen
+    mediocre
+}
+
+// ============================================================================
+// TABLE: Demandes de modification de mission
+// ============================================================================
+
+model DemandeModification {
+    id        String  @id @default(uuid())
+    missionId String
+    mission   Mission @relation(fields: [missionId], references: [id])
+
+    demandeurId String
+
+    typeModification       TypeDemandeModification
+    motif                  String?                 @db.Text
+    documentsJustificatifs String[] // URLs des documents
+
+    // Détails selon le type
+    nouvelleValeur Json? // Nouvelle date, nouveaux horaires, etc.
+
+    // Statut
+    statut             StatutDemandeModification @default(en_attente)
+    dateReponse        DateTime?
+    commentaireReponse String?
+    reponduParId       String?
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([missionId])
+    @@index([statut])
+    @@map("demandes_modification")
+}
+
+// Enums utilisées par DemandeModification
+enum TypeDemandeModification {
+    horaires
+    date_debut
+    date_fin
+    lieu
+    autre
+}
+
+enum StatutDemandeModification {
+    en_attente
+    acceptee
+    refusee
+}
+
+// ============================================================================
+// TABLE: Annulations de mission
+// ============================================================================
+
+model AnnulationMission {
+    id        String  @id @default(uuid())
+    missionId String  @unique
+    mission   Mission @relation(fields: [missionId], references: [id])
+
+    demandeurId String
+
+    motif       MotifAnnulation
+    commentaire String?         @db.Text
+
+    // Pénalités (annulation tardive < 24h)
+    estTardive        Boolean @default(false)
+    penaliteAppliquee Boolean @default(false)
+    typePenalite      String? // "suspension_7j", "suspension_permanente"
+
+    dateCreation DateTime @default(now())
+
+    @@map("annulations_mission")
+}
+
+// Enums utilisées par AnnulationMission
+enum MotifAnnulation {
+    maladie
+    probleme_personnel
+    conflit_horaire
+    autre
+}
+
+enum MotifAbsence {
+    autre_mission_imprevue
+    probleme_communication
+    probleme_disponibilite
+    absence_non_prevue
+    autre
+}
+
+enum MotifAjustementDuree {
+    retard_demarrage
+    probleme_imprevu
+    prolongation
+    changement_besoins
+    autre
+}
+
+// ============================================================================
+// TABLE: Favoris Renford (établissements gardent leurs Renfords préférés)
+// ============================================================================
+
+model FavoriRenford {
+    id              String        @id @default(uuid())
+    etablissementId String
+    etablissement   Etablissement @relation(fields: [etablissementId], references: [id], onDelete: Cascade)
+
+    // Renford inscrit sur la plateforme
+    profilRenfordId String?
+    profilRenford   ProfilRenford? @relation(fields: [profilRenfordId], references: [id])
+
+    // Données de prospection (si Renford non encore inscrit)
+    nomComplet String?
+    email      String?
+    telephone  String?
+
+    dateCreation DateTime @default(now())
+
+    @@unique([etablissementId, profilRenfordId])
+    @@index([etablissementId])
+    @@index([email])
+    @@map("favoris_renford")
+}
+
+// ============================================================================
+// TABLE: Notifications
+// ============================================================================
+
+model Notification {
+    id String @id @default(uuid())
+
+    destinataireId String
+    destinataire   Utilisateur @relation("destinataireNotification", fields: [destinataireId], references: [id], onDelete: Cascade)
+
+    expediteurId String?
+    expediteur   Utilisateur? @relation("expediteurNotification", fields: [expediteurId], references: [id])
+
+    type  TypeNotification
+    canal CanalNotification @default(tableau_de_bord)
+
+    titre   String
+    contenu String @db.Text
+
+    // Lien d'action
+    lienAction String?
+    entiteType String? // "mission", "document", "paiement", etc.
+    entiteId   String?
+
+    // Statut
+    lu       Boolean   @default(false)
+    luLe     DateTime?
+    envoye   Boolean   @default(false)
+    envoyeLe DateTime?
+
+    dateCreation DateTime @default(now())
+
+    @@index([destinataireId])
+    @@index([type])
+    @@index([lu])
+    @@index([dateCreation])
+    @@map("notifications")
+}
+
+// Enums utilisées par Notification
+enum TypeNotification {
+    nouvelle_mission
+    mission_acceptee
+    mission_refusee
+    contrat_pret
+    contrat_signe
+    paiement_traite
+    paiement_recu
+    rappel_mission_1_semaine
+    rappel_mission_2_jours
+    mission_demarree
+    mission_terminee
+    demande_evaluation
+    rappel_evaluation
+    rappel_devis
+    document_expire
+    mise_a_jour_profil_requise
+    bienvenue
+}
+
+enum CanalNotification {
+    email
+    sms
+    tableau_de_bord
+    calendrier
+}
+
+// ============================================================================
+// TABLE: Conversations (messagerie interne / support)
+// ============================================================================
 
 model Conversation {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
+    id String @id @default(uuid())
 
-    type TypeConversation @default(directe)
-    nom  String? // pour les groupes
+    // Participants (IDs utilisateurs)
+    participantIds String[]
 
-    participantIds String[] @db.ObjectId
+    // Mission liée (optionnel)
+    missionId String?
 
-    messages       Message[]
+    // Support Renford
+    estSupportRenford Boolean @default(false)
+    sujetSupport      String?
+
     dernierMessage DateTime?
 
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
 
+    messages Message[]
+
     @@index([participantIds])
+    @@index([missionId])
     @@map("conversations")
 }
 
-enum TypeConversation {
-    directe
-    groupe
-}
+// ============================================================================
+// TABLE: Messages
+// ============================================================================
 
 model Message {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
+    id String @id @default(uuid())
 
-    conversationId String       @db.ObjectId
+    conversationId String
     conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-    expediteurId String      @db.ObjectId
-    expediteur   Utilisateur @relation("expediteurMessage", fields: [expediteurId], references: [id], onDelete: Cascade)
+    expediteurId String
+    expediteur   Utilisateur @relation("expediteurMessage", fields: [expediteurId], references: [id])
 
-    destinataireId String?      @db.ObjectId
+    destinataireId String?
     destinataire   Utilisateur? @relation("destinataireMessage", fields: [destinataireId], references: [id])
 
-    contenu     String
-    typeMessage TypeMessage @default(texte)
-    fichierUrl  String?
+    contenu String @db.Text
+
+    // Pièces jointes
+    pieceJointeUrl String?
+    pieceJointeNom String?
 
     lu   Boolean   @default(false)
     luLe DateTime?
@@ -500,56 +1100,208 @@ model Message {
 
     @@index([conversationId])
     @@index([expediteurId])
-    @@index([destinataireId])
+    @@index([dateCreation])
     @@map("messages")
 }
 
-enum TypeMessage {
-    texte
-    image
-    fichier
-    systeme
-}
+// ============================================================================
+// TABLE: Préférences de mission (Renford - Annexe 16)
+// ============================================================================
 
-// ======================
-// NOTIFICATIONS
-// ======================
+model PreferenceMission {
+    id              String        @id @default(uuid())
+    profilRenfordId String
+    profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
 
-model Notification {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
-
-    destinataireId String      @db.ObjectId
-    destinataire   Utilisateur @relation("destinataire", fields: [destinataireId], references: [id], onDelete: Cascade)
-
-    expediteurId String?      @db.ObjectId
-    expediteur   Utilisateur? @relation("expediteur", fields: [expediteurId], references: [id])
-
-    titre       String
-    description String
-    type        TypeNotification
-
-    lu   Boolean   @default(false)
-    luLe DateTime?
-
-    // Pour navigation
-    sourceType String?
-    sourceId   String? @db.ObjectId
+    // Catégories: Coaching Individuel, Sessions en Groupe, Ateliers, etc.
+    categorie  String
+    preference String // Description de la préférence
 
     dateCreation DateTime @default(now())
 
-    @@index([destinataireId])
-    @@index([type])
-    @@index([lu])
-    @@map("notifications")
+    @@unique([profilRenfordId, categorie, preference])
+    @@index([profilRenfordId])
+    @@map("preferences_mission")
 }
 
-enum TypeNotification {
-    nouveau_resume
-    resume_corrige
-    passeport_obtenu
-    competition
-    message
-    approbation_etablissement
-    inscription_eleve
-    systeme
+// ============================================================================
+// TABLE: Journal d'activités (audit log)
+// ============================================================================
+
+model JournalActivite {
+    id String @id @default(uuid())
+
+    utilisateurId String?
+    utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id])
+
+    action     String // "connexion", "creation_mission", "signature_contrat", etc.
+    entiteType String? // "mission", "document", "paiement", etc.
+    entiteId   String?
+
+    details   Json? // Détails supplémentaires
+    adresseIp String?
+    userAgent String?
+
+    dateCreation DateTime @default(now())
+
+    @@index([utilisateurId])
+    @@index([action])
+    @@index([dateCreation])
+    @@map("journal_activites")
+}
+
+// ============================================================================
+// TABLE: Sessions Refresh Token
+// ============================================================================
+
+model SessionRefresh {
+    id String @id @default(uuid())
+
+    utilisateurId String
+    utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+    refreshToken String  @unique
+    userAgent    String?
+    adresseIp    String?
+
+    dateExpiration DateTime
+    estRevoque     Boolean   @default(false)
+    dateRevocation DateTime?
+
+    dateCreation DateTime @default(now())
+
+    @@index([utilisateurId])
+    @@index([refreshToken])
+    @@index([dateExpiration])
+    @@map("sessions_refresh")
+}
+
+// ============================================================================
+// TABLE: Suspensions de compte
+// ============================================================================
+
+model SuspensionCompte {
+    id String @id @default(uuid())
+
+    utilisateurId String
+
+    motif   String
+    details String? @db.Text
+
+    // Durée (7 jours pour 1ère infraction, permanente pour 2 infractions en 30 jours)
+    dateDebut     DateTime  @default(now())
+    dateFin       DateTime? // Null = permanente
+    estPermanente Boolean   @default(false)
+
+    // Infraction liée
+    nombreInfractions Int     @default(1)
+    missionId         String? // Mission concernée si applicable
+
+    // Levée de suspension
+    levee      Boolean   @default(false)
+    dateLeveee DateTime?
+    motifLevee String?
+    leveeParId String?
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([utilisateurId])
+    @@index([estPermanente])
+    @@map("suspensions_compte")
+}
+
+// ============================================================================
+// TABLE: Paramètres plateforme (configuration admin)
+// ============================================================================
+
+model ParametrePlateforme {
+    id String @id @default(uuid())
+
+    cle         String  @unique
+    valeur      String
+    description String?
+    type        String  @default("string") // string, number, boolean, json
+    categorie   String? // "paiement", "notification", "matching", etc.
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([categorie])
+    @@map("parametres_plateforme")
+}
+
+// ============================================================================
+// TABLE: Rappels programmés (pour notifications automatiques)
+// ============================================================================
+
+model RappelProgramme {
+    id String @id @default(uuid())
+
+    type       String // "evaluation", "mission", "document"
+    entiteType String // "mission", "evaluation", etc.
+    entiteId   String
+
+    destinataireId String
+
+    dateEnvoi         DateTime
+    envoye            Boolean   @default(false)
+    dateEnvoiEffectif DateTime?
+
+    tentatives Int @default(0)
+
+    dateCreation DateTime @default(now())
+
+    @@index([dateEnvoi])
+    @@index([envoye])
+    @@index([type])
+    @@map("rappels_programmes")
+}
+
+// ============================================================================
+// TABLE: Statistiques quotidiennes (analytics)
+// ============================================================================
+
+model StatistiqueQuotidienne {
+    id String @id @default(uuid())
+
+    date DateTime @unique @db.Date
+
+    // Utilisateurs
+    nouveauxEtablissements Int @default(0)
+    nouveauxRenfords       Int @default(0)
+    utilisateursActifs     Int @default(0)
+
+    // Missions
+    missionsCrees      Int @default(0)
+    missionsCompletees Int @default(0)
+    missionsAnnulees   Int @default(0)
+    missionsFlex       Int @default(0)
+    missionsCoach      Int @default(0)
+
+    // Financier
+    volumePaiementsHT   Decimal @default(0) @db.Decimal(12, 2)
+    commissionsGenerees Decimal @default(0) @db.Decimal(12, 2)
+
+    // Matching
+    tauxMatchingReussi Float? // Pourcentage
+    tempsMatchingMoyen Float? // En heures
+
+    dateCreation DateTime @default(now())
+
+    @@map("statistiques_quotidiennes")
+}
+
+// ============================================================================
+// TABLE: Départements adjacents (pour matching géographique)
+// ============================================================================
+
+model DepartementAdjacent {
+    id String @id @default(uuid())
+
+    departement         DepartementIDF
+    departementAdjacent DepartementIDF
+
+    @@unique([departement, departementAdjacent])
+    @@map("departements_adjacents")
 }

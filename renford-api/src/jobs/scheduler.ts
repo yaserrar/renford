@@ -5,6 +5,5 @@ import { logger } from '../config/logger';
  */
 export function initScheduler(): void {
   logger.info('Initializing scheduler...');
-
   logger.info('Scheduler initialized with the following jobs:');
 }

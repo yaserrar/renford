@@ -1,18 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/prisma';
-import { RoleUtilisateur } from '@prisma/client';
+import { TypeUtilisateur, StatutCompte } from '@prisma/client';
+import { env } from '../config/env';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-
-// Rôles autorisés pour l'authentification dashboard (pas les élèves)
-const ALLOWED_DASHBOARD_ROLES: RoleUtilisateur[] = [
-  'admin',
-  'coordinateur_national',
-  'coordinateur_regional',
-  'coordinateur_provincial',
-  'superviseur',
-];
+const JWT_SECRET = env.JWT_SECRET;
 
 declare module 'express-serve-static-core' {
   namespace Express {
@@ -21,20 +13,19 @@ declare module 'express-serve-static-core' {
       utilisateur?: {
         id: string;
         email: string;
-        role: RoleUtilisateur;
+        typeUtilisateur: TypeUtilisateur;
         nom: string;
         prenom: string;
-        regionId: string | null;
-        provinceId: string | null;
-        etablissementId: string | null;
+        statutCompte: StatutCompte;
+        emailVerifie: boolean;
       };
     }
   }
 }
 
-// Middleware d'authentification avec contrôle de rôle optionnel
-// Si allowedRoles est spécifié, l'utilisateur doit avoir l'un de ces rôles
-export const authenticateToken = (allowedRoles?: RoleUtilisateur[]) => {
+// Middleware d'authentification avec contrôle de type d'utilisateur optionnel
+// Si allowedTypes est spécifié, l'utilisateur doit avoir l'un de ces types
+export const authenticateToken = (allowedTypes?: TypeUtilisateur[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authHeader = req.headers.authorization;
@@ -60,13 +51,11 @@ export const authenticateToken = (allowedRoles?: RoleUtilisateur[]) => {
         select: {
           id: true,
           email: true,
-          role: true,
+          typeUtilisateur: true,
           nom: true,
           prenom: true,
-          statut: true,
-          regionId: true,
-          provinceId: true,
-          etablissementId: true,
+          statutCompte: true,
+          emailVerifie: true,
         },
       });
 
@@ -76,47 +65,28 @@ export const authenticateToken = (allowedRoles?: RoleUtilisateur[]) => {
         });
       }
 
-      // Vérifier que le rôle est autorisé pour le dashboard (pas les élèves)
-      if (!ALLOWED_DASHBOARD_ROLES.includes(utilisateur.role)) {
-        return res.status(403).json({
-          message:
-            'Accès refusé. Cette plateforme est réservée aux administrateurs et coordinateurs.',
-        });
-      }
-
-      // Vérifier que l'utilisateur a les relations nécessaires selon son rôle
-      const hasValidProfile = (() => {
-        switch (utilisateur.role) {
-          case 'admin':
-          case 'coordinateur_national':
-            return true; // Pas besoin de relation géographique
-          case 'coordinateur_regional':
-            return !!utilisateur.regionId;
-          case 'coordinateur_provincial':
-            return !!utilisateur.provinceId;
-          case 'superviseur':
-            return !!utilisateur.etablissementId;
-          default:
-            return false;
-        }
-      })();
-
-      if (!hasValidProfile) {
-        return res.status(403).json({
-          message: 'Compte incomplet. Profil non configuré. Veuillez contacter un administrateur.',
-        });
-      }
-
       // Vérifier le statut du compte
-      if (utilisateur.statut !== 'actif') {
+      if (utilisateur.statutCompte === 'suspendu') {
         return res.status(403).json({
-          message: 'Compte inactif ou suspendu. Veuillez contacter un administrateur.',
+          message: 'Votre compte est suspendu. Veuillez contacter le support.',
         });
       }
 
-      // Vérifier le rôle spécifique si spécifié
-      if (allowedRoles && allowedRoles.length > 0) {
-        if (!allowedRoles.includes(utilisateur.role)) {
+      if (utilisateur.statutCompte === 'banni') {
+        return res.status(403).json({
+          message: 'Votre compte a été banni.',
+        });
+      }
+
+      if (utilisateur.statutCompte === 'desactive') {
+        return res.status(403).json({
+          message: 'Votre compte est désactivé. Veuillez contacter le support pour le réactiver.',
+        });
+      }
+
+      // Vérifier le type d'utilisateur si spécifié
+      if (allowedTypes && allowedTypes.length > 0) {
+        if (!allowedTypes.includes(utilisateur.typeUtilisateur)) {
           return res.status(403).json({
             message: "Accès refusé. Vous n'avez pas les permissions nécessaires.",
           });
@@ -128,12 +98,11 @@ export const authenticateToken = (allowedRoles?: RoleUtilisateur[]) => {
       req.utilisateur = {
         id: utilisateur.id,
         email: utilisateur.email,
-        role: utilisateur.role,
+        typeUtilisateur: utilisateur.typeUtilisateur,
         nom: utilisateur.nom,
         prenom: utilisateur.prenom,
-        regionId: utilisateur.regionId,
-        provinceId: utilisateur.provinceId,
-        etablissementId: utilisateur.etablissementId,
+        statutCompte: utilisateur.statutCompte,
+        emailVerifie: utilisateur.emailVerifie,
       };
       next();
     } catch (error) {
@@ -149,5 +118,43 @@ export const authenticateToken = (allowedRoles?: RoleUtilisateur[]) => {
       }
       return next(error);
     }
+  };
+};
+
+// Middleware pour vérifier que l'email est vérifié
+export const requireVerifiedEmail = () => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.utilisateur) {
+      return res.status(401).json({
+        message: 'Utilisateur non authentifié',
+      });
+    }
+
+    if (!req.utilisateur.emailVerifie) {
+      return res.status(403).json({
+        message: 'Veuillez vérifier votre email avant de continuer.',
+      });
+    }
+
+    next();
+  };
+};
+
+// Middleware pour vérifier que le compte est actif
+export const requireActiveAccount = () => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.utilisateur) {
+      return res.status(401).json({
+        message: 'Utilisateur non authentifié',
+      });
+    }
+
+    if (req.utilisateur.statutCompte !== 'actif') {
+      return res.status(403).json({
+        message: 'Votre compte doit être actif pour effectuer cette action.',
+      });
+    }
+
+    next();
   };
 };

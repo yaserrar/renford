@@ -13,7 +13,7 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
     }
 
     const utilisateur = await prisma.utilisateur.findUnique({
-      where: { id: userId, statut: 'actif' },
+      where: { id: userId },
       select: {
         id: true,
         email: true,
@@ -21,26 +21,24 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
         prenom: true,
         telephone: true,
         avatarChemin: true,
-        role: true,
-        statut: true,
+        typeUtilisateur: true,
+        statutCompte: true,
         emailVerifie: true,
         dateCreation: true,
-        derniereConnexionA: true,
-        intitule_poste: true,
-        // Relations géographiques selon le rôle
-        region: true,
-        province: {
+        derniereConnexion: true,
+        // Relations selon le type d'utilisateur
+        profilEtablissement: {
           include: {
-            region: true,
+            etablissements: true,
+            informationsBancaires: true,
           },
         },
-        etablissement: {
+        profilRenford: {
           include: {
-            province: {
-              include: {
-                region: true,
-              },
-            },
+            typesPostes: true,
+            specialisations: true,
+            diplomes: true,
+            documentsRenford: true,
           },
         },
       },
@@ -69,7 +67,7 @@ export const updateProfile = async (
       return res.status(401).json({ message: 'Utilisateur non authentifié' });
     }
 
-    const { nom, prenom, telephone, avatar } = req.body;
+    const { nom, prenom, telephone, avatarChemin } = req.body;
 
     const utilisateur = await prisma.utilisateur.update({
       where: { id: userId },
@@ -77,7 +75,7 @@ export const updateProfile = async (
         ...(nom && { nom }),
         ...(prenom && { prenom }),
         ...(telephone !== undefined && { telephone }),
-        ...(avatar !== undefined && { avatar }),
+        ...(avatarChemin !== undefined && { avatarChemin }),
       },
       select: {
         id: true,
@@ -86,7 +84,7 @@ export const updateProfile = async (
         prenom: true,
         telephone: true,
         avatarChemin: true,
-        role: true,
+        typeUtilisateur: true,
       },
     });
 
@@ -111,20 +109,20 @@ export const changePassword = async (
     }
 
     const utilisateur = await prisma.utilisateur.findUnique({
-      where: { id: userId, statut: 'actif' },
+      where: { id: userId },
     });
 
     if (!utilisateur) {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
 
-    if (!utilisateur.password) {
+    if (!utilisateur.motDePasse) {
       return res.status(400).json({
         message: 'Impossible de changer le mot de passe pour ce type de compte',
       });
     }
 
-    const isMatch = await bcrypt.compare(oldPassword, utilisateur.password);
+    const isMatch = await bcrypt.compare(oldPassword, utilisateur.motDePasse);
     if (!isMatch) {
       return res.status(400).json({ message: 'Le mot de passe actuel est incorrect' });
     }
@@ -132,7 +130,7 @@ export const changePassword = async (
     const hashedPassword = await bcrypt.hash(newPassword, 12);
     await prisma.utilisateur.update({
       where: { id: userId },
-      data: { password: hashedPassword },
+      data: { motDePasse: hashedPassword },
     });
 
     return res.json({ message: 'Mot de passe mis à jour avec succès' });

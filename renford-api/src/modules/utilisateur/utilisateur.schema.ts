@@ -5,7 +5,7 @@ export const updateProfileSchema = z.object({
   nom: z.string().min(2, '2 caractères minimum').optional(),
   prenom: z.string().min(2, '2 caractères minimum').optional(),
   telephone: z.string().optional().nullable(),
-  avatar: z.string().url('URL invalide').optional().nullable(),
+  avatarChemin: z.string().optional().nullable(),
 });
 
 export type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;
