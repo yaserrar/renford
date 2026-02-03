@@ -1,0 +1,555 @@
+// Prisma schema for MongoDB
+// CAP'Lecture Maroc Platform - Défi de Lecture
+// Docs: https://www.prisma.io/docs/orm/overview/databases/mongodb
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+// ======================
+// HIÉRARCHIE GÉOGRAPHIQUE
+// ======================
+
+model Region {
+    id  String @id @default(auto()) @map("_id") @db.ObjectId
+    nom String @unique
+
+    coordinateurs Utilisateur[]
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    provinces Province[]
+
+    @@map("regions")
+}
+
+model Province {
+    id  String @id @default(auto()) @map("_id") @db.ObjectId
+    nom String
+
+    regionId String @db.ObjectId
+    region   Region @relation(fields: [regionId], references: [id], onDelete: Cascade)
+
+    coordinateurs Utilisateur[]
+
+    dateCreation   DateTime        @default(now())
+    dateMiseAJour  DateTime        @updatedAt
+    etablissements Etablissement[]
+
+    @@index([regionId])
+    @@map("provinces")
+}
+
+model Etablissement {
+    id                    String @id @default(auto()) @map("_id") @db.ObjectId
+    nom                   String
+    numeroImmatriculation String @unique
+
+    typeEtablissement TypeEtablissement    @default(primaire)
+    secteur           SecteurEtablissement @default(public)
+    nombreEleves      Int                  @default(0)
+
+    provinceId String   @db.ObjectId
+    province   Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+
+    adresse String?
+
+    nomComplet String?
+    email      String?
+    telephone  String?
+
+    active Boolean @default(true)
+
+    approuve   Boolean   @default(false)
+    approuveLe DateTime?
+
+    superviseurs Utilisateur[]
+    eleves       Eleve[]
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([provinceId])
+    @@index([approuve])
+    @@map("etablissements")
+}
+
+enum TypeEtablissement {
+    primaire
+    college
+    lycee
+    autre
+}
+
+enum SecteurEtablissement {
+    public
+    prive
+    autre
+}
+
+// ======================
+// UTILISATEURS
+// ======================
+
+model Utilisateur {
+    id       String          @id @default(auto()) @map("_id") @db.ObjectId
+    email    String          @unique
+    password String?
+    role     RoleUtilisateur
+
+    nom          String
+    prenom       String
+    telephone    String?
+    avatarChemin String?
+
+    statut StatutCompte @default(actif)
+
+    // Champs d'authentification
+    emailVerifie              Boolean   @default(false)
+    emailVerifieA             DateTime?
+    emailVerificationCode     String?
+    emailVerificationCreation DateTime?
+    reinitPasswordCode        String?
+    reinitPasswordCreation    DateTime?
+
+    derniereConnexionA DateTime?
+
+    // ======================
+    // RELATIONS VERS PROFILS (one-to-one)
+    // ======================
+
+    regionId String? @db.ObjectId
+    region   Region? @relation(fields: [regionId], references: [id], onDelete: Cascade)
+
+    provinceId String?   @db.ObjectId
+    province   Province? @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+
+    etablissementId String?        @db.ObjectId
+    etablissement   Etablissement? @relation(fields: [etablissementId], references: [id], onDelete: Cascade)
+
+    intitule_poste String?
+
+    eleve Eleve?
+
+    // ======================
+    // RELATIONS
+    // ======================
+
+    resumesCoriges Resume[] @relation("correcteur")
+
+    notificationsEnvoyees Notification[] @relation("expediteur")
+    notificationsRecues   Notification[] @relation("destinataire")
+    messagesEnvoyes       Message[]      @relation("expediteurMessage")
+    messagesRecus         Message[]      @relation("destinataireMessage")
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([role])
+    @@index([statut])
+    @@index([reinitPasswordCode])
+    @@map("utilisateurs")
+}
+
+enum RoleUtilisateur {
+    admin
+    coordinateur_national
+    coordinateur_regional
+    coordinateur_provincial
+    superviseur
+    eleve
+}
+
+enum StatutCompte {
+    actif
+    inactif
+    suspendu
+}
+
+// ======================
+// PROFILS PAR RÔLE (Relational Models)
+// ======================
+
+model Eleve {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    utilisateurId String      @unique @db.ObjectId
+    utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+    etablissementId String        @db.ObjectId
+    etablissement   Etablissement @relation(fields: [etablissementId], references: [id], onDelete: Cascade)
+
+    dateNaissance DateTime
+    genre         Genre
+    niveau        NiveauScolaire
+
+    passeportActuel TypePasseport @default(rouge)
+
+    // Relations
+    lectures       Lecture[]
+    resumes        Resume[]
+    passeports     PasseportHistorique[]
+    participations Participant[]
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([etablissementId])
+    @@index([passeportActuel])
+    @@map("eleves")
+}
+
+enum Genre {
+    garcon
+    fille
+}
+
+enum NiveauScolaire {
+    // Primaire
+    cp
+    ce1
+    ce2
+    cm1
+    cm2
+    sixieme_primaire
+    // Collège
+    premiere_college
+    deuxieme_college
+    troisieme_college
+    // Lycée
+    tronc_commun
+    premiere_bac
+    deuxieme_bac
+}
+
+// ======================
+// LIVRES & CATÉGORIES
+// ======================
+
+model Livre {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    titre       String
+    auteur      String
+    description String?
+    couverture  String? // URL image
+
+    nombrePages Int
+    categorie   CategorieLivre
+
+    langue           String  @default("ar")
+    isbn             String?
+    editeur          String?
+    anneePublication Int?
+
+    disponible Boolean @default(true)
+    fichierPdf String? // URL si lecture en ligne
+
+    dateCreation  DateTime  @default(now())
+    dateMiseAJour DateTime  @updatedAt
+    resumes       Resume[]
+    lectures      Lecture[]
+
+    @@index([categorie])
+    @@index([disponible])
+    @@map("livres")
+}
+
+enum CategorieLivre {
+    premiere_etape // 5-20 pages (CP-CE2)
+    deuxieme_etape // 21-30 pages (CM1-6ème)
+    troisieme_etape // 31-50 pages (Collège)
+    quatrieme_etape // 51-100 pages (Lycée)
+    autres_textes // Variable
+}
+
+// ======================
+// LECTURES & RÉSUMÉS
+// ======================
+
+model Lecture {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    eleveId String @db.ObjectId
+    eleve   Eleve  @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+
+    livreId String @db.ObjectId
+    livre   Livre  @relation(fields: [livreId], references: [id], onDelete: Cascade)
+
+    dateDebut    DateTime      @default(now())
+    dateFin      DateTime?
+    statut       StatutLecture @default(en_cours)
+    progression  Int           @default(0) // pourcentage 0-100
+    tempsLecture Int           @default(0) // minutes
+
+    resume Resume?
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@unique([eleveId, livreId])
+    @@index([eleveId])
+    @@index([livreId])
+    @@index([statut])
+    @@map("lectures")
+}
+
+enum StatutLecture {
+    en_cours
+    termine
+    abandonne
+}
+
+model Resume {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    lectureId String  @unique @db.ObjectId
+    lecture   Lecture @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+
+    eleveId String @db.ObjectId
+    eleve   Eleve  @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+
+    livreId String @db.ObjectId
+    livre   Livre  @relation(fields: [livreId], references: [id], onDelete: Cascade)
+
+    typeResume     TypeResume
+    contenu        String? // texte du résumé
+    fichierUrl     String? // URL si audio/fichier uploadé
+    audioTranscrit String? // transcription audio
+
+    statut      StatutResume @default(en_attente)
+    note        Int? // sur 100
+    commentaire String? // feedback du correcteur
+
+    correcteur   Utilisateur? @relation("correcteur", fields: [correcteurId], references: [id])
+    correcteurId String?      @db.ObjectId
+
+    dateCorrection DateTime?
+
+    dateSoumission DateTime @default(now())
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([eleveId])
+    @@index([livreId])
+    @@index([statut])
+    @@index([correcteurId])
+    @@map("resumes")
+}
+
+enum TypeResume {
+    ecrit
+    audio
+    fichier
+}
+
+enum StatutResume {
+    en_attente
+    valide
+    refuse
+    revision
+}
+
+// ======================
+// PASSEPORTS
+// ======================
+
+enum TypePasseport {
+    rouge // 0-10 livres
+    vert // 11-20 livres
+    bleu // 21-30 livres
+    gris // 31-40 livres
+    or // 41-50 livres
+}
+
+model PasseportHistorique {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    eleveId String @db.ObjectId
+    eleve   Eleve  @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+
+    typePasseport  TypePasseport
+    dateObtention  DateTime      @default(now())
+    livresLusTotal Int
+
+    dateCreation DateTime @default(now())
+
+    @@index([eleveId])
+    @@index([typePasseport])
+    @@map("passeports_historique")
+}
+
+// ======================
+// ÉLIMINATOIRES & COMPÉTITIONS
+// ======================
+
+model Competition {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    nom         String
+    description String?
+    annee       String // ex: "2025-2026"
+
+    niveau NiveauCompetition
+    statut StatutCompetition @default(planifiee)
+
+    dateDebut DateTime
+    dateFin   DateTime
+
+    participants Participant[]
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([niveau])
+    @@index([statut])
+    @@map("competitions")
+}
+
+enum NiveauCompetition {
+    etablissement
+    provincial
+    regional
+    national
+}
+
+enum StatutCompetition {
+    planifiee
+    en_cours
+    terminee
+    annulee
+}
+
+model Participant {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    competitionId String      @db.ObjectId
+    competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+    eleveId String @db.ObjectId
+    eleve   Eleve  @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+
+    rang            Int?
+    score           Int?
+    selectionne     Boolean  @default(false) // pour niveau suivant
+    dateInscription DateTime @default(now())
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@unique([competitionId, eleveId])
+    @@index([competitionId])
+    @@index([eleveId])
+    @@map("participants")
+}
+
+// ======================
+// MESSAGERIE & CHAT
+// ======================
+
+model Conversation {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    type TypeConversation @default(directe)
+    nom  String? // pour les groupes
+
+    participantIds String[] @db.ObjectId
+
+    messages       Message[]
+    dernierMessage DateTime?
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([participantIds])
+    @@map("conversations")
+}
+
+enum TypeConversation {
+    directe
+    groupe
+}
+
+model Message {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    conversationId String       @db.ObjectId
+    conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+    expediteurId String      @db.ObjectId
+    expediteur   Utilisateur @relation("expediteurMessage", fields: [expediteurId], references: [id], onDelete: Cascade)
+
+    destinataireId String?      @db.ObjectId
+    destinataire   Utilisateur? @relation("destinataireMessage", fields: [destinataireId], references: [id])
+
+    contenu     String
+    typeMessage TypeMessage @default(texte)
+    fichierUrl  String?
+
+    lu   Boolean   @default(false)
+    luLe DateTime?
+
+    dateCreation DateTime @default(now())
+
+    @@index([conversationId])
+    @@index([expediteurId])
+    @@index([destinataireId])
+    @@map("messages")
+}
+
+enum TypeMessage {
+    texte
+    image
+    fichier
+    systeme
+}
+
+// ======================
+// NOTIFICATIONS
+// ======================
+
+model Notification {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    destinataireId String      @db.ObjectId
+    destinataire   Utilisateur @relation("destinataire", fields: [destinataireId], references: [id], onDelete: Cascade)
+
+    expediteurId String?      @db.ObjectId
+    expediteur   Utilisateur? @relation("expediteur", fields: [expediteurId], references: [id])
+
+    titre       String
+    description String
+    type        TypeNotification
+
+    lu   Boolean   @default(false)
+    luLe DateTime?
+
+    // Pour navigation
+    sourceType String?
+    sourceId   String? @db.ObjectId
+
+    dateCreation DateTime @default(now())
+
+    @@index([destinataireId])
+    @@index([type])
+    @@index([lu])
+    @@map("notifications")
+}
+
+enum TypeNotification {
+    nouveau_resume
+    resume_corrige
+    passeport_obtenu
+    competition
+    message
+    approbation_etablissement
+    inscription_eleve
+    systeme
+}

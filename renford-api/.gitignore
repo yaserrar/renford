@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.env
+.env.prod
+*.log
+.DS_Store
+/uploads
+yarn.lock
