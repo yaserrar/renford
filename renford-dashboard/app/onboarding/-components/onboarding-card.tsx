@@ -22,7 +22,7 @@ export function OnboardingCard({
     <div className="w-full max-w-lg">
       <OnboardingProgress currentStep={currentStep} totalSteps={totalSteps} />
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+      <div className="bg-white md:rounded-2xl md:shadow-sm md:border md:border-gray-100 p-6 md:p-8">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
           {subtitle && <p className="text-gray-500 mt-2">{subtitle}</p>}

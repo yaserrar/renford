@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import ErrorMessage from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useSkipStep, useUpdateFavoris } from "@/hooks/onboarding";
+import {
+  useSkipEtablissementStep,
+  useUpdateEtablissementFavoris,
+} from "@/hooks/onboarding";
 import {
   favoriRenfordSchema,
   FavoriRenfordSchema,
@@ -20,8 +23,9 @@ import { OnboardingCard } from "../-components";
 
 export default function Etape4Page() {
   const router = useRouter();
-  const { mutate: updateFavoris, isPending } = useUpdateFavoris();
-  const { mutate: skipStep, isPending: isSkipping } = useSkipStep();
+  const { mutate: updateFavoris, isPending } = useUpdateEtablissementFavoris();
+  const { mutate: skipStep, isPending: isSkipping } =
+    useSkipEtablissementStep();
   const [favoris, setFavoris] = useState<FavoriRenfordSchema[]>([]);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);

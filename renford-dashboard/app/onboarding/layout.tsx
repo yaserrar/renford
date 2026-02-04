@@ -13,7 +13,7 @@ export default function OnboardingLayout({
   children: ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-primary-background flex flex-col">
+    <main className="min-h-screen bg-white md:bg-primary-background flex flex-col">
       {/* Header avec logo et barre de progression */}
       <header className="w-full bg-white border-b border-gray-200 py-4 px-6">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -28,7 +28,7 @@ export default function OnboardingLayout({
       </header>
 
       {/* Contenu principal */}
-      <div className="flex-1 flex items-center justify-center p-6">
+      <div className="flex-1 flex items-center justify-center p-4 md:p-6">
         {children}
       </div>
     </main>

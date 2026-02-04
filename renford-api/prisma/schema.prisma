@@ -262,15 +262,17 @@ model ProfilRenford {
     utilisateurId String      @unique
     utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
-    // Profil public
+    // Profil public (étape 4)
     titreProfil       String?
-    descriptionProfil String? @db.Text
-    photoProfilChemin String?
+    descriptionProfil String?      @db.Text
+    photoProfil       String? // Chemin vers la photo de profil
+    typeMission       TypeMission? // volant, mission_longue, les_deux
+    assuranceRCPro    Boolean      @default(false)
 
-    // Informations légales
-    siret                 String? // Numéro SIRET (14 chiffres)
-    siretEnCoursObtention Boolean @default(false) // Numéro en cours d'obtention
-    attestationStatut     Boolean @default(false) // J'atteste être auto-entrepreneur/EI/EIRL/SASU/EURL
+    // Informations légales (étape 3)
+    siret                       String? // Numéro SIRET (14 chiffres)
+    attestationAutoEntrepreneur Boolean @default(false) // Attestation auto-entrepreneur
+    attestationVigilanceChemin  String? // Document attestation de vigilance
 
     // Informations personnelles
     dateNaissance DateTime? @db.Date
@@ -288,28 +290,31 @@ model ProfilRenford {
     statutCertification StatutCertification @default(en_attente)
     dateCertification   DateTime?
 
-    // Documents obligatoires
-    carteIdentiteChemin          String?
-    attestationVigilanceChemin   String? // Optionnel
-    justificatifsDiplomesChemins String[] // Array de chemins
-    justificatifsCarteProChemins String[] // Array de chemins
+    // Documents (étape 5 et 6)
+    carteIdentiteChemin                    String?
+    justificatifDiplomeChemin              String? // Justificatif de diplôme
+    justificatifCarteProfessionnelleChemin String? // Justificatif de carte professionnelle
+    diplomes                               String? @db.Text // Description des diplômes
 
-    // Expérience
+    // Expérience (étape 5)
     niveauExperience NiveauExperience?
 
-    // Tarification (au moins un requis côté front, tous optionnels en DB)
-    tarifHoraire     Decimal? @db.Decimal(8, 2)
-    tarifJournee     Decimal? @db.Decimal(8, 2)
-    tarifDemiJournee Decimal? @db.Decimal(8, 2)
+    // Tarification (étape 5)
+    tarifHoraire       Decimal? @db.Decimal(8, 2)
+    proposeJournee     Boolean  @default(false)
+    tarifJournee       Decimal? @db.Decimal(8, 2)
+    proposeDemiJournee Boolean  @default(false)
+    tarifDemiJournee   Decimal? @db.Decimal(8, 2)
 
-    // Informations bancaires
+    // Informations bancaires (étape 6)
     iban String?
 
-    // Disponibilité
-    joursDisponibles       JourSemaine[] // Jours disponibles dans la semaine
-    disponibiliteIllimitee Boolean       @default(true) // Je suis disponible pour une durée illimitée
-    dateDebutDispo         DateTime?
-    dateFinDispo           DateTime?
+    // Disponibilité (étape 7)
+    joursDisponibles Json? // Objet avec les jours: { lundi: true, mardi: false, ... }
+    creneaux         Json? // Array de créneaux: [{ debut: "09:00", fin: "12:00" }]
+    dureeIllimitee   Boolean   @default(true) // Je suis disponible pour une durée illimitée
+    dateDebut        DateTime?
+    dateFin          DateTime?
 
     // Statistiques calculées
     nombreMissionsCompletees Int      @default(0)
@@ -323,7 +328,7 @@ model ProfilRenford {
     // Relations
     typesPostes              RenfordTypePoste[]
     specialisations          RenfordSpecialisation[]
-    diplomes                 RenfordDiplome[]
+    renfordDiplomes          RenfordDiplome[]
     documentsRenford         DocumentRenford[]
     missionsAssignees        MissionRenford[]
     favorisParEtablissements FavoriRenford[]
@@ -345,6 +350,12 @@ enum NiveauExperience {
     debutant // Moins de 2 ans
     confirme // Entre 5 et 10 ans
     expert // Plus de 10 ans
+}
+
+enum TypeMission {
+    volant
+    mission_longue
+    les_deux
 }
 
 enum JourSemaine {

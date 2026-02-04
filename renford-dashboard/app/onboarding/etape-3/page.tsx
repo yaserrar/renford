@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useUpdateProfilEtablissement } from "@/hooks/onboarding";
+import { useUpdateEtablissementProfil } from "@/hooks/onboarding";
 import { useCurrentUser } from "@/hooks/utilisateur";
 import {
   TYPE_ETABLISSEMENT,
@@ -32,7 +32,7 @@ import { OnboardingCard } from "../-components";
 export default function Etape3Page() {
   const router = useRouter();
   const { data: user } = useCurrentUser();
-  const { mutate, isPending } = useUpdateProfilEtablissement();
+  const { mutate, isPending } = useUpdateEtablissementProfil();
   const [showSiegeAddress, setShowSiegeAddress] = useState(
     !!user?.profilEtablissement?.adresseSiege,
   );

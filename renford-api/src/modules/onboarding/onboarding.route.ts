@@ -9,6 +9,12 @@ import {
   skipStep,
   completeOnboarding,
   getOnboardingStatus,
+  updateRenfordIdentite,
+  updateRenfordProfil,
+  updateRenfordQualifications,
+  updateRenfordBancaire,
+  updateRenfordDisponibilites,
+  completeRenfordOnboarding,
 } from './onboarding.controller';
 import {
   updateContactSchema,
@@ -16,6 +22,11 @@ import {
   updateEtablissementSchema,
   updateFavorisSchema,
   skipStepSchema,
+  updateRenfordIdentiteSchema,
+  updateRenfordProfilSchema,
+  updateRenfordQualificationsSchema,
+  updateRenfordBancaireSchema,
+  updateRenfordDisponibilitesSchema,
 } from './onboarding.schema';
 
 const router = Router();
@@ -26,22 +37,75 @@ router.use(authenticateToken());
 // GET /onboarding/status - Obtenir le statut de l'onboarding
 router.get('/status', getOnboardingStatus);
 
+// ============================================================================
+// Routes communes (établissement et renford)
+// ============================================================================
+
 // PUT /onboarding/contact - Étape 1: Informations de contact
 router.put('/contact', validateResource(updateContactSchema), updateContact);
 
 // PUT /onboarding/type - Étape 2: Type d'utilisateur
 router.put('/type', validateResource(updateTypeSchema), updateType);
 
-// PUT /onboarding/etablissement - Étape 3: Profil établissement
-router.put('/etablissement', validateResource(updateEtablissementSchema), updateEtablissement);
+// ============================================================================
+// Routes spécifiques aux établissements
+// ============================================================================
 
-// PUT /onboarding/favoris - Étape 4: Favoris Renfords
-router.put('/favoris', validateResource(updateFavorisSchema), updateFavoris);
+// PUT /onboarding/etablissement/profil - Étape 3: Profil établissement
+router.put(
+  '/etablissement/profil',
+  validateResource(updateEtablissementSchema),
+  updateEtablissement,
+);
 
-// POST /onboarding/skip - Passer une étape
-router.post('/skip', validateResource(skipStepSchema), skipStep);
+// PUT /onboarding/etablissement/favoris - Étape 4: Favoris Renfords
+router.put('/etablissement/favoris', validateResource(updateFavorisSchema), updateFavoris);
 
-// POST /onboarding/complete - Terminer l'onboarding
-router.post('/complete', completeOnboarding);
+// POST /onboarding/etablissement/skip - Passer une étape
+router.post('/etablissement/skip', validateResource(skipStepSchema), skipStep);
+
+// POST /onboarding/etablissement/complete - Terminer l'onboarding
+router.post('/etablissement/complete', completeOnboarding);
+
+// ============================================================================
+// Routes spécifiques aux Renfords (8 étapes)
+// ============================================================================
+
+// PUT /onboarding/renford/identite - Étape 3: Identité légale Renford
+router.put(
+  '/renford/identite',
+  validateResource(updateRenfordIdentiteSchema),
+  updateRenfordIdentite,
+);
+
+// PUT /onboarding/renford/profil - Étape 4: Profil Renford
+router.put('/renford/profil', validateResource(updateRenfordProfilSchema), updateRenfordProfil);
+
+// PUT /onboarding/renford/qualifications - Étape 5: Qualifications Renford
+router.put(
+  '/renford/qualifications',
+  validateResource(updateRenfordQualificationsSchema),
+  updateRenfordQualifications,
+);
+
+// PUT /onboarding/renford/bancaire - Étape 6: Infos bancaires Renford
+router.put(
+  '/renford/bancaire',
+  validateResource(updateRenfordBancaireSchema),
+  updateRenfordBancaire,
+);
+
+// PUT /onboarding/renford/disponibilites - Étape 7: Disponibilités Renford
+router.put(
+  '/renford/disponibilites',
+  validateResource(updateRenfordDisponibilitesSchema),
+  updateRenfordDisponibilites,
+);
+
+// POST /onboarding/renford/skip - Passer une étape
+router.post('/renford/skip', validateResource(skipStepSchema), skipStep);
+
+// POST /onboarding/renford/complete - Terminer l'onboarding Renford (étape 8)
+router.post('/renford/complete', completeRenfordOnboarding);
 
 export default router;

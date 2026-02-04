@@ -21,9 +21,22 @@ const OnboardingProvider = ({ children }: Props) => {
 
     // Si l'utilisateur est en onboarding et n'est pas sur la page d'onboarding
     if (user.statut === "onboarding" && !isOnboardingPage) {
-      // Rediriger vers l'étape appropriée
+      // Rediriger vers l'étape appropriée selon le type d'utilisateur
       const etape = user.etapeOnboarding || 1;
-      router.replace(`/onboarding/etape-${etape}`);
+
+      // Étapes 1 et 2 sont communes
+      if (etape <= 2) {
+        router.replace(`/onboarding/etape-${etape}`);
+      } else {
+        // Étapes spécifiques au type d'utilisateur
+        if (user.typeUtilisateur === "renford") {
+          // Renford: étapes 3-8
+          router.replace(`/onboarding/etape-${etape}-renford`);
+        } else {
+          // Établissement: étapes 3-5
+          router.replace(`/onboarding/etape-${etape}`);
+        }
+      }
       return;
     }
 

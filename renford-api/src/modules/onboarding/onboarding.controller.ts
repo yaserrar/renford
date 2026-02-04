@@ -6,7 +6,60 @@ import type {
   UpdateEtablissementSchema,
   UpdateFavorisSchema,
   SkipStepSchema,
+  UpdateRenfordIdentiteSchema,
+  UpdateRenfordProfilSchema,
+  UpdateRenfordQualificationsSchema,
+  UpdateRenfordBancaireSchema,
+  UpdateRenfordDisponibilitesSchema,
 } from './onboarding.schema';
+
+// GET /onboarding/status - Obtenir le statut de l'onboarding
+export const getOnboardingStatus = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    const utilisateur = await prisma.utilisateur.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        etapeOnboarding: true,
+        typeUtilisateur: true,
+        statut: true,
+        nom: true,
+        prenom: true,
+        telephone: true,
+        profilEtablissement: {
+          select: {
+            raisonSociale: true,
+            siret: true,
+            adresse: true,
+            codePostal: true,
+            ville: true,
+            typeEtablissement: true,
+          },
+        },
+        profilRenford: {
+          select: {
+            titreProfil: true,
+            descriptionProfil: true,
+          },
+        },
+      },
+    });
+
+    if (!utilisateur) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    return res.json(utilisateur);
+  } catch (err) {
+    return next(err);
+  }
+};
 
 // PUT /onboarding/contact - Étape 1: Informations de contact
 export const updateContact = async (
@@ -290,8 +343,16 @@ export const completeOnboarding = async (req: Request, res: Response, next: Next
   }
 };
 
-// GET /onboarding/status - Obtenir le statut de l'onboarding
-export const getOnboardingStatus = async (req: Request, res: Response, next: NextFunction) => {
+// ============================================================================
+// Contrôleurs spécifiques aux Renfords
+// ============================================================================
+
+// PUT /onboarding/renford/identite - Étape 3: Identité légale Renford
+export const updateRenfordIdentite = async (
+  req: Request<unknown, unknown, UpdateRenfordIdentiteSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const userId = req.userId;
 
@@ -299,40 +360,261 @@ export const getOnboardingStatus = async (req: Request, res: Response, next: Nex
       return res.status(401).json({ message: 'Utilisateur non authentifié' });
     }
 
-    const utilisateur = await prisma.utilisateur.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        etapeOnboarding: true,
-        typeUtilisateur: true,
-        statut: true,
-        nom: true,
-        prenom: true,
-        telephone: true,
-        profilEtablissement: {
-          select: {
-            raisonSociale: true,
-            siret: true,
-            adresse: true,
-            codePostal: true,
-            ville: true,
-            typeEtablissement: true,
-          },
-        },
-        profilRenford: {
-          select: {
-            titreProfil: true,
-            descriptionProfil: true,
-          },
-        },
+    const {
+      siret,
+      attestationAutoEntrepreneur,
+      adresse,
+      codePostal,
+      ville,
+      pays,
+      dateNaissance,
+      attestationVigilanceChemin,
+    } = req.body;
+
+    // Mettre à jour le profil Renford
+    const profilRenford = await prisma.profilRenford.upsert({
+      where: { utilisateurId: userId },
+      update: {
+        siret,
+        attestationAutoEntrepreneur,
+        adresse,
+        codePostal,
+        ville,
+        pays,
+        dateNaissance: new Date(dateNaissance),
+        attestationVigilanceChemin,
+      },
+      create: {
+        utilisateurId: userId,
+        siret,
+        attestationAutoEntrepreneur,
+        adresse,
+        codePostal,
+        ville,
+        pays,
+        dateNaissance: new Date(dateNaissance),
+        attestationVigilanceChemin,
       },
     });
 
-    if (!utilisateur) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    // Mettre à jour l'étape d'onboarding
+    await prisma.utilisateur.update({
+      where: { id: userId },
+      data: {
+        etapeOnboarding: 3,
+      },
+    });
+
+    return res.json(profilRenford);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+// PUT /onboarding/renford/profil - Étape 4: Profil Renford
+export const updateRenfordProfil = async (
+  req: Request<unknown, unknown, UpdateRenfordProfilSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
     }
 
-    return res.json(utilisateur);
+    const { photoProfil, titreProfil, descriptionProfil, typeMission, assuranceRCPro } = req.body;
+
+    // Mettre à jour le profil Renford
+    const profilRenford = await prisma.profilRenford.update({
+      where: { utilisateurId: userId },
+      data: {
+        photoProfil,
+        titreProfil,
+        descriptionProfil,
+        typeMission,
+        assuranceRCPro,
+      },
+    });
+
+    // Mettre à jour l'étape d'onboarding
+    await prisma.utilisateur.update({
+      where: { id: userId },
+      data: {
+        etapeOnboarding: 4,
+      },
+    });
+
+    return res.json(profilRenford);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+// PUT /onboarding/renford/qualifications - Étape 5: Qualifications Renford
+export const updateRenfordQualifications = async (
+  req: Request<unknown, unknown, UpdateRenfordQualificationsSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    const {
+      niveauExperience,
+      diplomes,
+      justificatifDiplomeChemin,
+      justificatifCarteProfessionnelleChemin,
+      tarifHoraire,
+      proposeJournee,
+      tarifJournee,
+      proposeDemiJournee,
+      tarifDemiJournee,
+    } = req.body;
+
+    const profilRenford = await prisma.profilRenford.update({
+      where: { utilisateurId: userId },
+      data: {
+        niveauExperience,
+        diplomes,
+        justificatifDiplomeChemin,
+        justificatifCarteProfessionnelleChemin,
+        tarifHoraire,
+        proposeJournee,
+        tarifJournee: proposeJournee ? tarifJournee : null,
+        proposeDemiJournee,
+        tarifDemiJournee: proposeDemiJournee ? tarifDemiJournee : null,
+      },
+    });
+
+    // Mettre à jour l'étape d'onboarding
+    await prisma.utilisateur.update({
+      where: { id: userId },
+      data: {
+        etapeOnboarding: 5,
+      },
+    });
+
+    return res.json(profilRenford);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+// PUT /onboarding/renford/bancaire - Étape 6: Infos bancaires Renford
+export const updateRenfordBancaire = async (
+  req: Request<unknown, unknown, UpdateRenfordBancaireSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    const { iban, carteIdentiteChemin } = req.body;
+
+    const profilRenford = await prisma.profilRenford.update({
+      where: { utilisateurId: userId },
+      data: {
+        iban,
+        carteIdentiteChemin,
+      },
+    });
+
+    // Mettre à jour l'étape d'onboarding
+    await prisma.utilisateur.update({
+      where: { id: userId },
+      data: {
+        etapeOnboarding: 6,
+      },
+    });
+
+    return res.json(profilRenford);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+// PUT /onboarding/renford/disponibilites - Étape 7: Disponibilités Renford
+export const updateRenfordDisponibilites = async (
+  req: Request<unknown, unknown, UpdateRenfordDisponibilitesSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    const { joursDisponibles, creneaux, dureeIllimitee, dateDebut, dateFin, zoneDeplacement } =
+      req.body;
+
+    const profilRenford = await prisma.profilRenford.update({
+      where: { utilisateurId: userId },
+      data: {
+        joursDisponibles: joursDisponibles as any,
+        creneaux: creneaux as any,
+        dureeIllimitee,
+        dateDebut: dateDebut ? new Date(dateDebut) : null,
+        dateFin: dateFin ? new Date(dateFin) : null,
+        zoneDeplacement,
+      },
+    });
+
+    // Mettre à jour l'étape d'onboarding
+    await prisma.utilisateur.update({
+      where: { id: userId },
+      data: {
+        etapeOnboarding: 7,
+      },
+    });
+
+    return res.json(profilRenford);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+// POST /onboarding/renford/complete - Terminer l'onboarding Renford (étape 8)
+export const completeRenfordOnboarding = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    const utilisateur = await prisma.utilisateur.update({
+      where: { id: userId },
+      data: {
+        etapeOnboarding: 8,
+        statut: 'actif',
+      },
+      select: {
+        id: true,
+        etapeOnboarding: true,
+        statut: true,
+      },
+    });
+
+    return res.json({
+      message: 'Onboarding terminé avec succès',
+      utilisateur,
+    });
   } catch (err) {
     return next(err);
   }

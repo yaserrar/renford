@@ -68,7 +68,94 @@ export type UpdateFavorisSchema = z.infer<typeof updateFavorisSchema>;
 
 // Schéma pour passer une étape
 export const skipStepSchema = z.object({
-  etape: z.number().min(1).max(5),
+  etape: z.number().min(1).max(8),
 });
 
 export type SkipStepSchema = z.infer<typeof skipStepSchema>;
+
+// ============================================================================
+// Schémas spécifiques aux Renfords
+// ============================================================================
+
+// Schéma pour l'identité légale Renford (étape 3)
+export const updateRenfordIdentiteSchema = z.object({
+  siret: z.string().length(14, 'Le SIRET doit contenir 14 chiffres'),
+  attestationAutoEntrepreneur: z.boolean(),
+  adresse: z.string().min(5, '5 caractères minimum'),
+  codePostal: z.string().length(5, 'Le code postal doit contenir 5 chiffres'),
+  ville: z.string().min(2, '2 caractères minimum'),
+  pays: z.string().min(2, '2 caractères minimum'),
+  dateNaissance: z.string().or(z.date()),
+  attestationVigilanceChemin: z.string().optional(),
+});
+
+export type UpdateRenfordIdentiteSchema = z.infer<typeof updateRenfordIdentiteSchema>;
+
+// Schéma pour le profil Renford (étape 4)
+export const updateRenfordProfilSchema = z.object({
+  photoProfil: z.string().optional(),
+  titreProfil: z.string().min(5, '5 caractères minimum').max(100, '100 caractères maximum'),
+  descriptionProfil: z
+    .string()
+    .min(50, '50 caractères minimum')
+    .max(1000, '1000 caractères maximum'),
+  typeMission: z.enum(['volant', 'mission_longue', 'les_deux'], {
+    required_error: 'Le type de mission est obligatoire',
+  }),
+  assuranceRCPro: z.boolean(),
+});
+
+export type UpdateRenfordProfilSchema = z.infer<typeof updateRenfordProfilSchema>;
+
+// Schéma pour les qualifications Renford (étape 5)
+export const updateRenfordQualificationsSchema = z.object({
+  niveauExperience: z.enum(['debutant', 'confirme', 'expert'], {
+    required_error: "Le niveau d'expérience est obligatoire",
+  }),
+  diplomes: z.string().optional(),
+  justificatifDiplomeChemin: z.string().optional(),
+  justificatifCarteProfessionnelleChemin: z.string().optional(),
+  tarifHoraire: z.number().min(10).max(500),
+  proposeJournee: z.boolean().default(false),
+  tarifJournee: z.number().min(100).max(5000).optional(),
+  proposeDemiJournee: z.boolean().default(false),
+  tarifDemiJournee: z.number().min(50).max(2000).optional(),
+});
+
+export type UpdateRenfordQualificationsSchema = z.infer<typeof updateRenfordQualificationsSchema>;
+
+// Schéma pour les infos bancaires Renford (étape 6)
+export const updateRenfordBancaireSchema = z.object({
+  iban: z.string().min(14, 'IBAN invalide').max(34, 'IBAN invalide'),
+  carteIdentiteChemin: z.string().min(1, "La carte d'identité est obligatoire"),
+});
+
+export type UpdateRenfordBancaireSchema = z.infer<typeof updateRenfordBancaireSchema>;
+
+// Types pour les disponibilités
+const joursSchema = z.object({
+  lundi: z.boolean(),
+  mardi: z.boolean(),
+  mercredi: z.boolean(),
+  jeudi: z.boolean(),
+  vendredi: z.boolean(),
+  samedi: z.boolean(),
+  dimanche: z.boolean(),
+});
+
+const creneauSchema = z.object({
+  debut: z.string(),
+  fin: z.string(),
+});
+
+// Schéma pour les disponibilités Renford (étape 7)
+export const updateRenfordDisponibilitesSchema = z.object({
+  joursDisponibles: joursSchema,
+  creneaux: z.array(creneauSchema).optional(),
+  dureeIllimitee: z.boolean().default(false),
+  dateDebut: z.string().or(z.date()).optional(),
+  dateFin: z.string().or(z.date()).optional(),
+  zoneDeplacement: z.number().min(1).max(200),
+});
+
+export type UpdateRenfordDisponibilitesSchema = z.infer<typeof updateRenfordDisponibilitesSchema>;
