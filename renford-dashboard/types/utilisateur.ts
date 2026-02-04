@@ -1,13 +1,12 @@
+import { STATUT_COMPTE, TYPE_UTILISATEUR } from "@/validations/utilisateur";
+import { ProfilEtablissement } from "./etablissement";
+import { ProfilRenford } from "./profil-renford";
+
 // Type d'utilisateur
-export type TypeUtilisateur = "etablissement" | "renford" | "administrateur";
+export type TypeUtilisateur = (typeof TYPE_UTILISATEUR)[number];
 
 // Statut du compte
-export type StatutCompte =
-  | "actif"
-  | "suspendu"
-  | "banni"
-  | "en_attente_verification"
-  | "desactive";
+export type StatutCompte = (typeof STATUT_COMPTE)[number];
 
 // Utilisateur courant (retourné par /utilisateur/me)
 export type CurrentUser = {
@@ -18,43 +17,14 @@ export type CurrentUser = {
   telephone: string | null;
   avatarChemin: string | null;
   typeUtilisateur: TypeUtilisateur;
-  statutCompte: StatutCompte;
+  statut: StatutCompte;
+  etapeOnboarding: number;
   emailVerifie: boolean;
   dateCreation: Date;
   derniereConnexion: Date | null;
   // Relations selon le type d'utilisateur
   profilEtablissement: ProfilEtablissement | null;
   profilRenford: ProfilRenford | null;
-};
-
-// Profil établissement
-export type ProfilEtablissement = {
-  id: string;
-  raisonSociale: string;
-  siret: string;
-  adresse: string;
-  codePostal: string;
-  ville: string;
-  typeEtablissement: string | null;
-  emailPrincipal: string | null;
-  telephonePrincipal: string | null;
-  nomContactPrincipal: string | null;
-};
-
-// Profil Renford (Freelancer)
-export type ProfilRenford = {
-  id: string;
-  titreProfil: string | null;
-  descriptionProfil: string | null;
-  photoProfilChemin: string | null;
-  siret: string | null;
-  siretEnCoursObtention: boolean;
-  attestationStatut: boolean;
-  adresse: string | null;
-  codePostal: string | null;
-  ville: string | null;
-  niveauExperience: string | null;
-  statutCertification: string;
 };
 
 // Types simplifiés pour les relations

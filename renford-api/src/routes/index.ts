@@ -9,6 +9,7 @@ import etablissementsRouter from '../modules/etablissements/etablissement.route'
 import coordinateursRouter from '../modules/coordinateurs/coordinateur.route';
 import elevesRouter from '../modules/eleves/eleve.route';
 import accueilRouter from '../modules/accueil/accueil.route';
+import onboardingRouter from '../modules/onboarding/onboarding.route';
 
 const router = Router();
 
@@ -23,6 +24,7 @@ router.use('/etablissements', etablissementsRouter);
 router.use('/coordinateurs', coordinateursRouter);
 router.use('/eleves', elevesRouter);
 router.use('/accueil', accueilRouter);
+router.use('/onboarding', onboardingRouter);
 //----------------------------------------------------------
 
 export default router;

@@ -22,7 +22,7 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
         telephone: true,
         avatarChemin: true,
         typeUtilisateur: true,
-        statutCompte: true,
+        statut: true,
         emailVerifie: true,
         dateCreation: true,
         derniereConnexion: true,

@@ -16,7 +16,7 @@ declare module 'express-serve-static-core' {
         typeUtilisateur: TypeUtilisateur;
         nom: string;
         prenom: string;
-        statutCompte: StatutCompte;
+        statut: StatutCompte;
         emailVerifie: boolean;
       };
     }
@@ -54,7 +54,7 @@ export const authenticateToken = (allowedTypes?: TypeUtilisateur[]) => {
           typeUtilisateur: true,
           nom: true,
           prenom: true,
-          statutCompte: true,
+          statut: true,
           emailVerifie: true,
         },
       });
@@ -66,21 +66,9 @@ export const authenticateToken = (allowedTypes?: TypeUtilisateur[]) => {
       }
 
       // Vérifier le statut du compte
-      if (utilisateur.statutCompte === 'suspendu') {
+      if (utilisateur.statut === 'suspendu') {
         return res.status(403).json({
           message: 'Votre compte est suspendu. Veuillez contacter le support.',
-        });
-      }
-
-      if (utilisateur.statutCompte === 'banni') {
-        return res.status(403).json({
-          message: 'Votre compte a été banni.',
-        });
-      }
-
-      if (utilisateur.statutCompte === 'desactive') {
-        return res.status(403).json({
-          message: 'Votre compte est désactivé. Veuillez contacter le support pour le réactiver.',
         });
       }
 
@@ -101,7 +89,7 @@ export const authenticateToken = (allowedTypes?: TypeUtilisateur[]) => {
         typeUtilisateur: utilisateur.typeUtilisateur,
         nom: utilisateur.nom,
         prenom: utilisateur.prenom,
-        statutCompte: utilisateur.statutCompte,
+        statut: utilisateur.statut,
         emailVerifie: utilisateur.emailVerifie,
       };
       next();
@@ -149,7 +137,7 @@ export const requireActiveAccount = () => {
       });
     }
 
-    if (req.utilisateur.statutCompte !== 'actif') {
+    if (req.utilisateur.statut !== 'actif') {
       return res.status(403).json({
         message: 'Votre compte doit être actif pour effectuer cette action.',
       });

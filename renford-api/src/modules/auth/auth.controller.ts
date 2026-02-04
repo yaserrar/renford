@@ -78,7 +78,7 @@ export const signupEtablissement = async (
         nom,
         prenom,
         telephone,
-        statutCompte: 'en_attente_verification',
+        statut: 'en_attente_verification',
         codeVerificationEmail: verificationCode,
         dateCreationCodeVerif: new Date(),
         profilEtablissement: {
@@ -220,7 +220,7 @@ export const signupRenford = async (
         nom,
         prenom,
         telephone,
-        statutCompte: 'en_attente_verification',
+        statut: 'en_attente_verification',
         codeVerificationEmail: verificationCode,
         dateCreationCodeVerif: new Date(),
         profilRenford: {
@@ -343,7 +343,7 @@ export const signupAdmin = async (
         nom,
         prenom,
         telephone,
-        statutCompte: 'actif',
+        statut: 'actif',
         emailVerifie: true,
         emailVerifieA: new Date(),
       },
@@ -400,21 +400,9 @@ export const login = async (
     }
 
     // Vérifier le statut du compte
-    if (utilisateur.statutCompte === 'suspendu') {
+    if (utilisateur.statut === 'suspendu') {
       return res.status(403).json({
         message: 'Votre compte est suspendu. Veuillez contacter le support.',
-      });
-    }
-
-    if (utilisateur.statutCompte === 'banni') {
-      return res.status(403).json({
-        message: 'Votre compte a été banni.',
-      });
-    }
-
-    if (utilisateur.statutCompte === 'desactive') {
-      return res.status(403).json({
-        message: 'Votre compte est désactivé. Veuillez contacter le support pour le réactiver.',
       });
     }
 
@@ -438,7 +426,7 @@ export const login = async (
         nom: utilisateur.nom,
         prenom: utilisateur.prenom,
         typeUtilisateur: utilisateur.typeUtilisateur,
-        statutCompte: utilisateur.statutCompte,
+        statut: utilisateur.statut,
         emailVerifie: utilisateur.emailVerifie,
       },
     };
@@ -504,7 +492,7 @@ export const verifyEmail = async (
         emailVerifieA: new Date(),
         codeVerificationEmail: null,
         dateCreationCodeVerif: null,
-        statutCompte: 'actif',
+        statut: 'actif',
       },
     });
 

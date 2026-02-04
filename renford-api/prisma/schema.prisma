@@ -28,7 +28,10 @@ model Utilisateur {
     avatarChemin String?
 
     // Statut du compte
-    statutCompte StatutCompte @default(en_attente_verification)
+    statut StatutCompte @default(en_attente_verification)
+
+    // Onboarding
+    etapeOnboarding Int @default(0) // 0 = pas commencé, 1-5 = étapes
 
     // Authentification
     emailVerifie  Boolean   @default(false)
@@ -64,7 +67,7 @@ model Utilisateur {
 
     @@index([email])
     @@index([typeUtilisateur])
-    @@index([statutCompte])
+    @@index([statut])
     @@map("utilisateurs")
 }
 
@@ -78,9 +81,8 @@ enum TypeUtilisateur {
 enum StatutCompte {
     actif
     suspendu
-    banni
     en_attente_verification
-    desactive
+    onboarding
 }
 
 // ============================================================================
