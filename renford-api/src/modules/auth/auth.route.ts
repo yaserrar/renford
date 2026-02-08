@@ -1,9 +1,7 @@
 import { Router } from 'express';
 import {
   login,
-  signupEtablissement,
-  signupRenford,
-  signupAdmin,
+  signup,
   verifyEmail,
   resendVerification,
   sendPasswordResetCode,
@@ -14,9 +12,7 @@ import { validateResource } from '../../middleware/validate.resource';
 import { authenticateToken } from '../../middleware/auth.middleware';
 import {
   loginSchema,
-  signupEtablissementSchema,
-  signupRenfordSchema,
-  signupAdminSchema,
+  signupSchema,
   verifyEmailSchema,
   resendVerificationSchema,
   passwordResetSendCodeSchema,
@@ -30,23 +26,8 @@ const router = Router();
 // Inscription (signup)
 // ============================================================================
 
-// Inscription établissement (public)
-router.post(
-  '/auth/signup/etablissement',
-  validateResource(signupEtablissementSchema),
-  signupEtablissement,
-);
-
-// Inscription Renford/Freelancer (public)
-router.post('/auth/signup/renford', validateResource(signupRenfordSchema), signupRenford);
-
-// Inscription administrateur (réservé aux admins connectés)
-router.post(
-  '/auth/signup/admin',
-  authenticateToken(['administrateur']),
-  validateResource(signupAdminSchema),
-  signupAdmin,
-);
+// Inscription simple - le type utilisateur sera défini dans l'onboarding
+router.post('/auth/signup', validateResource(signupSchema), signup);
 
 // ============================================================================
 // Connexion

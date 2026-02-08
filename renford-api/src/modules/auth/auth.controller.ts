@@ -4,14 +4,12 @@ import jwt from 'jsonwebtoken';
 import prisma from '../../config/prisma';
 import {
   LoginSchema,
+  SignupSchema,
   VerifyEmailSchema,
   ResendVerificationSchema,
   PasswordResetSendCodeSchema,
   PasswordResetValidateCodeSchema,
   PasswordResetUpdatePasswordSchema,
-  SignupEtablissementSchema,
-  SignupRenfordSchema,
-  SignupAdminSchema,
 } from './auth.schema';
 import { env } from '../../config/env';
 import { JWT_EXPIRES_IN, EMAIL_CODE_TTL } from '../../config/consts';
@@ -19,344 +17,81 @@ import { mail } from '../../config/mail';
 import { logger } from '../../config/logger';
 
 // ============================================================================
-// POST /auth/signup/etablissement - Inscription établissement
+// POST /auth/signup - Inscription simple (sans type utilisateur)
 // ============================================================================
-export const signupEtablissement = async (
-  req: Request<unknown, unknown, SignupEtablissementSchema>,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const {
-      email,
-      password,
-      nom,
-      prenom,
-      telephone,
-      // Informations légales (obligatoires)
-      raisonSociale,
-      siret,
-      // Adresse (obligatoire)
-      adresse,
-      codePostal,
-      ville,
-      // Type d'établissement (optionnel)
-      typeEtablissement,
-      // Adresse du siège (optionnel)
-      adresseSiege,
-      codePostalSiege,
-      villeSiege,
-      // Contact (optionnel)
-      emailPrincipal,
-      telephonePrincipal,
-      nomContactPrincipal,
-    } = req.body;
-
-    // Vérifier si l'email existe déjà
-    const existingUser = await prisma.utilisateur.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      return res.status(400).json({
-        message: 'Un compte avec cet email existe déjà',
-      });
-    }
-
-    // Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Générer le code de vérification
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Créer l'utilisateur et le profil établissement
-    const utilisateur = await prisma.utilisateur.create({
-      data: {
-        email,
-        motDePasse: hashedPassword,
-        typeUtilisateur: 'etablissement',
-        nom,
-        prenom,
-        telephone,
-        statut: 'en_attente_verification',
-        codeVerificationEmail: verificationCode,
-        dateCreationCodeVerif: new Date(),
-        profilEtablissement: {
-          create: {
-            // Informations légales (obligatoires)
-            raisonSociale,
-            siret,
-            // Adresse (obligatoire)
-            adresse,
-            codePostal,
-            ville,
-            // Type d'établissement (optionnel)
-            typeEtablissement,
-            // Adresse du siège (optionnel)
-            adresseSiege,
-            codePostalSiege,
-            villeSiege,
-            // Contact (optionnel)
-            emailPrincipal: emailPrincipal || email,
-            telephonePrincipal: telephonePrincipal || telephone,
-            nomContactPrincipal: nomContactPrincipal || `${prenom} ${nom}`,
-          },
-        },
-      },
-      include: {
-        profilEtablissement: true,
-      },
-    });
-
-    // Envoyer l'email de vérification
-    const mailOptions = {
-      from: env.EMAIL_HOST_USER,
-      to: email,
-      subject: 'RENFORD: Vérification de votre compte établissement',
-      html: `
-        <h3>Bienvenue sur RENFORD !</h3>
-        <p>Votre code de vérification est: <strong>${verificationCode}</strong></p>
-        <p>Ce code expire dans 15 minutes.</p>
-      `,
-    };
-
-    try {
-      await mail.sendMail(mailOptions);
-    } catch (e) {
-      logger.error(e, 'Échec envoi email de vérification établissement');
-    }
-
-    // Générer le token JWT
-    const token = jwt.sign({ userId: utilisateur.id, email: utilisateur.email }, env.JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN,
-    });
-
-    return res.status(201).json({
-      message: 'Compte établissement créé avec succès. Veuillez vérifier votre email.',
-      token,
-      utilisateur: {
-        id: utilisateur.id,
-        email: utilisateur.email,
-        nom: utilisateur.nom,
-        prenom: utilisateur.prenom,
-        typeUtilisateur: utilisateur.typeUtilisateur,
-        profilEtablissement: utilisateur.profilEtablissement,
-      },
-    });
-  } catch (err) {
-    return next(err);
-  }
-};
-
-// ============================================================================
-// POST /auth/signup/renford - Inscription Renford (Freelancer)
-// ============================================================================
-export const signupRenford = async (
-  req: Request<unknown, unknown, SignupRenfordSchema>,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const {
-      email,
-      password,
-      nom,
-      prenom,
-      telephone,
-      // Profil public
-      titreProfil,
-      descriptionProfil,
-      // Informations légales
-      siret,
-      siretEnCoursObtention,
-      attestationStatut,
-      // Informations personnelles
-      dateNaissance,
-      // Localisation
-      adresse,
-      codePostal,
-      ville,
-      pays,
-      // Zone de déplacement
-      zoneDeplacement,
-      // Niveau d'expérience
-      niveauExperience,
-      // Tarification
-      tarifHoraire,
-      tarifJournee,
-      tarifDemiJournee,
-      // Informations bancaires
-      iban,
-      // Disponibilité
-      joursDisponibles,
-      disponibiliteIllimitee,
-      dateDebutDispo,
-      dateFinDispo,
-    } = req.body;
-
-    // Vérifier si l'email existe déjà
-    const existingUser = await prisma.utilisateur.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      return res.status(400).json({
-        message: 'Un compte avec cet email existe déjà',
-      });
-    }
-
-    // Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Générer le code de vérification
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Créer l'utilisateur et le profil renford
-    const utilisateur = await prisma.utilisateur.create({
-      data: {
-        email,
-        motDePasse: hashedPassword,
-        typeUtilisateur: 'renford',
-        nom,
-        prenom,
-        telephone,
-        statut: 'en_attente_verification',
-        codeVerificationEmail: verificationCode,
-        dateCreationCodeVerif: new Date(),
-        profilRenford: {
-          create: {
-            // Profil public
-            titreProfil,
-            descriptionProfil,
-            // Informations légales
-            siret,
-            siretEnCoursObtention,
-            attestationStatut,
-            // Informations personnelles
-            dateNaissance,
-            // Localisation
-            adresse,
-            codePostal,
-            ville,
-            pays,
-            // Zone de déplacement
-            zoneDeplacement,
-            // Niveau d'expérience
-            niveauExperience,
-            // Tarification
-            tarifHoraire,
-            tarifJournee,
-            tarifDemiJournee,
-            // Informations bancaires
-            iban,
-            // Disponibilité
-            joursDisponibles,
-            disponibiliteIllimitee,
-            dateDebutDispo,
-            dateFinDispo,
-          },
-        },
-      },
-      include: {
-        profilRenford: true,
-      },
-    });
-
-    // Envoyer l'email de vérification
-    const mailOptions = {
-      from: env.EMAIL_HOST_USER,
-      to: email,
-      subject: 'RENFORD: Vérification de votre compte Renford',
-      html: `
-        <h3>Bienvenue sur RENFORD !</h3>
-        <p>Votre code de vérification est: <strong>${verificationCode}</strong></p>
-        <p>Ce code expire dans 15 minutes.</p>
-      `,
-    };
-
-    try {
-      await mail.sendMail(mailOptions);
-    } catch (e) {
-      logger.error(e, 'Échec envoi email de vérification renford');
-    }
-
-    // Générer le token JWT
-    const token = jwt.sign({ userId: utilisateur.id, email: utilisateur.email }, env.JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN,
-    });
-
-    return res.status(201).json({
-      message: 'Compte Renford créé avec succès. Veuillez vérifier votre email.',
-      token,
-      utilisateur: {
-        id: utilisateur.id,
-        email: utilisateur.email,
-        nom: utilisateur.nom,
-        prenom: utilisateur.prenom,
-        typeUtilisateur: utilisateur.typeUtilisateur,
-        profilRenford: utilisateur.profilRenford,
-      },
-    });
-  } catch (err) {
-    return next(err);
-  }
-};
-
-// ============================================================================
-// POST /auth/signup/admin - Inscription administrateur (réservé aux admins)
-// ============================================================================
-export const signupAdmin = async (
-  req: Request<unknown, unknown, SignupAdminSchema>,
+export const signup = async (
+  req: Request<unknown, unknown, SignupSchema>,
   res: Response,
   next: NextFunction,
 ) => {
   try {
     const { email, password, nom, prenom, telephone } = req.body;
 
-    // Vérifier que l'utilisateur connecté est un administrateur
-    if (req.utilisateur?.typeUtilisateur !== 'administrateur') {
-      return res.status(403).json({
-        message: 'Seul un administrateur peut créer un autre administrateur',
-      });
-    }
-
     // Vérifier si l'email existe déjà
     const existingUser = await prisma.utilisateur.findUnique({
       where: { email },
     });
 
     if (existingUser) {
-      return res.status(400).json({
-        message: 'Un compte avec cet email existe déjà',
+      return res.status(409).json({
+        message: 'Cette adresse email est déjà utilisée',
       });
     }
 
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Créer l'utilisateur administrateur (pas besoin de vérification email)
+    // Générer le code de vérification
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Créer l'utilisateur (sans type pour l'instant)
     const utilisateur = await prisma.utilisateur.create({
       data: {
         email,
         motDePasse: hashedPassword,
-        typeUtilisateur: 'administrateur',
+        typeUtilisateur: 'renford', // Valeur temporaire (sera modifiée à l'étape 2)
         nom,
         prenom,
         telephone,
-        statut: 'actif',
-        emailVerifie: true,
-        emailVerifieA: new Date(),
+        statut: 'en_attente_verification',
+        codeVerificationEmail: verificationCode,
+        dateCreationCodeVerif: new Date(),
       },
     });
 
+    // Envoyer l'email de vérification
+    const mailOptions = {
+      from: env.EMAIL_HOST_USER,
+      to: email,
+      subject: 'RENFORD: Vérification de votre compte',
+      html: `
+        <h3>Bienvenue sur RENFORD !</h3>
+        <p>Votre code de vérification est: <strong>${verificationCode}</strong></p>
+        <p>Ce code expire dans 15 minutes.</p>
+      `,
+    };
+
+    try {
+      await mail.sendMail(mailOptions);
+    } catch (e) {
+      console.error('Erreur envoi email:', e);
+    }
+
+    // Générer le token JWT
+    const token = jwt.sign({ userId: utilisateur.id, email: utilisateur.email }, env.JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
+
     return res.status(201).json({
-      message: 'Compte administrateur créé avec succès.',
+      message: 'Compte créé avec succès. Veuillez vérifier votre email.',
+      token,
       utilisateur: {
         id: utilisateur.id,
         email: utilisateur.email,
         nom: utilisateur.nom,
         prenom: utilisateur.prenom,
-        typeUtilisateur: utilisateur.typeUtilisateur,
+        statut: utilisateur.statut,
+        emailVerifie: utilisateur.emailVerifie,
       },
     });
   } catch (err) {

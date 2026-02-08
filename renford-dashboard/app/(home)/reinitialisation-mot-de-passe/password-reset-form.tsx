@@ -44,7 +44,6 @@ const PasswordResetForm = () => {
       email: "",
       code: "",
       password: "",
-      confirmPassword: "",
     },
   });
 
@@ -64,7 +63,6 @@ const PasswordResetForm = () => {
           email: data.email,
           code: data.code,
           password: "",
-          confirmPassword: "",
         });
         setStep(3);
       },
@@ -176,18 +174,6 @@ const PasswordResetForm = () => {
             />
             <ErrorMessage>
               {step3Form.formState.errors.password?.message}
-            </ErrorMessage>
-          </div>
-
-          <div>
-            <Label htmlFor="confirmPassword">Confirmer le mot de passe*</Label>
-            <InputPassword
-              id="confirmPassword"
-              placeholder="••••••••"
-              {...step3Form.register("confirmPassword")}
-            />
-            <ErrorMessage>
-              {step3Form.formState.errors.confirmPassword?.message}
             </ErrorMessage>
           </div>
 

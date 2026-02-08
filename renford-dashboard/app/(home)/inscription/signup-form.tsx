@@ -79,14 +79,11 @@ const SignupForm = () => {
             className="text-sm text-gray-600 leading-tight cursor-pointer"
           >
             En cochant cette case, je déclare avoir lu et accepter les{" "}
-            <Link href="/conditions" className="text-secondary hover:underline">
+            <Link href="/conditions" className="underline">
               Conditions Générales de Vente
             </Link>{" "}
             et la{" "}
-            <Link
-              href="/confidentialite"
-              className="text-secondary hover:underline"
-            >
+            <Link href="/confidentialite" className="underline">
               politique de confidentialité
             </Link>
             .

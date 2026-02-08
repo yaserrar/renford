@@ -1,25 +1,25 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ErrorMessage from "@/components/ui/error-message";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  updateProfileSchema,
-  UpdateProfileSchema,
-  changePasswordSchema,
-  ChangePasswordSchema,
-} from "@/validations/utilisateur";
-import {
+  useChangePassword,
   useCurrentUser,
   useUpdateProfile,
-  useChangePassword,
 } from "@/hooks/utilisateur";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import ErrorMessage from "@/components/ui/error-message";
-import { Label } from "@/components/ui/label";
-import { useEffect } from "react";
+import {
+  changePasswordSchema,
+  ChangePasswordSchema,
+  updateProfileSchema,
+  UpdateProfileSchema,
+} from "@/validations/utilisateur";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 
 export default function ProfilePage() {
   const { data: me, isLoading } = useCurrentUser();
@@ -113,10 +113,6 @@ export default function ProfilePage() {
                 <ErrorMessage>
                   {profileForm.formState.errors.telephone?.message}
                 </ErrorMessage>
-              </div>
-              <div>
-                <Label>Rôle</Label>
-                <Input disabled value={me?.role || ""} className="bg-gray-50" />
               </div>
               <div>
                 <Label>Email</Label>
