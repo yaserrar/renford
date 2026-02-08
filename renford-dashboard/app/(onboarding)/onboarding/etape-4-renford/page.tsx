@@ -15,15 +15,17 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateRenfordProfil } from "@/hooks/onboarding";
 import { useCurrentUser } from "@/hooks/utilisateur";
-import { useUploadFile } from "@/hooks/uploads";
 import {
   onboardingRenfordProfilSchema,
   OnboardingRenfordProfilSchema,
+} from "@/validations/onboarding";
+import {
   TYPE_MISSION,
   TYPE_MISSION_LABELS,
-} from "@/validations/onboarding";
+} from "@/validations/profil-renford";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileText, Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
+import ImageUploadDialog from "@/components/common/image-upload-dialog";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -33,7 +35,7 @@ export default function Etape4RenfordPage() {
   const router = useRouter();
   const { data: user } = useCurrentUser();
   const { mutate, isPending } = useUpdateRenfordProfil();
-  const { mutateAsync: uploadFile, isPending: isUploading } = useUploadFile();
+  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
   const [photoProfil, setPhotoProfil] = useState<string | null>(
     user?.profilRenford?.photoProfil || null
   );
@@ -55,17 +57,9 @@ export default function Etape4RenfordPage() {
     },
   });
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const result = await uploadFile({ file, path: "profils/photos" });
-      setPhotoProfil(result.path);
-      setValue("photoProfil", result.path, { shouldDirty: true });
-    } catch (error) {
-      console.error("Erreur lors de l'upload:", error);
-    }
+  const handlePhotoUploaded = (path: string) => {
+    setPhotoProfil(path);
+    setValue("photoProfil", path, { shouldDirty: true });
   };
 
   const removePhoto = () => {
@@ -118,31 +112,33 @@ export default function Etape4RenfordPage() {
               </Button>
             </div>
           ) : (
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                {isUploading ? (
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                ) : (
-                  <>
-                    <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-500">
-                      Cliquez pour télécharger
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      JPG ou PNG (max 5 Mo)
-                    </p>
-                  </>
-                )}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-32 border-2 border-dashed"
+              onClick={() => setPhotoDialogOpen(true)}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <Upload className="h-8 w-8 text-gray-400" />
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">
+                    Cliquez pour télécharger
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    JPG ou PNG (max 5 Mo)
+                  </p>
+                </div>
               </div>
-              <input
-                type="file"
-                className="hidden"
-                accept=".jpg,.jpeg,.png"
-                onChange={handleFileUpload}
-                disabled={isUploading}
-              />
-            </label>
+            </Button>
           )}
+
+          <ImageUploadDialog
+            open={photoDialogOpen}
+            setOpen={setPhotoDialogOpen}
+            setImageValue={handlePhotoUploaded}
+            path="profils/photos"
+            aspect={1}
+          />
         </div>
 
         <div>
@@ -220,11 +216,7 @@ export default function Etape4RenfordPage() {
           >
             Retour
           </Button>
-          <Button
-            type="submit"
-            className="flex-1"
-            disabled={isPending || !isDirty}
-          >
+          <Button type="submit" className="flex-1" disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}
             Continuer
           </Button>

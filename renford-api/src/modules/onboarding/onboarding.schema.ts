@@ -51,19 +51,63 @@ export const TYPE_ETABLISSEMENT = [
 ] as const;
 
 // Schéma pour la mise à jour du profil établissement (étape 3)
-export const updateEtablissementSchema = z.object({
-  raisonSociale: z.string().min(2, '2 caractères minimum'),
-  siret: z.string().length(14, 'Le SIRET doit contenir 14 chiffres'),
-  adresse: z.string().min(5, '5 caractères minimum'),
-  codePostal: z.string().length(5, 'Le code postal doit contenir 5 chiffres'),
-  ville: z.string().min(2, '2 caractères minimum'),
-  typeEtablissement: z.enum(TYPE_ETABLISSEMENT, {
-    required_error: "Le type d'établissement est obligatoire",
-  }),
-  adresseSiege: z.string().optional(),
-  codePostalSiege: z.string().optional(),
-  villeSiege: z.string().optional(),
-});
+export const updateEtablissementSchema = z
+  .object({
+    raisonSociale: z.string().min(2, '2 caractères minimum').max(100, '100 caractères maximum'),
+    siret: z
+      .string()
+      .length(14, 'Le SIRET doit contenir 14 chiffres')
+      .regex(/^\d{14}$/, 'Le SIRET ne doit contenir que des chiffres'),
+    adresse: z.string().min(5, '5 caractères minimum').max(200, '200 caractères maximum'),
+    codePostal: z
+      .string()
+      .length(5, 'Le code postal doit contenir 5 chiffres')
+      .regex(/^\d{5}$/, 'Le code postal ne doit contenir que des chiffres'),
+    ville: z.string().min(2, '2 caractères minimum').max(100, '100 caractères maximum'),
+    typeEtablissement: z.enum(TYPE_ETABLISSEMENT, {
+      required_error: "Le type d'établissement est obligatoire",
+    }),
+    adresseSiegeDifferente: z.boolean(),
+    adresseSiege: z.string().optional(),
+    codePostalSiege: z.string().optional(),
+    villeSiege: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.adresseSiegeDifferente) {
+        return !!data.adresseSiege && data.adresseSiege.length >= 5;
+      }
+      return true;
+    },
+    {
+      message: "L'adresse du siège est obligatoire (5 caractères minimum)",
+      path: ['adresseSiege'],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.adresseSiegeDifferente) {
+        return !!data.codePostalSiege && /^\d{5}$/.test(data.codePostalSiege);
+      }
+      return true;
+    },
+    {
+      message: 'Le code postal du siège est obligatoire (5 chiffres)',
+      path: ['codePostalSiege'],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.adresseSiegeDifferente) {
+        return !!data.villeSiege && data.villeSiege.length >= 2;
+      }
+      return true;
+    },
+    {
+      message: 'La ville du siège est obligatoire (2 caractères minimum)',
+      path: ['villeSiege'],
+    },
+  );
 
 export type UpdateEtablissementSchema = z.infer<typeof updateEtablissementSchema>;
 
@@ -116,7 +160,7 @@ export const updateRenfordProfilSchema = z.object({
   titreProfil: z.string().min(5, '5 caractères minimum').max(100, '100 caractères maximum'),
   descriptionProfil: z
     .string()
-    .min(50, '50 caractères minimum')
+    .min(20, '20 caractères minimum')
     .max(1000, '1000 caractères maximum'),
   typeMission: z.enum(TYPE_MISSION, {
     required_error: 'Le type de mission est obligatoire',
@@ -173,10 +217,13 @@ const creneauSchema = z.object({
 export const updateRenfordDisponibilitesSchema = z.object({
   joursDisponibles: joursSchema,
   creneaux: z.array(creneauSchema).optional(),
-  dureeIllimitee: z.boolean().default(false),
+  dureeIllimitee: z.boolean().default(true),
   dateDebut: z.string().or(z.date()).optional(),
   dateFin: z.string().or(z.date()).optional(),
-  zoneDeplacement: z.number().min(1).max(200),
+  zoneDeplacement: z
+    .number()
+    .min(1, "La zone de déplacement doit être d'au moins 1 km")
+    .max(200, 'La zone de déplacement ne peut pas dépasser 200 km'),
 });
 
 export type UpdateRenfordDisponibilitesSchema = z.infer<typeof updateRenfordDisponibilitesSchema>;

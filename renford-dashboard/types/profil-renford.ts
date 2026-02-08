@@ -3,8 +3,8 @@ import {
   NIVEAU_EXPERIENCE,
   STATUT_CERTIFICATION,
   TYPE_POSTE,
+  TypeMission,
 } from "@/validations/profil-renford";
-import { TypeMission } from "@/validations/onboarding";
 
 // Statut de certification
 export type StatutCertification = (typeof STATUT_CERTIFICATION)[number];

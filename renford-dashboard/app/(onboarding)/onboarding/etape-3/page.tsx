@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import ErrorMessage from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +16,7 @@ import { useCurrentUser } from "@/hooks/utilisateur";
 import {
   TYPE_ETABLISSEMENT,
   TYPE_ETABLISSEMENT_LABELS,
-} from "@/validations/etablissement";
+} from "@/validations/profil-etablissement";
 import {
   onboardingEtablissementSchema,
   OnboardingEtablissementSchema,
@@ -25,7 +24,6 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { OnboardingCard } from "../-components";
 
@@ -33,14 +31,13 @@ export default function Etape3Page() {
   const router = useRouter();
   const { data: user } = useCurrentUser();
   const { mutate, isPending } = useUpdateEtablissementProfil();
-  const [showSiegeAddress, setShowSiegeAddress] = useState(
-    !!user?.profilEtablissement?.adresseSiege
-  );
 
   const {
     register,
     handleSubmit,
     control,
+    watch,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<OnboardingEtablissementSchema>({
     resolver: zodResolver(onboardingEtablissementSchema),
@@ -52,12 +49,25 @@ export default function Etape3Page() {
       ville: user?.profilEtablissement?.ville || "",
       typeEtablissement:
         user?.profilEtablissement?.typeEtablissement || undefined,
-      adresseSiegeDifferente: !!user?.profilEtablissement?.adresseSiege,
+      adresseSiegeDifferente:
+        user?.profilEtablissement?.adresseSiegeDifferente ?? false,
       adresseSiege: user?.profilEtablissement?.adresseSiege || "",
       codePostalSiege: user?.profilEtablissement?.codePostalSiege || "",
       villeSiege: user?.profilEtablissement?.villeSiege || "",
     },
   });
+
+  const adresseSiegeDifferente = watch("adresseSiegeDifferente");
+
+  const handleToggleSiege = () => {
+    const newValue = !adresseSiegeDifferente;
+    setValue("adresseSiegeDifferente", newValue, { shouldDirty: true });
+    if (!newValue) {
+      setValue("adresseSiege", "", { shouldDirty: true });
+      setValue("codePostalSiege", "", { shouldDirty: true });
+      setValue("villeSiege", "", { shouldDirty: true });
+    }
+  };
 
   const onSubmit = (data: OnboardingEtablissementSchema) => {
     mutate(data, {
@@ -121,40 +131,43 @@ export default function Etape3Page() {
 
         <button
           type="button"
-          onClick={() => setShowSiegeAddress(!showSiegeAddress)}
+          onClick={handleToggleSiege}
           className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
         >
           <Plus size={16} />
           Ajouter l&apos;adresse du siège social si différente
         </button>
 
-        {showSiegeAddress && (
+        {adresseSiegeDifferente && (
           <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
             <div>
-              <Label htmlFor="adresseSiege">Adresse du siège</Label>
+              <Label htmlFor="adresseSiege">Adresse du siège*</Label>
               <Input
                 id="adresseSiege"
                 placeholder="Adresse du siège social"
                 {...register("adresseSiege")}
               />
+              <ErrorMessage>{errors.adresseSiege?.message}</ErrorMessage>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="codePostalSiege">Code postal</Label>
+                <Label htmlFor="codePostalSiege">Code postal*</Label>
                 <Input
                   id="codePostalSiege"
                   placeholder="75001"
                   maxLength={5}
                   {...register("codePostalSiege")}
                 />
+                <ErrorMessage>{errors.codePostalSiege?.message}</ErrorMessage>
               </div>
               <div>
-                <Label htmlFor="villeSiege">Ville</Label>
+                <Label htmlFor="villeSiege">Ville*</Label>
                 <Input
                   id="villeSiege"
                   placeholder="Paris"
                   {...register("villeSiege")}
                 />
+                <ErrorMessage>{errors.villeSiege?.message}</ErrorMessage>
               </div>
             </div>
           </div>
@@ -191,7 +204,7 @@ export default function Etape3Page() {
           >
             Annuler
           </Button>
-          <Button type="submit" disabled={isPending || !isDirty}>
+          <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}
             Suivant
           </Button>

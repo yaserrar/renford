@@ -9,13 +9,13 @@ import {
   useSkipRenfordStep,
 } from "@/hooks/onboarding";
 import { useCurrentUser } from "@/hooks/utilisateur";
-import { useUploadFile } from "@/hooks/uploads";
 import {
   onboardingRenfordBancaireSchema,
   OnboardingRenfordBancaireSchema,
 } from "@/validations/onboarding";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileText, Loader2, Upload, X } from "lucide-react";
+import { FileText, Loader2, X } from "lucide-react";
+import DocumentUploadDialog from "@/components/common/document-upload-dialog";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -26,7 +26,7 @@ export default function Etape6RenfordPage() {
   const { data: user } = useCurrentUser();
   const { mutate, isPending } = useUpdateRenfordBancaire();
   const { mutate: skipStep, isPending: isSkipping } = useSkipRenfordStep();
-  const { mutateAsync: uploadFile, isPending: isUploading } = useUploadFile();
+  const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   const [carteIdentite, setCarteIdentite] = useState<string | null>(
     user?.profilRenford?.carteIdentiteChemin || null
   );
@@ -44,17 +44,9 @@ export default function Etape6RenfordPage() {
     },
   });
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const result = await uploadFile({ file, path: "documents/identite" });
-      setCarteIdentite(result.path);
-      setValue("carteIdentiteChemin", result.path, { shouldDirty: true });
-    } catch (error) {
-      console.error("Erreur lors de l'upload:", error);
-    }
+  const handleDocumentUploaded = (path: string) => {
+    setCarteIdentite(path);
+    setValue("carteIdentiteChemin", path, { shouldDirty: true });
   };
 
   const removeFile = () => {
@@ -119,32 +111,35 @@ export default function Etape6RenfordPage() {
               </Button>
             </div>
           ) : (
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                {isUploading ? (
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                ) : (
-                  <>
-                    <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-500">
-                      Cliquez pour télécharger
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      PDF, JPG ou PNG (max 5 Mo)
-                    </p>
-                  </>
-                )}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-32 border-2 border-dashed"
+              onClick={() => setDocumentDialogOpen(true)}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <FileText className="h-8 w-8 text-gray-400" />
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">
+                    Cliquez pour télécharger
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    PDF, JPG ou PNG (max 5 Mo)
+                  </p>
+                </div>
               </div>
-              <input
-                type="file"
-                className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={handleFileUpload}
-                disabled={isUploading}
-              />
-            </label>
+            </Button>
           )}
           <ErrorMessage>{errors.carteIdentiteChemin?.message}</ErrorMessage>
+
+          <DocumentUploadDialog
+            open={documentDialogOpen}
+            setOpen={setDocumentDialogOpen}
+            setFileValue={handleDocumentUploaded}
+            path="documents/identite"
+            accept=".pdf,.jpg,.jpeg,.png"
+            maxSizeMB={5}
+          />
         </div>
 
         <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
@@ -160,7 +155,7 @@ export default function Etape6RenfordPage() {
             <Button
               type="submit"
               className="flex-1"
-              disabled={isPending || !isDirty || !carteIdentite}
+              disabled={isPending || !carteIdentite}
             >
               {isPending && <Loader2 className="animate-spin" />}
               Continuer

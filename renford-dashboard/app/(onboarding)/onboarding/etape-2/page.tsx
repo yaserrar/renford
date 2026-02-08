@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import {
   onboardingTypeSchema,
   OnboardingTypeSchema,
-  TYPE_UTILISATEUR_ONBOARDING,
 } from "@/validations/onboarding";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Building2, Loader2, User } from "lucide-react";

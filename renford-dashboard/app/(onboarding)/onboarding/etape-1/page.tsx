@@ -69,7 +69,7 @@ export default function Etape1Page() {
           <Input
             id="telephone"
             type="tel"
-            placeholder="06 12 34 56 78"
+            placeholder="+33....."
             {...register("telephone")}
           />
           <ErrorMessage>{errors.telephone?.message}</ErrorMessage>
@@ -79,7 +79,7 @@ export default function Etape1Page() {
           <Button type="button" variant="outline" onClick={() => router.back()}>
             Annuler
           </Button>
-          <Button type="submit" disabled={isPending || !isDirty}>
+          <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}
             Terminé
           </Button>

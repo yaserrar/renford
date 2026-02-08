@@ -362,11 +362,7 @@ export default function Etape5RenfordPage() {
           >
             Retour
           </Button>
-          <Button
-            type="submit"
-            className="flex-1"
-            disabled={isPending || !isDirty}
-          >
+          <Button type="submit" className="flex-1" disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}
             Continuer
           </Button>

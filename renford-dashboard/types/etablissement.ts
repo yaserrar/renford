@@ -1,8 +1,8 @@
 import {
   DEPARTEMENT_IDF,
   ROLE_ETABLISSEMENT,
-  TYPE_ETABLISSEMENT,
 } from "@/validations/etablissement";
+import { TYPE_ETABLISSEMENT } from "@/validations/profil-etablissement";
 
 // Type d'établissement
 export type TypeEtablissement = (typeof TYPE_ETABLISSEMENT)[number];
@@ -23,6 +23,7 @@ export type ProfilEtablissement = {
   codePostal: string;
   ville: string;
   typeEtablissement: TypeEtablissement | null;
+  adresseSiegeDifferente: boolean;
   adresseSiege: string | null;
   codePostalSiege: string | null;
   villeSiege: string | null;

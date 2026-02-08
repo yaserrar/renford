@@ -68,3 +68,22 @@ export const TYPE_POSTE_LABELS: Record<(typeof TYPE_POSTE)[number], string> = {
   tennis: "Tennis",
   apa: "Activité Physique Adaptée (APA)",
 };
+
+// Type de mission
+export const TYPE_MISSION = ["volant", "mission_longue", "les_deux"] as const;
+export type TypeMission = (typeof TYPE_MISSION)[number];
+
+export const TYPE_MISSION_LABELS: Record<TypeMission, string> = {
+  volant: "Volant (missions ponctuelles)",
+  mission_longue: "Mission longue durée",
+  les_deux: "Les deux",
+};
+
+// Créneaux horaires pour les disponibilités
+export const CRENEAUX_HORAIRES = [
+  { debut: "06:00", fin: "09:00" },
+  { debut: "09:00", fin: "12:00" },
+  { debut: "12:00", fin: "14:00" },
+  { debut: "14:00", fin: "18:00" },
+  { debut: "18:00", fin: "21:00" },
+] as const;

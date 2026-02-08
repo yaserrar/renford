@@ -166,7 +166,7 @@ export default function Etape4Page() {
               <Input
                 id="telephone"
                 type="tel"
-                placeholder="06 12 34 56 78"
+                placeholder="+33....."
                 {...register("telephone")}
               />
               <ErrorMessage>{errors.telephone?.message}</ErrorMessage>
@@ -178,7 +178,7 @@ export default function Etape4Page() {
               </Button>
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 onClick={() => {
                   setIsAddingNew(false);
                   setEditingIndex(null);
@@ -225,7 +225,7 @@ export default function Etape4Page() {
           <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               onClick={() => router.push("/onboarding/etape-3")}
             >
               Annuler

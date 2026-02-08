@@ -187,10 +187,16 @@ export const updateEtablissement = async (
       codePostal,
       ville,
       typeEtablissement,
+      adresseSiegeDifferente,
       adresseSiege,
       codePostalSiege,
       villeSiege,
     } = req.body;
+
+    // Si l'adresse du siège n'est pas différente, on nettoie les champs siège
+    const siegeData = adresseSiegeDifferente
+      ? { adresseSiege, codePostalSiege, villeSiege }
+      : { adresseSiege: null, codePostalSiege: null, villeSiege: null };
 
     // Mettre à jour le profil établissement
     const profilEtablissement = await prisma.profilEtablissement.upsert({
@@ -202,9 +208,8 @@ export const updateEtablissement = async (
         codePostal,
         ville,
         typeEtablissement,
-        adresseSiege,
-        codePostalSiege,
-        villeSiege,
+        adresseSiegeDifferente,
+        ...siegeData,
       },
       create: {
         utilisateurId: userId,
@@ -214,9 +219,8 @@ export const updateEtablissement = async (
         codePostal,
         ville,
         typeEtablissement,
-        adresseSiege,
-        codePostalSiege,
-        villeSiege,
+        adresseSiegeDifferente,
+        ...siegeData,
       },
     });
 

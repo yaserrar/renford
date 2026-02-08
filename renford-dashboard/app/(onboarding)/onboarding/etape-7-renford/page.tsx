@@ -11,8 +11,8 @@ import { useCurrentUser } from "@/hooks/utilisateur";
 import {
   onboardingRenfordDisponibilitesSchema,
   OnboardingRenfordDisponibilitesSchema,
-  CRENEAUX_HORAIRES,
 } from "@/validations/onboarding";
+import { CRENEAUX_HORAIRES } from "@/validations/profil-renford";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -270,11 +270,7 @@ export default function Etape7RenfordPage() {
           >
             Retour
           </Button>
-          <Button
-            type="submit"
-            className="flex-1"
-            disabled={isPending || !isDirty}
-          >
+          <Button type="submit" className="flex-1" disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}
             Terminer
           </Button>

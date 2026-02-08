@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { TYPE_ETABLISSEMENT } from "./profil-etablissement";
+import { NIVEAU_EXPERIENCE, TYPE_MISSION } from "./profil-renford";
+import { TYPE_UTILISATEUR } from "./utilisateur";
 
 // Étape 1: Informations de contact
 export const onboardingContactSchema = z.object({
@@ -18,14 +21,8 @@ export const onboardingContactSchema = z.object({
 
 export type OnboardingContactSchema = z.infer<typeof onboardingContactSchema>;
 
-// Étape 2: Type d'utilisateur
-export const TYPE_UTILISATEUR_ONBOARDING = [
-  "etablissement",
-  "renford",
-] as const;
-
 export const onboardingTypeSchema = z.object({
-  typeUtilisateur: z.enum(TYPE_UTILISATEUR_ONBOARDING, {
+  typeUtilisateur: z.enum(TYPE_UTILISATEUR, {
     required_error: "Veuillez sélectionner un type de profil",
   }),
 });
@@ -33,36 +30,73 @@ export const onboardingTypeSchema = z.object({
 export type OnboardingTypeSchema = z.infer<typeof onboardingTypeSchema>;
 
 // Étape 3: Informations établissement
-export const onboardingEtablissementSchema = z.object({
-  raisonSociale: z
-    .string()
-    .min(2, "La raison sociale doit contenir au moins 2 caractères")
-    .max(100, "La raison sociale ne peut pas dépasser 100 caractères"),
-  siret: z
-    .string()
-    .length(14, "Le numéro SIRET doit contenir exactement 14 chiffres")
-    .regex(/^\d{14}$/, "Le numéro SIRET ne doit contenir que des chiffres"),
-  adresse: z
-    .string()
-    .min(5, "L'adresse doit contenir au moins 5 caractères")
-    .max(200, "L'adresse ne peut pas dépasser 200 caractères"),
-  codePostal: z
-    .string()
-    .length(5, "Le code postal doit contenir exactement 5 chiffres")
-    .regex(/^\d{5}$/, "Le code postal ne doit contenir que des chiffres"),
-  ville: z
-    .string()
-    .min(2, "La ville doit contenir au moins 2 caractères")
-    .max(100, "La ville ne peut pas dépasser 100 caractères"),
-  typeEtablissement: z.string({
-    required_error: "Veuillez sélectionner un type d'établissement",
-  }),
-  // Adresse du siège (optionnel)
-  adresseSiegeDifferente: z.boolean().optional(),
-  adresseSiege: z.string().optional(),
-  codePostalSiege: z.string().optional(),
-  villeSiege: z.string().optional(),
-});
+export const onboardingEtablissementSchema = z
+  .object({
+    raisonSociale: z
+      .string()
+      .min(2, "La raison sociale doit contenir au moins 2 caractères")
+      .max(100, "La raison sociale ne peut pas dépasser 100 caractères"),
+    siret: z
+      .string()
+      .length(14, "Le numéro SIRET doit contenir exactement 14 chiffres")
+      .regex(/^\d{14}$/, "Le numéro SIRET ne doit contenir que des chiffres"),
+    adresse: z
+      .string()
+      .min(5, "L'adresse doit contenir au moins 5 caractères")
+      .max(200, "L'adresse ne peut pas dépasser 200 caractères"),
+    codePostal: z
+      .string()
+      .length(5, "Le code postal doit contenir exactement 5 chiffres")
+      .regex(/^\d{5}$/, "Le code postal ne doit contenir que des chiffres"),
+    ville: z
+      .string()
+      .min(2, "La ville doit contenir au moins 2 caractères")
+      .max(100, "La ville ne peut pas dépasser 100 caractères"),
+    typeEtablissement: z.enum(TYPE_ETABLISSEMENT, {
+      required_error: "Veuillez sélectionner un type d'établissement",
+    }),
+    // Adresse du siège social (conditionnellement obligatoire)
+    adresseSiegeDifferente: z.boolean(),
+    adresseSiege: z.string().optional(),
+    codePostalSiege: z.string().optional(),
+    villeSiege: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.adresseSiegeDifferente) {
+        return !!data.adresseSiege && data.adresseSiege.length >= 5;
+      }
+      return true;
+    },
+    {
+      message: "L'adresse du siège doit contenir au moins 5 caractères",
+      path: ["adresseSiege"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.adresseSiegeDifferente) {
+        return !!data.codePostalSiege && /^\d{5}$/.test(data.codePostalSiege);
+      }
+      return true;
+    },
+    {
+      message: "Le code postal du siège doit contenir exactement 5 chiffres",
+      path: ["codePostalSiege"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.adresseSiegeDifferente) {
+        return !!data.villeSiege && data.villeSiege.length >= 2;
+      }
+      return true;
+    },
+    {
+      message: "La ville du siège doit contenir au moins 2 caractères",
+      path: ["villeSiege"],
+    }
+  );
 
 export type OnboardingEtablissementSchema = z.infer<
   typeof onboardingEtablissementSchema
@@ -125,16 +159,6 @@ export type OnboardingRenfordIdentiteSchema = z.infer<
   typeof onboardingRenfordIdentiteSchema
 >;
 
-// Constantes pour le type de mission
-export const TYPE_MISSION = ["volant", "mission_longue", "les_deux"] as const;
-export type TypeMission = (typeof TYPE_MISSION)[number];
-
-export const TYPE_MISSION_LABELS: Record<TypeMission, string> = {
-  volant: "Volant (missions ponctuelles)",
-  mission_longue: "Mission longue durée",
-  les_deux: "Les deux",
-};
-
 // Étape 4 Renford: Profil public
 export const onboardingRenfordProfilSchema = z.object({
   photoProfil: z.string().optional(),
@@ -157,9 +181,6 @@ export const onboardingRenfordProfilSchema = z.object({
 export type OnboardingRenfordProfilSchema = z.infer<
   typeof onboardingRenfordProfilSchema
 >;
-
-export const NIVEAU_EXPERIENCE = ["debutant", "confirme", "expert"] as const;
-export type NiveauExperience = (typeof NIVEAU_EXPERIENCE)[number];
 
 // Étape 5 Renford: Qualifications et expériences
 export const onboardingRenfordQualificationsSchema = z.object({
@@ -200,15 +221,6 @@ export const onboardingRenfordBancaireSchema = z.object({
 export type OnboardingRenfordBancaireSchema = z.infer<
   typeof onboardingRenfordBancaireSchema
 >;
-
-// Créneaux horaires pour les disponibilités
-export const CRENEAUX_HORAIRES = [
-  { debut: "06:00", fin: "09:00" },
-  { debut: "09:00", fin: "12:00" },
-  { debut: "12:00", fin: "14:00" },
-  { debut: "14:00", fin: "18:00" },
-  { debut: "18:00", fin: "21:00" },
-] as const;
 
 // Schéma pour les jours de disponibilité
 const joursDisponiblesSchema = z.object({

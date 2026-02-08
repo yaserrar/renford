@@ -4,6 +4,7 @@ import accountVerificationRouter from '../modules/account-verification/account-v
 import uploadsRouter from '../modules/uploads/upload.route';
 import userRouter from '../modules/utilisateur/utilisateur.route';
 import onboardingRouter from '../modules/onboarding/onboarding.route';
+import devRouter from '../modules/dev/dev.route';
 
 const router = Router();
 
@@ -13,6 +14,7 @@ router.use('/account-verification', accountVerificationRouter);
 router.use('/utilisateur', userRouter);
 router.use('/upload', uploadsRouter);
 router.use('/onboarding', onboardingRouter);
+router.use('/dev', devRouter);
 //----------------------------------------------------------
 
 export default router;

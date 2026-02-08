@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 import useSession from "@/stores/session-store";
+import { useDevResetOnboarding, useDevResetToStepThree } from "@/hooks/dev";
 import {
   Bell,
   LogOut,
@@ -28,6 +29,8 @@ import {
   Home,
   Building2,
   Users as UsersIcon,
+  RotateCcw,
+  SkipBack,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -38,6 +41,8 @@ import { Button, buttonVariants } from "../ui/button";
 export function Header() {
   const router = useRouter();
   const { logout } = useSession();
+  const devResetOnboarding = useDevResetOnboarding();
+  const devResetToStepThree = useDevResetToStepThree();
 
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -114,6 +119,30 @@ export function Header() {
 
         {/* Desktop Actions */}
         <div className="hidden lg:flex gap-4 items-center">
+          {/* Dev Buttons */}
+          <div className="flex gap-1 items-center border border-dashed border-orange-400 rounded-lg px-2 py-1">
+            <span className="text-[10px] font-mono text-orange-500 mr-1">DEV</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-orange-500 hover:text-orange-700 hover:bg-orange-50"
+              onClick={() => devResetOnboarding.mutate()}
+              disabled={devResetOnboarding.isPending}
+              title="Reset onboarding (supprimer profil, étape 1)"
+            >
+              <RotateCcw size={14} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-orange-500 hover:text-orange-700 hover:bg-orange-50"
+              onClick={() => devResetToStepThree.mutate()}
+              disabled={devResetToStepThree.isPending}
+              title="Retour étape 3 (début profil)"
+            >
+              <SkipBack size={14} />
+            </Button>
+          </div>
           <Button
             variant="ghost"
             size="icon"
@@ -152,6 +181,30 @@ export function Header() {
 
         {/* Mobile Actions */}
         <div className="flex lg:hidden gap-2 items-center">
+          {/* Dev Buttons Mobile */}
+          <div className="flex gap-0.5 items-center border border-dashed border-orange-400 rounded-md px-1 py-0.5">
+            <span className="text-[8px] font-mono text-orange-500">DEV</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-orange-500 hover:text-orange-700 hover:bg-orange-50"
+              onClick={() => devResetOnboarding.mutate()}
+              disabled={devResetOnboarding.isPending}
+              title="Reset onboarding"
+            >
+              <RotateCcw size={12} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-orange-500 hover:text-orange-700 hover:bg-orange-50"
+              onClick={() => devResetToStepThree.mutate()}
+              disabled={devResetToStepThree.isPending}
+              title="Retour étape 3"
+            >
+              <SkipBack size={12} />
+            </Button>
+          </div>
           <Button
             variant="ghost"
             size="icon"

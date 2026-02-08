@@ -129,10 +129,11 @@ model ProfilEtablissement {
     // Type d'établissement
     typeEtablissement TypeEtablissement?
 
+    adresseSiegeDifferente Boolean @default(false)
     // Adresse du siège (optionnel, si différent de l'établissement)
-    adresseSiege    String?
-    codePostalSiege String?
-    villeSiege      String?
+    adresseSiege           String?
+    codePostalSiege        String?
+    villeSiege             String?
 
     // Contact
     emailPrincipal      String?

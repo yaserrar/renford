@@ -8,13 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUpdateRenfordIdentite } from "@/hooks/onboarding";
 import { useCurrentUser } from "@/hooks/utilisateur";
-import { useUploadFile } from "@/hooks/uploads";
 import {
   onboardingRenfordIdentiteSchema,
   OnboardingRenfordIdentiteSchema,
 } from "@/validations/onboarding";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileText, Loader2, Upload, X } from "lucide-react";
+import { FileText, Loader2, X } from "lucide-react";
+import DocumentUploadDialog from "@/components/common/document-upload-dialog";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -24,7 +24,7 @@ export default function Etape3RenfordPage() {
   const router = useRouter();
   const { data: user } = useCurrentUser();
   const { mutate, isPending } = useUpdateRenfordIdentite();
-  const { mutateAsync: uploadFile, isPending: isUploading } = useUploadFile();
+  const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   const [attestationVigilance, setAttestationVigilance] = useState<
     string | null
   >(user?.profilRenford?.attestationVigilanceChemin || null);
@@ -53,19 +53,11 @@ export default function Etape3RenfordPage() {
     },
   });
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const result = await uploadFile({ file, path: "documents/vigilance" });
-      setAttestationVigilance(result.path);
-      setValue("attestationVigilanceChemin", result.path, {
-        shouldDirty: true,
-      });
-    } catch (error) {
-      console.error("Erreur lors de l'upload:", error);
-    }
+  const handleDocumentUploaded = (path: string) => {
+    setAttestationVigilance(path);
+    setValue("attestationVigilanceChemin", path, {
+      shouldDirty: true,
+    });
   };
 
   const removeFile = () => {
@@ -114,7 +106,7 @@ export default function Etape3RenfordPage() {
           />
           <Label
             htmlFor="attestationAutoEntrepreneur"
-            className="cursor-pointer font-normal"
+            className="cursor-pointer font-normal mb-0"
           >
             J&apos;atteste être auto-entrepreneur
           </Label>
@@ -193,34 +185,37 @@ export default function Etape3RenfordPage() {
               </Button>
             </div>
           ) : (
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                {isUploading ? (
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                ) : (
-                  <>
-                    <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-500">
-                      Cliquez pour télécharger
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      PDF, JPG ou PNG (max 5 Mo)
-                    </p>
-                  </>
-                )}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-32 border-2 border-dashed"
+              onClick={() => setDocumentDialogOpen(true)}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <FileText className="h-8 w-8 text-gray-400" />
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">
+                    Cliquez pour télécharger
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    PDF, JPG ou PNG (max 10 Mo)
+                  </p>
+                </div>
               </div>
-              <input
-                type="file"
-                className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={handleFileUpload}
-                disabled={isUploading}
-              />
-            </label>
+            </Button>
           )}
           <ErrorMessage>
             {errors.attestationVigilanceChemin?.message}
           </ErrorMessage>
+
+          <DocumentUploadDialog
+            open={documentDialogOpen}
+            setOpen={setDocumentDialogOpen}
+            setFileValue={handleDocumentUploaded}
+            path="documents/vigilance"
+            accept=".pdf,.jpg,.jpeg,.png"
+            maxSizeMB={10}
+          />
         </div>
 
         <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
@@ -232,11 +227,7 @@ export default function Etape3RenfordPage() {
           >
             Retour
           </Button>
-          <Button
-            type="submit"
-            className="flex-1"
-            disabled={isPending || !isDirty}
-          >
+          <Button type="submit" className="flex-1" disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}
             Continuer
           </Button>
