@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+export const TYPE_UTILISATEUR = ['etablissement', 'renford', 'administrateur'] as const;
+
+export const STATUT_COMPTE = [
+  'actif',
+  'suspendu',
+  'en_attente_verification',
+  'onboarding',
+] as const;
+
 // Mise à jour du profil utilisateur
 export const updateProfileSchema = z.object({
   nom: z.string().min(2, '2 caractères minimum').optional(),

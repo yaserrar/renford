@@ -142,7 +142,7 @@ export default function Etape7RenfordPage() {
               <div className="space-y-2">
                 {CRENEAUX_HORAIRES.map((creneau) => {
                   const isSelected = field.value?.some(
-                    (c) => c.debut === creneau.debut && c.fin === creneau.fin,
+                    (c) => c.debut === creneau.debut && c.fin === creneau.fin
                   );
                   return (
                     <label
@@ -162,8 +162,8 @@ export default function Etape7RenfordPage() {
                               field.value?.filter(
                                 (c) =>
                                   c.debut !== creneau.debut ||
-                                  c.fin !== creneau.fin,
-                              ),
+                                  c.fin !== creneau.fin
+                              )
                             );
                           }
                         }}
@@ -261,7 +261,7 @@ export default function Etape7RenfordPage() {
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
           <Button
             type="button"
             variant="ghost"

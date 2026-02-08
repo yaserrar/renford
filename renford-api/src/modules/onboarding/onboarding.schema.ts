@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TYPE_UTILISATEUR } from '../utilisateur/utilisateur.schema';
 
 // Schéma pour la mise à jour des informations de contact (étape 1)
 export const updateContactSchema = z.object({
@@ -11,12 +12,43 @@ export type UpdateContactSchema = z.infer<typeof updateContactSchema>;
 
 // Schéma pour la mise à jour du type d'utilisateur (étape 2)
 export const updateTypeSchema = z.object({
-  typeUtilisateur: z.enum(['etablissement', 'renford'], {
+  typeUtilisateur: z.enum(TYPE_UTILISATEUR, {
     required_error: "Le type d'utilisateur est obligatoire",
   }),
 });
 
 export type UpdateTypeSchema = z.infer<typeof updateTypeSchema>;
+
+export const TYPE_ETABLISSEMENT = [
+  'salle_sport_gymnase',
+  'centre_fitness',
+  'studio_yoga',
+  'studio_pilates',
+  'centre_bien_etre',
+  'club_escalade',
+  'centre_sports_aquatiques',
+  'ecole_danse',
+  'centre_formation_sportive',
+  'club_sport_combat',
+  'centre_arts_martiaux',
+  'complexe_multisports',
+  'club_golf',
+  'club_tennis',
+  'centre_athletisme',
+  'etablissement_sports_extremes',
+  'centre_equestre',
+  'club_cyclisme',
+  'club_course_pied',
+  'club_tir_arc',
+  'club_voile_nautique',
+  'centre_musculation',
+  'centre_reeducation',
+  'stade_arene',
+  'association_sportive',
+  'complexe_loisirs',
+  'academie_sportive',
+  'ecole_surf',
+] as const;
 
 // Schéma pour la mise à jour du profil établissement (étape 3)
 export const updateEtablissementSchema = z.object({
@@ -25,26 +57,11 @@ export const updateEtablissementSchema = z.object({
   adresse: z.string().min(5, '5 caractères minimum'),
   codePostal: z.string().length(5, 'Le code postal doit contenir 5 chiffres'),
   ville: z.string().min(2, '2 caractères minimum'),
-  typeEtablissement: z
-    .enum([
-      'creche',
-      'maternelle',
-      'elementaire',
-      'college',
-      'lycee_general',
-      'lycee_professionnel',
-      'universite',
-      'ecole_superieure',
-      'centre_loisirs',
-      'club_sportif',
-      'association',
-      'entreprise',
-      'collectivite',
-      'autre',
-    ])
-    .optional(),
+  typeEtablissement: z.enum(TYPE_ETABLISSEMENT, {
+    required_error: "Le type d'établissement est obligatoire",
+  }),
   adresseSiege: z.string().optional(),
-  codePostalSiege: z.string().length(5, 'Le code postal doit contenir 5 chiffres').optional(),
+  codePostalSiege: z.string().optional(),
   villeSiege: z.string().optional(),
 });
 
@@ -91,6 +108,8 @@ export const updateRenfordIdentiteSchema = z.object({
 
 export type UpdateRenfordIdentiteSchema = z.infer<typeof updateRenfordIdentiteSchema>;
 
+export const TYPE_MISSION = ['volant', 'mission_longue', 'les_deux'] as const;
+
 // Schéma pour le profil Renford (étape 4)
 export const updateRenfordProfilSchema = z.object({
   photoProfil: z.string().optional(),
@@ -99,7 +118,7 @@ export const updateRenfordProfilSchema = z.object({
     .string()
     .min(50, '50 caractères minimum')
     .max(1000, '1000 caractères maximum'),
-  typeMission: z.enum(['volant', 'mission_longue', 'les_deux'], {
+  typeMission: z.enum(TYPE_MISSION, {
     required_error: 'Le type de mission est obligatoire',
   }),
   assuranceRCPro: z.boolean(),
@@ -107,9 +126,11 @@ export const updateRenfordProfilSchema = z.object({
 
 export type UpdateRenfordProfilSchema = z.infer<typeof updateRenfordProfilSchema>;
 
+export const NIVEAU_EXPERIENCE = ['debutant', 'confirme', 'expert'] as const;
+
 // Schéma pour les qualifications Renford (étape 5)
 export const updateRenfordQualificationsSchema = z.object({
-  niveauExperience: z.enum(['debutant', 'confirme', 'expert'], {
+  niveauExperience: z.enum(NIVEAU_EXPERIENCE, {
     required_error: "Le niveau d'expérience est obligatoire",
   }),
   diplomes: z.string().optional(),

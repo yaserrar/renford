@@ -23,6 +23,7 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
         avatarChemin: true,
         typeUtilisateur: true,
         statut: true,
+        etapeOnboarding: true,
         emailVerifie: true,
         dateCreation: true,
         derniereConnexion: true,
@@ -37,7 +38,6 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
           include: {
             typesPostes: true,
             specialisations: true,
-            diplomes: true,
             documentsRenford: true,
           },
         },

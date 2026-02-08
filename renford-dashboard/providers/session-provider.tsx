@@ -16,7 +16,7 @@ const SessionProvider = ({ children }: Props) => {
 
   useEffect(() => {
     if (!session && mounted) {
-      router.push("/login");
+      router.push("/connexion");
     }
   }, [session, mounted]);
 

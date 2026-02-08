@@ -43,38 +43,9 @@ export const signupSchema = z.object({
     .email({ message: "L'email est invalide" })
     .max(250, '250 caractères maximum'),
   password: passwordSchema,
-  nom: z
-    .string({ required_error: 'Le nom est obligatoire' })
-    .min(2, '2 caractères minimum')
-    .max(100, '100 caractères maximum'),
-  prenom: z
-    .string({ required_error: 'Le prénom est obligatoire' })
-    .min(2, '2 caractères minimum')
-    .max(100, '100 caractères maximum'),
-  telephone: z.string().optional(),
 });
 
 export type SignupSchema = z.infer<typeof signupSchema>;
-
-// ============================================================================
-// Vérification email
-// ============================================================================
-
-export const verifyEmailSchema = z.object({
-  code: z
-    .string({ required_error: 'Le code est obligatoire' })
-    .length(6, 'Le code doit contenir 6 chiffres'),
-});
-
-export type VerifyEmailSchema = z.infer<typeof verifyEmailSchema>;
-
-export const resendVerificationSchema = z.object({
-  email: z
-    .string({ required_error: "L'email est obligatoire" })
-    .email({ message: "L'email est invalide" }),
-});
-
-export type ResendVerificationSchema = z.infer<typeof resendVerificationSchema>;
 
 // ============================================================================
 // Réinitialisation de mot de passe

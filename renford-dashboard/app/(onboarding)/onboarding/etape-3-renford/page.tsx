@@ -223,7 +223,7 @@ export default function Etape3RenfordPage() {
           </ErrorMessage>
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
           <Button
             type="button"
             variant="ghost"

@@ -74,7 +74,7 @@ export default function Etape2Page() {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
-          <p className="text-sm text-gray-600 mb-4">Je suis ...</p>
+          <p className="mb-4">Je suis ...</p>
 
           <Controller
             name="typeUtilisateur"
@@ -87,22 +87,12 @@ export default function Etape2Page() {
                     type="button"
                     onClick={() => field.onChange(option.value)}
                     className={cn(
-                      "w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left",
+                      "w-full flex items-center gap-3 p-4 rounded-full border-2 transition-all text-left",
                       field.value === option.value
-                        ? "border-primary bg-primary/5"
-                        : "border-gray-200 hover:border-gray-300",
+                        ? "border-primary bg-primary"
+                        : "border-gray-200 hover:border-gray-300"
                     )}
                   >
-                    <div
-                      className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center",
-                        field.value === option.value
-                          ? "bg-primary text-primary-dark"
-                          : "bg-gray-100 text-gray-500",
-                      )}
-                    >
-                      <option.icon size={20} />
-                    </div>
                     <div>
                       <span className="font-medium text-gray-900">
                         {option.label}
@@ -118,10 +108,10 @@ export default function Etape2Page() {
           />
         </div>
 
-        <div className="flex justify-end gap-3 pt-4">
+        <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             onClick={() => router.push("/onboarding/etape-1")}
           >
             Annuler

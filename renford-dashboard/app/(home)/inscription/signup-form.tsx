@@ -31,9 +31,10 @@ const SignupForm = () => {
   });
 
   const onSubmit: SubmitHandler<SignupSchema> = (data) => {
-    signup.mutate(data, {
+    const { acceptTerms, ...payload } = data;
+    signup.mutate(payload, {
       onSuccess: () => {
-        router.push("/dashboard");
+        router.push("/verification-compte");
       },
     });
   };

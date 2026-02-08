@@ -28,7 +28,7 @@ export default function Etape6RenfordPage() {
   const { mutate: skipStep, isPending: isSkipping } = useSkipRenfordStep();
   const { mutateAsync: uploadFile, isPending: isUploading } = useUploadFile();
   const [carteIdentite, setCarteIdentite] = useState<string | null>(
-    user?.profilRenford?.carteIdentiteChemin || null,
+    user?.profilRenford?.carteIdentiteChemin || null
   );
 
   const {
@@ -147,8 +147,8 @@ export default function Etape6RenfordPage() {
           <ErrorMessage>{errors.carteIdentiteChemin?.message}</ErrorMessage>
         </div>
 
-        <div className="flex flex-col gap-3 pt-4">
-          <div className="flex gap-3">
+        <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
+          <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
             <Button
               type="button"
               variant="ghost"

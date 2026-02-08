@@ -37,7 +37,7 @@ export default function Etape5RenfordPage() {
   const { mutate, isPending } = useUpdateRenfordQualifications();
   const { mutateAsync: uploadFile, isPending: isUploading } = useUploadFile();
   const [justificatifDiplome, setJustificatifDiplome] = useState<string | null>(
-    user?.profilRenford?.justificatifDiplomeChemin || null,
+    user?.profilRenford?.justificatifDiplomeChemin || null
   );
   const [justificatifCartePro, setJustificatifCartePro] = useState<
     string | null
@@ -72,7 +72,7 @@ export default function Etape5RenfordPage() {
   const proposeDemiJournee = watch("proposeDemiJournee");
 
   const handleUploadDiplome = async (
-    e: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -87,7 +87,7 @@ export default function Etape5RenfordPage() {
   };
 
   const handleUploadCartePro = async (
-    e: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -217,7 +217,7 @@ export default function Etape5RenfordPage() {
                     undefined,
                     {
                       shouldDirty: true,
-                    },
+                    }
                   );
                 }}
               >
@@ -353,7 +353,7 @@ export default function Etape5RenfordPage() {
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
           <Button
             type="button"
             variant="ghost"

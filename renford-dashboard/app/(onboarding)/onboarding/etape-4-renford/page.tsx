@@ -35,7 +35,7 @@ export default function Etape4RenfordPage() {
   const { mutate, isPending } = useUpdateRenfordProfil();
   const { mutateAsync: uploadFile, isPending: isUploading } = useUploadFile();
   const [photoProfil, setPhotoProfil] = useState<string | null>(
-    user?.profilRenford?.photoProfil || null,
+    user?.profilRenford?.photoProfil || null
   );
 
   const {
@@ -211,7 +211,7 @@ export default function Etape4RenfordPage() {
         </div>
         <ErrorMessage>{errors.assuranceRCPro?.message}</ErrorMessage>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
           <Button
             type="button"
             variant="ghost"

@@ -2,19 +2,14 @@ import { Router } from 'express';
 import {
   login,
   signup,
-  verifyEmail,
-  resendVerification,
   sendPasswordResetCode,
   validatePasswordResetCode,
   updatePasswordWithCode,
 } from './auth.controller';
 import { validateResource } from '../../middleware/validate.resource';
-import { authenticateToken } from '../../middleware/auth.middleware';
 import {
   loginSchema,
   signupSchema,
-  verifyEmailSchema,
-  resendVerificationSchema,
   passwordResetSendCodeSchema,
   passwordResetValidateCodeSchema,
   passwordResetUpdatePasswordSchema,
@@ -26,7 +21,7 @@ const router = Router();
 // Inscription (signup)
 // ============================================================================
 
-// Inscription simple - le type utilisateur sera défini dans l'onboarding
+// Inscription simple - email + password uniquement
 router.post('/auth/signup', validateResource(signupSchema), signup);
 
 // ============================================================================
@@ -34,23 +29,6 @@ router.post('/auth/signup', validateResource(signupSchema), signup);
 // ============================================================================
 
 router.post('/auth/login', validateResource(loginSchema), login);
-
-// ============================================================================
-// Vérification email
-// ============================================================================
-
-router.post(
-  '/auth/verify-email',
-  authenticateToken(),
-  validateResource(verifyEmailSchema),
-  verifyEmail,
-);
-
-router.post(
-  '/auth/resend-verification',
-  validateResource(resendVerificationSchema),
-  resendVerification,
-);
 
 // ============================================================================
 // Réinitialisation mot de passe

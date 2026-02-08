@@ -158,9 +158,12 @@ export type OnboardingRenfordProfilSchema = z.infer<
   typeof onboardingRenfordProfilSchema
 >;
 
+export const NIVEAU_EXPERIENCE = ["debutant", "confirme", "expert"] as const;
+export type NiveauExperience = (typeof NIVEAU_EXPERIENCE)[number];
+
 // Étape 5 Renford: Qualifications et expériences
 export const onboardingRenfordQualificationsSchema = z.object({
-  niveauExperience: z.enum(["debutant", "confirme", "expert"], {
+  niveauExperience: z.enum(NIVEAU_EXPERIENCE, {
     required_error: "Veuillez sélectionner votre niveau d'expérience",
   }),
   diplomes: z.string().optional(),

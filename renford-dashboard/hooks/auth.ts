@@ -42,7 +42,7 @@ export const useSignup = () => {
   const { setSession } = useSession();
 
   return useMutation({
-    mutationFn: async (data: SignupSchema) => {
+    mutationFn: async (data: Omit<SignupSchema, "acceptTerms">) => {
       return (await axios.post(`${API_BASE_URL}/auth/signup`, data))
         .data as JwtToken;
     },

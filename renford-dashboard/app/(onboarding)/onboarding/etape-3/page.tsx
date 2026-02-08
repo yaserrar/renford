@@ -34,7 +34,7 @@ export default function Etape3Page() {
   const { data: user } = useCurrentUser();
   const { mutate, isPending } = useUpdateEtablissementProfil();
   const [showSiegeAddress, setShowSiegeAddress] = useState(
-    !!user?.profilEtablissement?.adresseSiege,
+    !!user?.profilEtablissement?.adresseSiege
   );
 
   const {
@@ -183,10 +183,10 @@ export default function Etape3Page() {
           <ErrorMessage>{errors.typeEtablissement?.message}</ErrorMessage>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4">
+        <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             onClick={() => router.push("/onboarding/etape-2")}
           >
             Annuler

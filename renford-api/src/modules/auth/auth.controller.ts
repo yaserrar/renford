@@ -5,8 +5,6 @@ import prisma from '../../config/prisma';
 import {
   LoginSchema,
   SignupSchema,
-  VerifyEmailSchema,
-  ResendVerificationSchema,
   PasswordResetSendCodeSchema,
   PasswordResetValidateCodeSchema,
   PasswordResetUpdatePasswordSchema,
@@ -25,7 +23,7 @@ export const signup = async (
   next: NextFunction,
 ) => {
   try {
-    const { email, password, nom, prenom, telephone } = req.body;
+    const { email, password } = req.body;
 
     // Vérifier si l'email existe déjà
     const existingUser = await prisma.utilisateur.findUnique({
@@ -49,10 +47,9 @@ export const signup = async (
       data: {
         email,
         motDePasse: hashedPassword,
-        typeUtilisateur: 'renford', // Valeur temporaire (sera modifiée à l'étape 2)
-        nom,
-        prenom,
-        telephone,
+        typeUtilisateur: 'renford', // Valeur temporaire (sera modifiée dans l'onboarding)
+        nom: '',
+        prenom: '',
         statut: 'en_attente_verification',
         codeVerificationEmail: verificationCode,
         dateCreationCodeVerif: new Date(),
@@ -88,8 +85,6 @@ export const signup = async (
       utilisateur: {
         id: utilisateur.id,
         email: utilisateur.email,
-        nom: utilisateur.nom,
-        prenom: utilisateur.prenom,
         statut: utilisateur.statut,
         emailVerifie: utilisateur.emailVerifie,
       },
@@ -175,122 +170,6 @@ export const login = async (
     }
 
     return res.json(response);
-  } catch (err) {
-    return next(err);
-  }
-};
-
-// ============================================================================
-// POST /auth/verify-email - Vérification email
-// ============================================================================
-export const verifyEmail = async (
-  req: Request<unknown, unknown, VerifyEmailSchema>,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const userId = req.userId;
-    const { code } = req.body;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
-    const utilisateur = await prisma.utilisateur.findUnique({
-      where: { id: userId },
-    });
-
-    if (!utilisateur) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé' });
-    }
-
-    if (utilisateur.emailVerifie) {
-      return res.status(400).json({ message: 'Email déjà vérifié' });
-    }
-
-    // Vérifier le code
-    if (utilisateur.codeVerificationEmail !== code) {
-      return res.status(400).json({ message: 'Code de vérification invalide' });
-    }
-
-    // Vérifier l'expiration (15 minutes)
-    const codeCreation = utilisateur.dateCreationCodeVerif;
-    if (!codeCreation || Date.now() - codeCreation.getTime() > EMAIL_CODE_TTL) {
-      return res.status(400).json({ message: 'Code de vérification expiré' });
-    }
-
-    // Valider l'email et activer le compte
-    await prisma.utilisateur.update({
-      where: { id: userId },
-      data: {
-        emailVerifie: true,
-        emailVerifieA: new Date(),
-        codeVerificationEmail: null,
-        dateCreationCodeVerif: null,
-        statut: 'actif',
-      },
-    });
-
-    return res.json({ message: 'Email vérifié avec succès' });
-  } catch (err) {
-    return next(err);
-  }
-};
-
-// ============================================================================
-// POST /auth/resend-verification - Renvoyer le code de vérification
-// ============================================================================
-export const resendVerification = async (
-  req: Request<unknown, unknown, ResendVerificationSchema>,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const { email } = req.body;
-
-    const utilisateur = await prisma.utilisateur.findUnique({
-      where: { email },
-    });
-
-    if (!utilisateur) {
-      // Ne pas révéler si l'email existe
-      return res.json({ message: 'Si cet email existe, un code a été envoyé' });
-    }
-
-    if (utilisateur.emailVerifie) {
-      return res.status(400).json({ message: 'Email déjà vérifié' });
-    }
-
-    // Générer nouveau code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-    await prisma.utilisateur.update({
-      where: { id: utilisateur.id },
-      data: {
-        codeVerificationEmail: code,
-        dateCreationCodeVerif: new Date(),
-      },
-    });
-
-    // Envoyer l'email
-    const mailOptions = {
-      from: env.EMAIL_HOST_USER,
-      to: utilisateur.email,
-      subject: 'RENFORD: Nouveau code de vérification',
-      html: `
-        <h3>Nouveau code de vérification</h3>
-        <p>Votre code de vérification est: <strong>${code}</strong></p>
-        <p>Ce code expire dans 15 minutes.</p>
-      `,
-    };
-
-    try {
-      await mail.sendMail(mailOptions);
-    } catch (e) {
-      logger.error(e, 'Échec envoi email de vérification');
-    }
-
-    return res.json({ message: 'Si cet email existe, un code a été envoyé' });
   } catch (err) {
     return next(err);
   }
