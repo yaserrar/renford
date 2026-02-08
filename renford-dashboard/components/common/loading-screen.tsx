@@ -14,10 +14,10 @@ const LoadingScreen = ({ className }: Props) => {
       )}
     >
       <Image
-        alt="CAP'Lecture Maroc"
+        alt="Renford Logo"
         src="/logo.png"
-        width={250}
-        height={120}
+        width={150}
+        height={150}
         className="animate-bounce"
       />
     </main>

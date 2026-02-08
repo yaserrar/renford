@@ -152,7 +152,7 @@ export function DataTable<TData, TValue>({
           pageCount - 4,
           pageCount - 3,
           pageCount - 2,
-          pageCount - 1,
+          pageCount - 1
         );
       } else {
         pages.push(
@@ -162,7 +162,7 @@ export function DataTable<TData, TValue>({
           currentPage,
           currentPage + 1,
           "...",
-          pageCount - 1,
+          pageCount - 1
         );
       }
     }
@@ -171,21 +171,6 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      {/* {(title || description) && (
-        <div
-          className={cn(
-            "flex flex-col md:flex-row justify-between mb-12",
-            isRTL && "text-right flex-col md:flex-row-reverse"
-          )}
-        >
-          {title && (
-            <h1 className="text-2xl font-bold text-primary">{title}</h1>
-          )}
-          {description && <p className="text-gray-500 mt-1">{description}</p>}
-        </div>
-      )} */}
-
       {/* Actions Row */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <GlobalFilterInput
@@ -239,7 +224,7 @@ export function DataTable<TData, TValue>({
                       <Select
                         onValueChange={(value) =>
                           column.setFilterValue(
-                            value === "all" ? undefined : value,
+                            value === "all" ? undefined : value
                           )
                         }
                         value={(column.getFilterValue() as string) || "all"}
@@ -289,7 +274,7 @@ export function DataTable<TData, TValue>({
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext(),
+                              header.getContext()
                             )}
                       </TableHead>
                     );
@@ -310,12 +295,12 @@ export function DataTable<TData, TValue>({
                         key={cell.id}
                         className={cn(
                           "px-4 py-3 whitespace-nowrap",
-                          classNames?.tableCell,
+                          classNames?.tableCell
                         )}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext(),
+                          cell.getContext()
                         )}
                       </TableCell>
                     ))}
@@ -371,14 +356,14 @@ export function DataTable<TData, TValue>({
                   key={page}
                   variant={currentPage === page ? "default" : "outline"}
                   className={cn(
-                    currentPage === page && "bg-primary text-white",
+                    currentPage === page && "bg-primary text-white"
                   )}
                   onClick={() => table.setPageIndex(page)}
                   size="icon"
                 >
                   {page + 1}
                 </Button>
-              ),
+              )
             )}
           </div>
 

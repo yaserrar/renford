@@ -1,5 +1,7 @@
 "use client";
 
+import { Logo } from "@/components/common/logo";
+import { H1 } from "@/components/ui/typography";
 import Image from "next/image";
 import Link from "next/link";
 import LoginForm from "./login-form";
@@ -8,37 +10,37 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
-          {/* Logo */}
-          <div className="flex mb-8">
-            <Image src="/logo.png" alt="Renford" width={150} height={50} />
-          </div>
+      <div className="flex-1 flex flex-col items-center justify-center">
+        {/* Logo */}
+        <div className="flex justify-start mb-8 p-2 w-full border-b border">
+          <Logo />
+        </div>
 
+        <div className="w-full max-w-md flex-grow flex flex-col justify-center px-8">
           {/* Tabs */}
           <div className="flex gap-8 mb-8 border-b border-gray-200">
             <Link
               href="/inscription"
-              className="pb-3 text-gray-400 hover:text-gray-600 transition-colors"
+              className="pb-3 text-gray-400 hover:text-gray-600 transition-colors flex-1 text-center"
             >
               S&apos;inscrire
             </Link>
-            <span className="pb-3 text-black font-medium border-b-2 border-black">
+            <span className="pb-3 text-black font-medium border-b-2 border-black flex-1 text-center">
               Se connecter
             </span>
           </div>
 
           {/* Title */}
-          <h1 className="text-3xl font-bold mb-8">Se connecter</h1>
+          <H1 className="text-center mb-12">Se connecter</H1>
 
           {/* Form */}
           <LoginForm />
-
-          {/* Footer */}
-          <p className="text-center text-gray-400 text-sm mt-12">
-            © {new Date().getFullYear()} Renford
-          </p>
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-gray-800 text-sm mt-12 p-4 w-full border-t border-gray-200">
+          © {new Date().getFullYear()} Renford
+        </p>
       </div>
 
       {/* Right side - Image */}

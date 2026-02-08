@@ -15,7 +15,7 @@ const server = createServer(app);
 initScheduler();
 
 server.listen(port, () => {
-  logger.info(`CAP'Lecture Maroc API listening on http://localhost:${port}`);
+  logger.info(`Renford API listening on http://localhost:${port}`);
 });
 
 export default server;

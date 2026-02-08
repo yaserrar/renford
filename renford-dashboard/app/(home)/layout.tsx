@@ -38,7 +38,7 @@ export default async function RootLayout({ children }: Props) {
           <AuthProvider>
             <Suspense>
               <Toaster closeButton richColors />
-              {children}
+              <main className="bg-white">{children}</main>
             </Suspense>
           </AuthProvider>
         </TanstackQueryProvider>

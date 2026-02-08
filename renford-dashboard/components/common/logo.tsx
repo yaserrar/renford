@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { H4 } from "../ui/typography";
 
 type Props = {
   className?: string;
@@ -8,19 +9,9 @@ type Props = {
 
 export function Logo({ className, size }: Props) {
   return (
-    <div className={cn("flex items-center", className)}>
-      <div className="flex items-center justify-center">
-        <Image
-          alt="CAP'Lecture Maroc Logo"
-          src="/logo.png"
-          width={
-            size == "sm" ? 50 : size == "lg" ? 80 : size == "xl" ? 130 : 60
-          }
-          height={
-            size == "sm" ? 50 : size == "lg" ? 80 : size == "xl" ? 130 : 60
-          }
-        />
-      </div>
+    <div className={cn("flex items-center gap-2", className)}>
+      <Image src="/logo.png" alt="Renford" width={40} height={40} />
+      <H4>renford</H4>
     </div>
   );
 }

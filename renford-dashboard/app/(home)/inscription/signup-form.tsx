@@ -102,13 +102,7 @@ const SignupForm = () => {
         </Button>
       </form>
 
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-gray-200" />
-        </div>
-      </div>
-
-      <Button variant="outline" className="w-full gap-2">
+      <Button variant="outline" className="w-full gap-2 mt-4">
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path
             fill="currentColor"

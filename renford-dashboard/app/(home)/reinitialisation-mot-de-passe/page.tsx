@@ -4,23 +4,23 @@ import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import PasswordResetForm from "./password-reset-form";
+import { H1 } from "@/components/ui/typography";
+import { Logo } from "@/components/common/logo";
 
 export default function PasswordResetPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
-          {/* Logo */}
-          <div className="flex mb-8">
-            <Image src="/logo.png" alt="Renford" width={150} height={50} />
-          </div>
+      <div className="flex-1 flex flex-col items-center justify-center">
+        {/* Logo */}
+        <div className="flex justify-start mb-8 p-2 w-full border-b border">
+          <Logo />
+        </div>
 
+        <div className="w-full max-w-md flex-grow flex flex-col justify-center px-8">
           {/* Title */}
-          <h1 className="text-3xl font-bold mb-2">
-            Réinitialisation du mot de passe
-          </h1>
-          <p className="text-gray-500 mb-8">
+          <H1 className="text-center mb-4">Réinitialisation du mot de passe</H1>
+          <p className="text-gray-500 mb-12 text-center">
             Entrez votre email pour recevoir un code de vérification
           </p>
 
@@ -37,12 +37,12 @@ export default function PasswordResetPage() {
               Retour à la connexion
             </Link>
           </div>
-
-          {/* Footer */}
-          <p className="text-center text-gray-400 text-sm mt-12">
-            © {new Date().getFullYear()} Renford
-          </p>
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-gray-800 text-sm mt-12 p-4 w-full border-t border-gray-200">
+          © {new Date().getFullYear()} Renford
+        </p>
       </div>
 
       {/* Right side - Image */}
