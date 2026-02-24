@@ -1,5 +1,6 @@
 "use client";
 
+import { H1 } from "@/components/ui/typography";
 import { useCompleteEtablissementOnboarding } from "@/hooks/onboarding";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
@@ -23,10 +24,10 @@ export default function Etape5Page() {
   }, [completeOnboarding, router]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+    <div className="flex flex-col items-center justify-center h-screen text-center px-4 bg-secondary-background">
       <div className="mb-8">
         <Image
-          src="/logo.png"
+          src="/logo-dark.png"
           alt="Renford"
           width={120}
           height={120}
@@ -34,13 +35,9 @@ export default function Etape5Page() {
         />
       </div>
 
-      <h1 className="text-2xl font-semibold text-gray-900 mb-4">
+      <H1 className="text-2xl font-semibold text-gray-900 mb-4">
         Échauffez-vous, l&apos;aventure commence bientôt !
-      </h1>
-
-      <p className="text-gray-500 mb-8">
-        Nous finalisons la configuration de votre compte...
-      </p>
+      </H1>
 
       {isPending && <Loader2 className="h-8 w-8 animate-spin text-primary" />}
     </div>

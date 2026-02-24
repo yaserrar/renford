@@ -130,30 +130,40 @@ export type OnboardingFavorisSchema = z.infer<typeof onboardingFavorisSchema>;
 // ============================================================================
 
 // Étape 3 Renford: Identité légale
-export const onboardingRenfordIdentiteSchema = z.object({
-  siret: z
-    .string()
-    .length(14, "Le numéro SIRET doit contenir exactement 14 chiffres")
-    .regex(/^\d{14}$/, "Le numéro SIRET ne doit contenir que des chiffres"),
-  attestationAutoEntrepreneur: z.boolean(),
-  adresse: z
-    .string()
-    .min(5, "L'adresse doit contenir au moins 5 caractères")
-    .max(200, "L'adresse ne peut pas dépasser 200 caractères"),
-  codePostal: z
-    .string()
-    .length(5, "Le code postal doit contenir exactement 5 chiffres")
-    .regex(/^\d{5}$/, "Le code postal ne doit contenir que des chiffres"),
-  ville: z
-    .string()
-    .min(2, "La ville doit contenir au moins 2 caractères")
-    .max(100, "La ville ne peut pas dépasser 100 caractères"),
-  pays: z.string().min(2, "Le pays est obligatoire"),
-  dateNaissance: z.date({
-    required_error: "La date de naissance est obligatoire",
-  }),
-  attestationVigilanceChemin: z.string().optional(),
-});
+export const onboardingRenfordIdentiteSchema = z
+  .object({
+    siret: z.string().optional(),
+    siretEnCoursObtention: z.boolean(),
+    attestationAutoEntrepreneur: z.boolean(),
+    adresse: z
+      .string()
+      .min(5, "L'adresse doit contenir au moins 5 caractères")
+      .max(200, "L'adresse ne peut pas dépasser 200 caractères"),
+    codePostal: z
+      .string()
+      .length(5, "Le code postal doit contenir exactement 5 chiffres")
+      .regex(/^\d{5}$/, "Le code postal ne doit contenir que des chiffres"),
+    ville: z
+      .string()
+      .min(2, "La ville doit contenir au moins 2 caractères")
+      .max(100, "La ville ne peut pas dépasser 100 caractères"),
+    pays: z.string().min(2, "Le pays est obligatoire"),
+    dateNaissance: z.date({
+      required_error: "La date de naissance est obligatoire",
+    }),
+    attestationVigilanceChemin: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.siretEnCoursObtention) {
+      if (!data.siret || !/^\d{14}$/.test(data.siret)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["siret"],
+          message: "Le numéro SIRET doit contenir exactement 14 chiffres",
+        });
+      }
+    }
+  });
 
 export type OnboardingRenfordIdentiteSchema = z.infer<
   typeof onboardingRenfordIdentiteSchema

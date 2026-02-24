@@ -34,11 +34,14 @@ export default function Etape3RenfordPage() {
     handleSubmit,
     control,
     setValue,
+    watch,
     formState: { errors, isDirty },
   } = useForm<OnboardingRenfordIdentiteSchema>({
     resolver: zodResolver(onboardingRenfordIdentiteSchema),
     defaultValues: {
       siret: user?.profilRenford?.siret || "",
+      siretEnCoursObtention:
+        user?.profilRenford?.siretEnCoursObtention || false,
       attestationAutoEntrepreneur:
         user?.profilRenford?.attestationAutoEntrepreneur || false,
       adresse: user?.profilRenford?.adresse || "",
@@ -52,6 +55,11 @@ export default function Etape3RenfordPage() {
         user?.profilRenford?.attestationVigilanceChemin || undefined,
     },
   });
+
+  const siretEnCoursObtention = watch("siretEnCoursObtention");
+  const attestationFileName = attestationVigilance
+    ? attestationVigilance.split("/").pop()
+    : null;
 
   const handleDocumentUploaded = (path: string) => {
     setAttestationVigilance(path);
@@ -87,9 +95,35 @@ export default function Etape3RenfordPage() {
             id="siret"
             placeholder="12345678901234"
             maxLength={14}
+            disabled={siretEnCoursObtention}
             {...register("siret")}
           />
           <ErrorMessage>{errors.siret?.message}</ErrorMessage>
+
+          <div className="flex items-center gap-2 mt-3">
+            <Controller
+              name="siretEnCoursObtention"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="siretEnCoursObtention"
+                  checked={field.value}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked);
+                    if (checked) {
+                      setValue("siret", "", { shouldDirty: true });
+                    }
+                  }}
+                />
+              )}
+            />
+            <Label
+              htmlFor="siretEnCoursObtention"
+              className="cursor-pointer font-normal mb-0"
+            >
+              Numéro SIRET en cours d'obtention
+            </Label>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -108,7 +142,7 @@ export default function Etape3RenfordPage() {
             htmlFor="attestationAutoEntrepreneur"
             className="cursor-pointer font-normal mb-0"
           >
-            J&apos;atteste être auto-entrepreneur
+            J'atteste être auto-entrepreneur/ EI/ EIRL/ SASU/ EURL *
           </Label>
         </div>
 
@@ -163,17 +197,16 @@ export default function Etape3RenfordPage() {
         </div>
 
         <div>
-          <Label>Attestation de vigilance (optionnel)</Label>
-          <p className="text-sm text-gray-500 mb-2">
-            Document attestant de votre situation administrative
-          </p>
+          <Label>Attestation de vigilance</Label>
 
           {attestationVigilance ? (
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <FileText className="h-8 w-8 text-gray-400" />
               <div className="flex-1">
                 <p className="text-sm font-medium">Document téléchargé</p>
-                <p className="text-xs text-gray-500">Cliquez pour modifier</p>
+                <p className="text-xs text-gray-500">
+                  {attestationFileName || "Cliquez pour modifier"}
+                </p>
               </div>
               <Button
                 type="button"
@@ -185,54 +218,56 @@ export default function Etape3RenfordPage() {
               </Button>
             </div>
           ) : (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-32 border-2 border-dashed"
+            <div
+              className="w-full p-6 flex flex-col justify-center items-center gap-2 border-2 border-dashed bg-gray-50 rounded-xl"
               onClick={() => setDocumentDialogOpen(true)}
             >
-              <div className="flex flex-col items-center gap-2">
-                <FileText className="h-8 w-8 text-gray-400" />
-                <div className="text-center">
-                  <p className="text-sm text-gray-500">
-                    Cliquez pour télécharger
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    PDF, JPG ou PNG (max 10 Mo)
-                  </p>
-                </div>
-              </div>
-            </Button>
+              <p className="text-sm text-gray-500 text-center">
+                Ton attestation de vigilance URSSAF pour anticiper tes missions
+                supérieures à 5000 euros (obligatoire)
+              </p>
+              <Button variant="outline">Télécharger un document</Button>
+            </div>
           )}
+
           <ErrorMessage>
             {errors.attestationVigilanceChemin?.message}
           </ErrorMessage>
 
-          <DocumentUploadDialog
-            open={documentDialogOpen}
-            setOpen={setDocumentDialogOpen}
-            setFileValue={handleDocumentUploaded}
-            path="documents/vigilance"
-            accept=".pdf,.jpg,.jpeg,.png"
-            maxSizeMB={10}
-          />
+          <div className="bg-secondary-dark text-white text-sm p-2 mt-4 rounded">
+            L'attestation de vigilance est une obligation légale avant le début
+            de la prestation pour s'assurer que le prestataire est en règle avec
+            ses obligations sociales (conformément à l'article L.8222-1 du Code
+            du travail). Cette attestation est fournie par l’URSSAF. Vous pouvez
+            télécharger vos attestations directement depuis votre espace en
+            ligne sur urssaf.fr.
+          </div>
         </div>
 
-        <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
+        <div className="flex flex-col md:flex-row md:justify-end gap-3">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             onClick={() => router.back()}
             disabled={isPending}
           >
             Retour
           </Button>
-          <Button type="submit" className="flex-1" disabled={isPending}>
+          <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}
-            Continuer
+            Suivant
           </Button>
         </div>
       </form>
+
+      <DocumentUploadDialog
+        open={documentDialogOpen}
+        setOpen={setDocumentDialogOpen}
+        setFileValue={handleDocumentUploaded}
+        path="documents/vigilance"
+        accept=".pdf,.jpg,.jpeg,.png"
+        maxSizeMB={10}
+      />
     </OnboardingCard>
   );
 }

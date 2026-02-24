@@ -63,7 +63,7 @@ const ImageUploadDialog = ({
 
   const imageUrl = useMemo(
     () => (uncroppedImage ? URL.createObjectURL(uncroppedImage) : undefined),
-    [uncroppedImage],
+    [uncroppedImage]
   );
 
   const onCropComplete = useCallback(
@@ -72,7 +72,7 @@ const ImageUploadDialog = ({
       try {
         const blob = await getCroppedImgFromFile(
           uncroppedImage,
-          croppedAreaPixels,
+          croppedAreaPixels
         );
         const croppedFile = new File([blob], "cropped.jpeg", {
           type: "image/jpeg",
@@ -87,7 +87,7 @@ const ImageUploadDialog = ({
         console.error(err);
       }
     },
-    [uncroppedImage, setValue],
+    [uncroppedImage, setValue]
   );
 
   return (

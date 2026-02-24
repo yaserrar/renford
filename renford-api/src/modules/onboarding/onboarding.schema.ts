@@ -139,16 +139,29 @@ export type SkipStepSchema = z.infer<typeof skipStepSchema>;
 // ============================================================================
 
 // Schéma pour l'identité légale Renford (étape 3)
-export const updateRenfordIdentiteSchema = z.object({
-  siret: z.string().length(14, 'Le SIRET doit contenir 14 chiffres'),
-  attestationAutoEntrepreneur: z.boolean(),
-  adresse: z.string().min(5, '5 caractères minimum'),
-  codePostal: z.string().length(5, 'Le code postal doit contenir 5 chiffres'),
-  ville: z.string().min(2, '2 caractères minimum'),
-  pays: z.string().min(2, '2 caractères minimum'),
-  dateNaissance: z.string().or(z.date()),
-  attestationVigilanceChemin: z.string().optional(),
-});
+export const updateRenfordIdentiteSchema = z
+  .object({
+    siret: z.string().optional(),
+    siretEnCoursObtention: z.boolean(),
+    attestationAutoEntrepreneur: z.boolean(),
+    adresse: z.string().min(5, '5 caractères minimum'),
+    codePostal: z.string().length(5, 'Le code postal doit contenir 5 chiffres'),
+    ville: z.string().min(2, '2 caractères minimum'),
+    pays: z.string().min(2, '2 caractères minimum'),
+    dateNaissance: z.string().or(z.date()),
+    attestationVigilanceChemin: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.siretEnCoursObtention) {
+      if (!data.siret || data.siret.length !== 14 || !/^\d{14}$/.test(data.siret)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['siret'],
+          message: 'Le SIRET doit contenir 14 chiffres',
+        });
+      }
+    }
+  });
 
 export type UpdateRenfordIdentiteSchema = z.infer<typeof updateRenfordIdentiteSchema>;
 

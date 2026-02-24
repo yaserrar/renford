@@ -5,17 +5,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import ErrorMessage from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateRenfordQualifications } from "@/hooks/onboarding";
 import { useCurrentUser } from "@/hooks/utilisateur";
 import { useUploadFile } from "@/hooks/uploads";
+import { cn } from "@/lib/utils";
 import {
   NIVEAU_EXPERIENCE,
   NIVEAU_EXPERIENCE_LABELS,
@@ -70,6 +64,12 @@ export default function Etape5RenfordPage() {
 
   const proposeJournee = watch("proposeJournee");
   const proposeDemiJournee = watch("proposeDemiJournee");
+  const justificatifDiplomeFileName = justificatifDiplome
+    ? justificatifDiplome.split("/").pop()
+    : null;
+  const justificatifCarteProFileName = justificatifCartePro
+    ? justificatifCartePro.split("/").pop()
+    : null;
 
   const handleUploadDiplome = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -125,18 +125,25 @@ export default function Etape5RenfordPage() {
             name="niveauExperience"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {NIVEAU_EXPERIENCE.map((niveau) => (
-                    <SelectItem key={niveau} value={niveau}>
+              <div className="space-y-3 mt-2">
+                {NIVEAU_EXPERIENCE.map((niveau) => (
+                  <button
+                    key={niveau}
+                    type="button"
+                    onClick={() => field.onChange(niveau)}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-4 rounded-full border-2 transition-all text-left",
+                      field.value === niveau
+                        ? "border-primary bg-primary"
+                        : "border-gray-200 hover:border-gray-300"
+                    )}
+                  >
+                    <span className="font-medium text-gray-900">
                       {NIVEAU_EXPERIENCE_LABELS[niveau]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </span>
+                  </button>
+                ))}
+              </div>
             )}
           />
           <ErrorMessage>{errors.niveauExperience?.message}</ErrorMessage>
@@ -160,6 +167,9 @@ export default function Etape5RenfordPage() {
               <FileText className="h-8 w-8 text-gray-400" />
               <div className="flex-1">
                 <p className="text-sm font-medium">Document téléchargé</p>
+                <p className="text-xs text-gray-500">
+                  {justificatifDiplomeFileName || "Cliquez pour modifier"}
+                </p>
               </div>
               <Button
                 type="button"
@@ -176,17 +186,19 @@ export default function Etape5RenfordPage() {
               </Button>
             </div>
           ) : (
-            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex flex-col items-center">
-                {isUploading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                ) : (
-                  <>
-                    <Upload className="h-6 w-6 text-gray-400 mb-1" />
-                    <p className="text-sm text-gray-500">Télécharger</p>
-                  </>
-                )}
-              </div>
+            <label className="w-full p-6 flex flex-col justify-center items-center gap-2 border-2 border-dashed bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+              {isUploading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+              ) : (
+                <>
+                  <p className="text-sm text-gray-500 text-center">
+                    Ajoutez votre justificatif de diplôme (PDF, JPG, PNG)
+                  </p>
+                  <Button variant="outline" type="button">
+                    Télécharger un document
+                  </Button>
+                </>
+              )}
               <input
                 type="file"
                 className="hidden"
@@ -205,6 +217,9 @@ export default function Etape5RenfordPage() {
               <FileText className="h-8 w-8 text-gray-400" />
               <div className="flex-1">
                 <p className="text-sm font-medium">Document téléchargé</p>
+                <p className="text-xs text-gray-500">
+                  {justificatifCarteProFileName || "Cliquez pour modifier"}
+                </p>
               </div>
               <Button
                 type="button"
@@ -225,17 +240,19 @@ export default function Etape5RenfordPage() {
               </Button>
             </div>
           ) : (
-            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex flex-col items-center">
-                {isUploading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                ) : (
-                  <>
-                    <Upload className="h-6 w-6 text-gray-400 mb-1" />
-                    <p className="text-sm text-gray-500">Télécharger</p>
-                  </>
-                )}
-              </div>
+            <label className="w-full p-6 flex flex-col justify-center items-center gap-2 border-2 border-dashed bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+              {isUploading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+              ) : (
+                <>
+                  <p className="text-sm text-gray-500 text-center">
+                    Ajoutez votre justificatif de carte professionnelle
+                  </p>
+                  <Button variant="outline" type="button">
+                    Télécharger un document
+                  </Button>
+                </>
+              )}
               <input
                 type="file"
                 className="hidden"
@@ -259,13 +276,16 @@ export default function Etape5RenfordPage() {
                   type="number"
                   min={10}
                   max={500}
-                  placeholder="35"
+                  placeholder="Exemple : 50€/heure"
                   {...register("tarifHoraire", { valueAsNumber: true })}
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                   €
                 </span>
               </div>
+              <p className="text-xs text-secondary-dark mt-2">
+                Indiquez ici le montant que vous facturez à l&apos;heure.
+              </p>
               <ErrorMessage>{errors.tarifHoraire?.message}</ErrorMessage>
             </div>
 
@@ -298,13 +318,17 @@ export default function Etape5RenfordPage() {
                     type="number"
                     min={100}
                     max={5000}
-                    placeholder="280"
+                    placeholder="Exemple : 300€ pour une journée de service"
                     {...register("tarifJournee", { valueAsNumber: true })}
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                     €
                   </span>
                 </div>
+                <p className="text-xs text-secondary-dark mt-2">
+                  Indiquez le montant pour une prestation complète, quel que
+                  soit le nombre d&apos;heures travaillées.
+                </p>
                 <ErrorMessage>{errors.tarifJournee?.message}</ErrorMessage>
               </div>
             )}
@@ -340,13 +364,17 @@ export default function Etape5RenfordPage() {
                     type="number"
                     min={50}
                     max={2000}
-                    placeholder="150"
+                    placeholder="Exemple : 150€ pour une demi-journée"
                     {...register("tarifDemiJournee", { valueAsNumber: true })}
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                     €
                   </span>
                 </div>
+                <p className="text-xs text-secondary-dark mt-2">
+                  Indiquez votre tarif de base pour une demi-journée de
+                  prestation.
+                </p>
                 <ErrorMessage>{errors.tarifDemiJournee?.message}</ErrorMessage>
               </div>
             )}
@@ -356,15 +384,15 @@ export default function Etape5RenfordPage() {
         <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             onClick={() => router.back()}
             disabled={isPending}
           >
             Retour
           </Button>
-          <Button type="submit" className="flex-1" disabled={isPending}>
+          <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}
-            Continuer
+            Suivant
           </Button>
         </div>
       </form>

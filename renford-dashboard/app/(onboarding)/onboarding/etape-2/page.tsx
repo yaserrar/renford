@@ -96,7 +96,7 @@ export default function Etape2Page() {
                       <span className="font-medium text-gray-900">
                         {option.label}
                       </span>
-                      <span className="text-gray-500 ml-1">
+                      <span className="text-gray-900 ml-1">
                         {option.description}
                       </span>
                     </div>

@@ -24,7 +24,7 @@ import {
   TYPE_MISSION_LABELS,
 } from "@/validations/profil-renford";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Upload, X } from "lucide-react";
+import { Image as ImageIcon, Loader2 } from "lucide-react";
 import ImageUploadDialog from "@/components/common/image-upload-dialog";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -89,48 +89,34 @@ export default function Etape4RenfordPage() {
             Une photo professionnelle augmente vos chances d&apos;être contacté
           </p>
 
-          {photoProfil ? (
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="h-16 w-16 rounded-full bg-gray-200 overflow-hidden">
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center shrink-0">
+              {photoProfil ? (
                 <img
                   src={photoProfil}
                   alt="Photo de profil"
                   className="h-full w-full object-cover"
                 />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">Photo téléchargée</p>
-                <p className="text-xs text-gray-500">Cliquez pour modifier</p>
-              </div>
+              ) : (
+                <ImageIcon className="h-6 w-6 text-gray-400" />
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
-                variant="ghost"
-                size="icon"
-                onClick={removePhoto}
+                variant="outline"
+                onClick={() => setPhotoDialogOpen(true)}
               >
-                <X className="h-4 w-4" />
+                {photoProfil ? "Modifier la photo" : "Télécharger une photo"}
               </Button>
+              {photoProfil && (
+                <Button type="button" variant="ghost" onClick={removePhoto}>
+                  Supprimer
+                </Button>
+              )}
             </div>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-32 border-2 border-dashed"
-              onClick={() => setPhotoDialogOpen(true)}
-            >
-              <div className="flex flex-col items-center gap-2">
-                <Upload className="h-8 w-8 text-gray-400" />
-                <div className="text-center">
-                  <p className="text-sm text-gray-500">
-                    Cliquez pour télécharger
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    JPG ou PNG (max 5 Mo)
-                  </p>
-                </div>
-              </div>
-            </Button>
-          )}
+          </div>
 
           <ImageUploadDialog
             open={photoDialogOpen}
@@ -169,7 +155,7 @@ export default function Etape4RenfordPage() {
             control={control}
             render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Sélectionner..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -210,15 +196,15 @@ export default function Etape4RenfordPage() {
         <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             onClick={() => router.back()}
             disabled={isPending}
           >
             Retour
           </Button>
-          <Button type="submit" className="flex-1" disabled={isPending}>
+          <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}
-            Continuer
+            Suivant
           </Button>
         </div>
       </form>

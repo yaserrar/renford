@@ -47,6 +47,7 @@ export type ProfilRenford = {
   assuranceRCPro: boolean;
   // Informations légales (étape 3)
   siret: string | null;
+  siretEnCoursObtention: boolean;
   attestationAutoEntrepreneur: boolean;
   attestationVigilanceChemin: string | null;
   // Informations personnelles

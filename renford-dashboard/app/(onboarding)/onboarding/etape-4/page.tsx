@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { OnboardingCard } from "../-components";
+import { UploadFavorisDialog } from "./upload-favoris-dialog";
 
 export default function Etape4Page() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function Etape4Page() {
   const [favoris, setFavoris] = useState<FavoriRenfordSchema[]>([]);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   const {
     register,
@@ -87,6 +89,11 @@ export default function Etape4Page() {
     });
   };
 
+  const handleImportFavoris = (importedFavoris: FavoriRenfordSchema[]) => {
+    // Append imported favoris to existing list
+    setFavoris([...favoris, ...importedFavoris]);
+  };
+
   return (
     <OnboardingCard
       currentStep={4}
@@ -120,15 +127,15 @@ export default function Etape4Page() {
                       size="icon"
                       onClick={() => onEditFavori(index)}
                     >
-                      <Pencil size={16} />
+                      <Pencil />
                     </Button>
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="ghost-destructive"
                       size="icon"
                       onClick={() => onRemoveFavori(index)}
                     >
-                      <Trash2 size={16} />
+                      <Trash2 />
                     </Button>
                   </div>
                 </div>
@@ -204,15 +211,16 @@ export default function Etape4Page() {
         <div className="text-center">
           <button
             type="button"
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors mx-auto"
+            onClick={() => setUploadDialogOpen(true)}
+            className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors mx-auto border border-input rounded-xl px-4 w-full py-10"
           >
             <Upload size={16} />
-            <span className="underline">Importer via CSV</span>
+            <span className="underline">Importer via Excel/CSV</span>
           </button>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-4">
+        <div className="flex items-center justify-between pt-2">
           <button
             type="button"
             onClick={handleSkip}
@@ -237,6 +245,13 @@ export default function Etape4Page() {
           </div>
         </div>
       </div>
+
+      {/* Upload Dialog */}
+      <UploadFavorisDialog
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        onSubmit={handleImportFavoris}
+      />
     </OnboardingCard>
   );
 }

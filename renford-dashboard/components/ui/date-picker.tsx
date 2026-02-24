@@ -38,19 +38,20 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           type="button"
           variant="outline"
           className={cn(
-            "bg-primary-background border-0 h-12 py-1 w-full justify-start px-3 text-primary-dark/30",
+            "bg-white border border-input h-12 py-1 w-full justify-between px-3 text-gray-400",
             value && "text-black"
           )}
           disabled={disabled}
         >
-          <CalendarIcon />
           {value ? format(value, "dd/MM/yyyy") : placeholder}
+          <CalendarIcon />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-2 w-auto bg-white" align="start">
         <Calendar
           mode="single"
           selected={value}
+          captionLayout="dropdown"
           onSelect={(d) => {
             onChange(d);
             setOpen(false);

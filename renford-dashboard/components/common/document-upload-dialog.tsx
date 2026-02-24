@@ -157,7 +157,7 @@ const DocumentUploadDialog = ({
             )}
           </div>
           <DialogFooter className="sm:justify-end">
-            <Button type="button" variant="ghost" onClick={handleClose}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Annuler
             </Button>
             <Button disabled={isPending || !isDirty}>

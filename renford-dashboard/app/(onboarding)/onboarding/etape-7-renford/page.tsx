@@ -264,13 +264,13 @@ export default function Etape7RenfordPage() {
         <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             onClick={() => router.back()}
             disabled={isPending}
           >
             Retour
           </Button>
-          <Button type="submit" className="flex-1" disabled={isPending}>
+          <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}
             Terminer
           </Button>

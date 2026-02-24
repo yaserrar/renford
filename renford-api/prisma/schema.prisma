@@ -272,6 +272,7 @@ model ProfilRenford {
 
     // Informations légales (étape 3)
     siret                       String? // Numéro SIRET (14 chiffres)
+    siretEnCoursObtention       Boolean @default(false) // Numéro SIRET en cours d'obtention
     attestationAutoEntrepreneur Boolean @default(false) // Attestation auto-entrepreneur
     attestationVigilanceChemin  String? // Document attestation de vigilance
 

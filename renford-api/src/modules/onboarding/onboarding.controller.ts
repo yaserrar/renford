@@ -1,5 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import prisma from '../../config/prisma';
+import { mail } from '../../config/mail';
+import { logger } from '../../config/logger';
 import type {
   UpdateContactSchema,
   UpdateTypeSchema,
@@ -263,9 +265,47 @@ export const updateFavoris = async (
       return res.status(404).json({ message: 'Profil établissement non trouvé' });
     }
 
-    // Créer les invitations pour les favoris (stockage temporaire ou envoi d'email)
-    // Pour l'instant, on stocke les invitations dans un log ou on envoie des emails
-    // Cette logique peut être étendue selon les besoins
+    const etablissementId = profilEtablissement.etablissements[0]?.id ?? profilEtablissement.id;
+    const invitationLink = `https://renford.fr/inscription?referred_by=${encodeURIComponent(etablissementId)}`;
+
+    const sendResults = await Promise.allSettled(
+      favoris.map((favori) => {
+        const destinataire = favori.email;
+        const nomFavori = favori.nomComplet?.trim();
+
+        const html = `
+          <p>Bonjour${nomFavori ? ` ${nomFavori}` : ''},</p>
+          <p>
+            Vous avez été invité${nomFavori ? '' : '(e)'} à rejoindre Renford par un établissement partenaire.
+          </p>
+          <p>
+            Créez votre compte en cliquant ici :
+            <a href="${invitationLink}">Rejoindre Renford</a>
+          </p>
+          <p>À très bientôt,<br />L'équipe Renford</p>
+        `;
+
+        return mail.sendMail({
+          from: process.env.EMAIL_HOST_USER,
+          to: destinataire,
+          subject: 'Invitation à rejoindre Renford',
+          html,
+        });
+      }),
+    );
+
+    const sentCount = sendResults.filter((result) => result.status === 'fulfilled').length;
+    const failedCount = sendResults.length - sentCount;
+
+    if (failedCount > 0) {
+      logger.warn(
+        {
+          userId,
+          failedCount,
+        },
+        "Certaines invitations favoris n'ont pas pu être envoyées",
+      );
+    }
 
     // Mettre à jour l'étape d'onboarding
     await prisma.utilisateur.update({
@@ -278,6 +318,8 @@ export const updateFavoris = async (
     return res.json({
       message: 'Favoris enregistrés avec succès',
       count: favoris.length,
+      invitationsEnvoyees: sentCount,
+      invitationsEchouees: failedCount,
     });
   } catch (err) {
     return next(err);
@@ -338,6 +380,63 @@ export const completeOnboarding = async (req: Request, res: Response, next: Next
       },
     });
 
+    const utilisateurInfos = await prisma.utilisateur.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        prenom: true,
+        nom: true,
+        profilEtablissement: {
+          select: {
+            raisonSociale: true,
+          },
+        },
+      },
+    });
+
+    if (utilisateurInfos?.email) {
+      const prenomNom = `${utilisateurInfos.prenom ?? ''} ${utilisateurInfos.nom ?? ''}`.trim();
+      const raisonSociale =
+        utilisateurInfos.profilEtablissement?.raisonSociale ?? 'votre établissement';
+
+      const welcomeHtml = `
+        <p>Bonjour ${prenomNom},</p>
+        <p>
+          Nous sommes ravis de vous accueillir au sein de Renford, votre nouvel allié dans la recherche de talents exceptionnels pour des missions à la demande.
+        </p>
+        <p>Pour tirer le meilleur parti de notre plateforme :</p>
+        <p>
+          1. Mettez à jour votre profil - Assurez-vous que vos informations sont à jour pour attirer les meilleurs Renfords ;<br />
+          2. Planifiez votre prochaine mission - Envoyez-nous votre première demande de mission ;<br />
+          3. Parcourez le blog Renford pour vous tenir au courant des dernières actualités sportives.
+        </p>
+        <p>
+          Votre réussite est notre priorité. Pour toute question ou besoin d'assistance, n'hésitez pas à contacter notre support dédié.
+        </p>
+        <p>
+          Prêt à débuter ? Connectez-vous et lancez votre première mission <a href="https://renford.fr">ici</a>.
+        </p>
+        <p>
+          Au plaisir de contribuer au succès de ${raisonSociale}
+        </p>
+        <p>
+          À très bientôt sur la plateforme,<br />
+          L'équipe Renford
+        </p>
+      `;
+
+      try {
+        await mail.sendMail({
+          from: process.env.EMAIL_HOST_USER,
+          to: utilisateurInfos.email,
+          subject: 'Bienvenue sur Renford',
+          html: welcomeHtml,
+        });
+      } catch (emailError) {
+        logger.error({ err: emailError, userId }, "Échec d'envoi de l'email de bienvenue");
+      }
+    }
+
     return res.json({
       message: 'Onboarding terminé avec succès',
       utilisateur,
@@ -366,6 +465,7 @@ export const updateRenfordIdentite = async (
 
     const {
       siret,
+      siretEnCoursObtention,
       attestationAutoEntrepreneur,
       adresse,
       codePostal,
@@ -375,11 +475,14 @@ export const updateRenfordIdentite = async (
       attestationVigilanceChemin,
     } = req.body;
 
+    const siretValue = siretEnCoursObtention ? null : siret;
+
     // Mettre à jour le profil Renford
     const profilRenford = await prisma.profilRenford.upsert({
       where: { utilisateurId: userId },
       update: {
-        siret,
+        siret: siretValue,
+        siretEnCoursObtention,
         attestationAutoEntrepreneur,
         adresse,
         codePostal,
@@ -390,7 +493,8 @@ export const updateRenfordIdentite = async (
       },
       create: {
         utilisateurId: userId,
-        siret,
+        siret: siretValue,
+        siretEnCoursObtention,
         attestationAutoEntrepreneur,
         adresse,
         codePostal,
