@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { TYPE_ETABLISSEMENT } from "./profil-etablissement";
-import { NIVEAU_EXPERIENCE, TYPE_MISSION } from "./profil-renford";
+import {
+  DIPLOME_KEYS,
+  NIVEAU_EXPERIENCE,
+  TYPE_MISSION,
+} from "./profil-renford";
 import { TYPE_UTILISATEUR } from "./utilisateur";
 
 // Étape 1: Informations de contact
@@ -71,7 +75,7 @@ export const onboardingEtablissementSchema = z
     {
       message: "L'adresse du siège doit contenir au moins 5 caractères",
       path: ["adresseSiege"],
-    }
+    },
   )
   .refine(
     (data) => {
@@ -83,7 +87,7 @@ export const onboardingEtablissementSchema = z
     {
       message: "Le code postal du siège doit contenir exactement 5 chiffres",
       path: ["codePostalSiege"],
-    }
+    },
   )
   .refine(
     (data) => {
@@ -95,7 +99,7 @@ export const onboardingEtablissementSchema = z
     {
       message: "La ville du siège doit contenir au moins 2 caractères",
       path: ["villeSiege"],
-    }
+    },
   );
 
 export type OnboardingEtablissementSchema = z.infer<
@@ -151,7 +155,7 @@ export const onboardingRenfordIdentiteSchema = z
     dateNaissance: z.date({
       required_error: "La date de naissance est obligatoire",
     }),
-    attestationVigilanceChemin: z.string().optional(),
+    attestationVigilanceChemin: z.string().nullable().optional(),
   })
   .superRefine((data, ctx) => {
     if (!data.siretEnCoursObtention) {
@@ -171,7 +175,7 @@ export type OnboardingRenfordIdentiteSchema = z.infer<
 
 // Étape 4 Renford: Profil public
 export const onboardingRenfordProfilSchema = z.object({
-  photoProfil: z.string().optional(),
+  photoProfil: z.string().nullable().optional(),
   titreProfil: z
     .string()
     .min(5, "Le titre doit contenir au moins 5 caractères")
@@ -196,31 +200,90 @@ export type OnboardingRenfordProfilSchema = z.infer<
   typeof onboardingRenfordProfilSchema
 >;
 
-// Étape 5 Renford: Qualifications et expériences
-export const onboardingRenfordQualificationsSchema = z.object({
-  niveauExperience: z.enum(NIVEAU_EXPERIENCE, {
-    required_error: "Veuillez sélectionner votre niveau d'expérience",
-  }),
-  diplomes: z.string().optional(),
-  justificatifDiplomeChemin: z.string().optional(),
-  justificatifCarteProfessionnelleChemin: z.string().optional(),
-  tarifHoraire: z.coerce
-    .number()
+const preprocessOptionalNumber = (value: unknown) => {
+  if (value === "" || value === null || value === undefined) return undefined;
+  if (typeof value === "number" && Number.isNaN(value)) return undefined;
+  return value;
+};
+
+const tarifHoraireSchema = z.preprocess(
+  preprocessOptionalNumber,
+  z
+    .number({
+      required_error: "Le tarif horaire est obligatoire",
+      invalid_type_error: "Le tarif horaire doit être un nombre valide",
+    })
     .min(10, "Le tarif horaire minimum est de 10€")
     .max(500, "Le tarif horaire maximum est de 500€"),
-  proposeJournee: z.boolean(),
-  tarifJournee: z.coerce
-    .number()
+);
+
+const tarifJourneeSchema = z.preprocess(
+  preprocessOptionalNumber,
+  z
+    .number({
+      invalid_type_error: "Le tarif journée doit être un nombre valide",
+    })
     .min(100, "Le tarif journée minimum est de 100€")
     .max(5000, "Le tarif journée maximum est de 5000€")
     .optional(),
-  proposeDemiJournee: z.boolean(),
-  tarifDemiJournee: z.coerce
-    .number()
+);
+
+const tarifDemiJourneeSchema = z.preprocess(
+  preprocessOptionalNumber,
+  z
+    .number({
+      invalid_type_error: "Le tarif demi-journée doit être un nombre valide",
+    })
     .min(50, "Le tarif demi-journée minimum est de 50€")
     .max(2000, "Le tarif demi-journée maximum est de 2000€")
     .optional(),
-});
+);
+
+// Étape 5 Renford: Qualifications et expériences
+export const onboardingRenfordQualificationsSchema = z
+  .object({
+    niveauExperience: z.enum(NIVEAU_EXPERIENCE, {
+      required_error: "Veuillez sélectionner votre niveau d'expérience",
+    }),
+    diplomes: z
+      .array(z.enum(DIPLOME_KEYS), {
+        required_error: "Veuillez sélectionner au moins un diplôme",
+        invalid_type_error: "Le format des diplômes est invalide",
+      })
+      .min(1, "Veuillez sélectionner au moins un diplôme"),
+    justificatifDiplomeChemin: z
+      .string({ required_error: "Le justificatif diplôme est obligatoire" })
+      .min(1, "Le justificatif diplôme est obligatoire"),
+    justificatifCarteProfessionnelleChemin: z
+      .string({
+        required_error: "Le justificatif carte professionnelle est obligatoire",
+      })
+      .min(1, "Le justificatif carte professionnelle est obligatoire"),
+    tarifHoraire: tarifHoraireSchema,
+    proposeJournee: z.boolean(),
+    tarifJournee: tarifJourneeSchema,
+    proposeDemiJournee: z.boolean(),
+    tarifDemiJournee: tarifDemiJourneeSchema,
+  })
+  .superRefine((data, ctx) => {
+    if (data.proposeJournee && data.tarifJournee === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["tarifJournee"],
+        message:
+          "Le tarif journée est obligatoire quand cette option est activée",
+      });
+    }
+
+    if (data.proposeDemiJournee && data.tarifDemiJournee === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["tarifDemiJournee"],
+        message:
+          "Le tarif demi-journée est obligatoire quand cette option est activée",
+      });
+    }
+  });
 
 export type OnboardingRenfordQualificationsSchema = z.infer<
   typeof onboardingRenfordQualificationsSchema

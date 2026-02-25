@@ -70,7 +70,7 @@ export default function Etape3RenfordPage() {
 
   const removeFile = () => {
     setAttestationVigilance(null);
-    setValue("attestationVigilanceChemin", undefined, { shouldDirty: true });
+    setValue("attestationVigilanceChemin", null, { shouldDirty: true });
   };
 
   const onSubmit = (data: OnboardingRenfordIdentiteSchema) => {
@@ -267,6 +267,7 @@ export default function Etape3RenfordPage() {
         path="documents/vigilance"
         accept=".pdf,.jpg,.jpeg,.png"
         maxSizeMB={10}
+        name="attestation-vigilance"
       />
     </OnboardingCard>
   );

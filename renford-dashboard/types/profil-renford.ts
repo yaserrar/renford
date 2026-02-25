@@ -1,4 +1,5 @@
 import {
+  DIPLOME_KEYS,
   JOUR_SEMAINE,
   NIVEAU_EXPERIENCE,
   STATUT_CERTIFICATION,
@@ -17,6 +18,7 @@ export type JourSemaine = (typeof JOUR_SEMAINE)[number];
 
 // Type de poste
 export type TypePoste = (typeof TYPE_POSTE)[number];
+export type DiplomeKey = (typeof DIPLOME_KEYS)[number];
 
 // Type pour les jours de disponibilité
 export type JoursDisponibles = {
@@ -64,7 +66,7 @@ export type ProfilRenford = {
   carteIdentiteChemin: string | null;
   justificatifDiplomeChemin: string | null;
   justificatifCarteProfessionnelleChemin: string | null;
-  diplomes: string | null;
+  diplomes: DiplomeKey[];
   // Expérience (étape 5)
   niveauExperience: NiveauExperience | null;
   // Tarification (étape 5)

@@ -2,15 +2,22 @@
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import DocumentUploadDialog from "@/components/common/document-upload-dialog";
+import { Combobox } from "@/components/ui/combobox";
 import ErrorMessage from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useUpdateRenfordQualifications } from "@/hooks/onboarding";
 import { useCurrentUser } from "@/hooks/utilisateur";
-import { useUploadFile } from "@/hooks/uploads";
 import { cn } from "@/lib/utils";
 import {
+  DIPLOME_KEYS,
+  DIPLOME_LABELS,
   NIVEAU_EXPERIENCE,
   NIVEAU_EXPERIENCE_LABELS,
 } from "@/validations/profil-renford";
@@ -19,19 +26,26 @@ import {
   OnboardingRenfordQualificationsSchema,
 } from "@/validations/onboarding";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileText, Loader2, Upload, X } from "lucide-react";
+import { FileText, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
 import { OnboardingCard } from "../-components";
+
+const diplomeOptions = DIPLOME_KEYS.map((key) => ({
+  value: key,
+  label: DIPLOME_LABELS[key],
+}));
 
 export default function Etape5RenfordPage() {
   const router = useRouter();
   const { data: user } = useCurrentUser();
   const { mutate, isPending } = useUpdateRenfordQualifications();
-  const { mutateAsync: uploadFile, isPending: isUploading } = useUploadFile();
+  const [diplomeDialogOpen, setDiplomeDialogOpen] = useState(false);
+  const [carteProDialogOpen, setCarteProDialogOpen] = useState(false);
   const [justificatifDiplome, setJustificatifDiplome] = useState<string | null>(
-    user?.profilRenford?.justificatifDiplomeChemin || null
+    user?.profilRenford?.justificatifDiplomeChemin || null,
   );
   const [justificatifCartePro, setJustificatifCartePro] = useState<
     string | null
@@ -44,16 +58,19 @@ export default function Etape5RenfordPage() {
     watch,
     setValue,
     formState: { errors, isDirty },
-  } = useForm<OnboardingRenfordQualificationsSchema>({
+  } = useForm<
+    z.input<typeof onboardingRenfordQualificationsSchema>,
+    unknown,
+    OnboardingRenfordQualificationsSchema
+  >({
     resolver: zodResolver(onboardingRenfordQualificationsSchema),
     defaultValues: {
       niveauExperience: user?.profilRenford?.niveauExperience || undefined,
-      diplomes: user?.profilRenford?.diplomes || "",
+      diplomes: user?.profilRenford?.diplomes || [],
       justificatifDiplomeChemin:
-        user?.profilRenford?.justificatifDiplomeChemin || undefined,
+        user?.profilRenford?.justificatifDiplomeChemin || "",
       justificatifCarteProfessionnelleChemin:
-        user?.profilRenford?.justificatifCarteProfessionnelleChemin ||
-        undefined,
+        user?.profilRenford?.justificatifCarteProfessionnelleChemin || "",
       tarifHoraire: user?.profilRenford?.tarifHoraire || undefined,
       proposeJournee: user?.profilRenford?.proposeJournee || false,
       tarifJournee: user?.profilRenford?.tarifJournee || undefined,
@@ -70,38 +87,6 @@ export default function Etape5RenfordPage() {
   const justificatifCarteProFileName = justificatifCartePro
     ? justificatifCartePro.split("/").pop()
     : null;
-
-  const handleUploadDiplome = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const result = await uploadFile({ file, path: "documents/diplomes" });
-      setJustificatifDiplome(result.path);
-      setValue("justificatifDiplomeChemin", result.path, { shouldDirty: true });
-    } catch (error) {
-      console.error("Erreur lors de l'upload:", error);
-    }
-  };
-
-  const handleUploadCartePro = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const result = await uploadFile({ file, path: "documents/carte-pro" });
-      setJustificatifCartePro(result.path);
-      setValue("justificatifCarteProfessionnelleChemin", result.path, {
-        shouldDirty: true,
-      });
-    } catch (error) {
-      console.error("Erreur lors de l'upload:", error);
-    }
-  };
 
   const onSubmit = (data: OnboardingRenfordQualificationsSchema) => {
     mutate(data, {
@@ -132,10 +117,10 @@ export default function Etape5RenfordPage() {
                     type="button"
                     onClick={() => field.onChange(niveau)}
                     className={cn(
-                      "w-full flex items-center gap-3 px-4 py-2 rounded-full border-2 transition-all text-left",
+                      "w-full flex text-sm items-center gap-3 px-4 py-2 rounded-full border-2 transition-all text-left",
                       field.value === niveau
                         ? "border-primary bg-primary"
-                        : "border-gray-200 hover:border-gray-300"
+                        : "border-gray-200 hover:border-gray-300",
                     )}
                   >
                     <span className="font-medium text-gray-900">
@@ -150,18 +135,32 @@ export default function Etape5RenfordPage() {
         </div>
 
         <div>
-          <Label htmlFor="diplomes">Diplôme(s)</Label>
-          <Textarea
-            id="diplomes"
-            placeholder="Ex: BPJEPS, CQP ALS, STAPS..."
-            rows={2}
-            {...register("diplomes")}
+          <Label htmlFor="diplomes">Diplôme(s)*</Label>
+          <Controller
+            name="diplomes"
+            control={control}
+            render={({ field }) => (
+              <Combobox
+                multiple
+                value={field.value || []}
+                onValueChange={(value) => {
+                  field.onChange(value as string[]);
+                }}
+                options={diplomeOptions as { value: string; label: string }[]}
+                placeholder="Sélectionner un ou plusieurs diplômes"
+                searchPlaceholder="Rechercher un diplôme"
+                emptyMessage="Aucun diplôme trouvé"
+              />
+            )}
           />
+          <p className="text-xs text-secondary-dark mt-2">
+            Sélection multiple selon l&apos;annexe des diplômes sport.
+          </p>
           <ErrorMessage>{errors.diplomes?.message}</ErrorMessage>
         </div>
 
         <div>
-          <Label>Justificatif diplôme (optionnel)</Label>
+          <Label>Justificatif diplôme *</Label>
           {justificatifDiplome ? (
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <FileText className="h-8 w-8 text-gray-400" />
@@ -177,7 +176,7 @@ export default function Etape5RenfordPage() {
                 size="icon"
                 onClick={() => {
                   setJustificatifDiplome(null);
-                  setValue("justificatifDiplomeChemin", undefined, {
+                  setValue("justificatifDiplomeChemin", "", {
                     shouldDirty: true,
                   });
                 }}
@@ -186,32 +185,26 @@ export default function Etape5RenfordPage() {
               </Button>
             </div>
           ) : (
-            <label className="w-full p-6 flex flex-col justify-center items-center gap-2 border-2 border-dashed bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
-              {isUploading ? (
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-              ) : (
-                <>
-                  <p className="text-sm text-gray-500 text-center">
-                    Ajoutez votre justificatif de diplôme (PDF, JPG, PNG)
-                  </p>
-                  <Button variant="outline" type="button">
-                    Télécharger un document
-                  </Button>
-                </>
-              )}
-              <input
-                type="file"
-                className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={handleUploadDiplome}
-                disabled={isUploading}
-              />
-            </label>
+            <div className="w-full p-6 flex flex-col justify-center items-center gap-2 border-2 border-dashed bg-gray-50 rounded-xl">
+              <p className="text-sm text-gray-500 text-center">
+                Ajoutez votre justificatif de diplôme (PDF, JPG, PNG)
+              </p>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setDiplomeDialogOpen(true)}
+              >
+                Télécharger un document
+              </Button>
+            </div>
           )}
+          <ErrorMessage>
+            {errors.justificatifDiplomeChemin?.message}
+          </ErrorMessage>
         </div>
 
         <div>
-          <Label>Justificatif carte professionnelle (optionnel)</Label>
+          <Label>Justificatif carte professionnelle *</Label>
           {justificatifCartePro ? (
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <FileText className="h-8 w-8 text-gray-400" />
@@ -227,41 +220,31 @@ export default function Etape5RenfordPage() {
                 size="icon"
                 onClick={() => {
                   setJustificatifCartePro(null);
-                  setValue(
-                    "justificatifCarteProfessionnelleChemin",
-                    undefined,
-                    {
-                      shouldDirty: true,
-                    }
-                  );
+                  setValue("justificatifCarteProfessionnelleChemin", "", {
+                    shouldDirty: true,
+                  });
                 }}
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           ) : (
-            <label className="w-full p-6 flex flex-col justify-center items-center gap-2 border-2 border-dashed bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
-              {isUploading ? (
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-              ) : (
-                <>
-                  <p className="text-sm text-gray-500 text-center">
-                    Ajoutez votre justificatif de carte professionnelle
-                  </p>
-                  <Button variant="outline" type="button">
-                    Télécharger un document
-                  </Button>
-                </>
-              )}
-              <input
-                type="file"
-                className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={handleUploadCartePro}
-                disabled={isUploading}
-              />
-            </label>
+            <div className="w-full p-6 flex flex-col justify-center items-center gap-2 border-2 border-dashed bg-gray-50 rounded-xl">
+              <p className="text-sm text-gray-500 text-center">
+                Ajoutez votre justificatif de carte professionnelle
+              </p>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setCarteProDialogOpen(true)}
+              >
+                Télécharger un document
+              </Button>
+            </div>
           )}
+          <ErrorMessage>
+            {errors.justificatifCarteProfessionnelleChemin?.message}
+          </ErrorMessage>
         </div>
 
         <div className="border-t pt-4">
@@ -276,16 +259,32 @@ export default function Etape5RenfordPage() {
                   type="number"
                   min={10}
                   max={500}
+                  className="[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   placeholder="Exemple : 50€/heure"
                   {...register("tarifHoraire", { valueAsNumber: true })}
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                  €
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full text-xs border border-input"
+                    >
+                      ?
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-left leading-relaxed">
+                    Indiquez ici le montant que vous facturez à l'heure. Les
+                    utilisateurs verront cette information lorsqu'ils
+                    examineront votre profil. Les tarifs en IDF varient selon
+                    les domaines mais sont généralement compris entre 30 et 45
+                    euros pour les débutants et jusqu’à 80 euros pour les
+                    profils expérimentés.
+                  </TooltipContent>
+                </Tooltip>
               </div>
-              <p className="text-xs text-secondary-dark mt-2">
-                Indiquez ici le montant que vous facturez à l&apos;heure.
-              </p>
+
               <ErrorMessage>{errors.tarifHoraire?.message}</ErrorMessage>
             </div>
 
@@ -318,17 +317,31 @@ export default function Etape5RenfordPage() {
                     type="number"
                     min={100}
                     max={5000}
+                    className="[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     placeholder="Exemple : 300€ pour une journée de service"
                     {...register("tarifJournee", { valueAsNumber: true })}
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    €
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full text-xs border border-input"
+                      >
+                        ?
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-left leading-relaxed">
+                      Indiquez ici le montant que vous facturez pour une
+                      prestation complète, quel que soit le nombre d'heures
+                      travaillées. Les tarifs en IDF varient selon les domaines
+                      mais sont généralement compris entre 200 et 500 euros par
+                      jour.
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
-                <p className="text-xs text-secondary-dark mt-2">
-                  Indiquez le montant pour une prestation complète, quel que
-                  soit le nombre d&apos;heures travaillées.
-                </p>
+
                 <ErrorMessage>{errors.tarifJournee?.message}</ErrorMessage>
               </div>
             )}
@@ -364,17 +377,31 @@ export default function Etape5RenfordPage() {
                     type="number"
                     min={50}
                     max={2000}
+                    className="[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     placeholder="Exemple : 150€ pour une demi-journée"
                     {...register("tarifDemiJournee", { valueAsNumber: true })}
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    €
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full text-xs border border-input"
+                      >
+                        ?
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-left leading-relaxed">
+                      Indiquez ici votre tarif de base pour une prestation
+                      complète. Vous pouvez également indiquer des tarifs
+                      dégressifs en fonction du nombre d'élèves présents à la
+                      session (ex : 1 à 5 élèves = 300€, 6 à 10 élèves = 250€,
+                      etc.).
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
-                <p className="text-xs text-secondary-dark mt-2">
-                  Indiquez votre tarif de base pour une demi-journée de
-                  prestation.
-                </p>
+
                 <ErrorMessage>{errors.tarifDemiJournee?.message}</ErrorMessage>
               </div>
             )}
@@ -396,6 +423,34 @@ export default function Etape5RenfordPage() {
           </Button>
         </div>
       </form>
+
+      <DocumentUploadDialog
+        open={diplomeDialogOpen}
+        setOpen={setDiplomeDialogOpen}
+        setFileValue={(path) => {
+          setJustificatifDiplome(path);
+          setValue("justificatifDiplomeChemin", path, { shouldDirty: true });
+        }}
+        path="documents/diplomes"
+        name="justificatif-diplome"
+        accept=".pdf,.jpg,.jpeg,.png"
+        maxSizeMB={10}
+      />
+
+      <DocumentUploadDialog
+        open={carteProDialogOpen}
+        setOpen={setCarteProDialogOpen}
+        setFileValue={(path) => {
+          setJustificatifCartePro(path);
+          setValue("justificatifCarteProfessionnelleChemin", path, {
+            shouldDirty: true,
+          });
+        }}
+        path="documents/carte-pro"
+        name="justificatif-carte-professionnelle"
+        accept=".pdf,.jpg,.jpeg,.png"
+        maxSizeMB={10}
+      />
     </OnboardingCard>
   );
 }

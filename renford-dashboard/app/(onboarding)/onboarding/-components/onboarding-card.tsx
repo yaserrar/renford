@@ -11,6 +11,7 @@ type Props = {
   totalSteps?: number;
   title: string;
   subtitle?: string;
+  description?: string;
 };
 
 export function OnboardingCard({
@@ -19,6 +20,7 @@ export function OnboardingCard({
   totalSteps = 5,
   title,
   subtitle,
+  description,
 }: Props) {
   return (
     <main className="min-h-screen bg-white md:bg-secondary-background flex flex-col">
@@ -33,7 +35,7 @@ export function OnboardingCard({
       </div>
 
       {/* Contenu principal */}
-      <div className="w-full flex justify-center p-4 md:p-6 mt-32">
+      <div className="w-full flex flex-col justify-center items-center p-4 md:p-6 mt-32">
         <div className="bg-white md:rounded-3xl md:border md:border-gray-100 p-6 md:p-8 md:w-xl">
           <div className="text-center mb-8">
             <H2>{title}</H2>
@@ -42,6 +44,11 @@ export function OnboardingCard({
 
           {children}
         </div>
+        {description && (
+          <p className="text-gray-500 mt-4 md:w-xl text-center text-sm">
+            {description}
+          </p>
+        )}
       </div>
     </main>
   );

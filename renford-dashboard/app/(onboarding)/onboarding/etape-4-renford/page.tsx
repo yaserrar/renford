@@ -33,7 +33,7 @@ export default function Etape4RenfordPage() {
   const { mutate, isPending } = useUpdateRenfordProfil();
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
   const [photoProfil, setPhotoProfil] = useState<string | null>(
-    user?.profilRenford?.photoProfil || null
+    user?.profilRenford?.photoProfil || null,
   );
 
   const {
@@ -60,7 +60,7 @@ export default function Etape4RenfordPage() {
 
   const removePhoto = () => {
     setPhotoProfil(null);
-    setValue("photoProfil", undefined, { shouldDirty: true });
+    setValue("photoProfil", null, { shouldDirty: true });
   };
 
   const onSubmit = (data: OnboardingRenfordProfilSchema) => {

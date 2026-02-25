@@ -28,8 +28,11 @@ export default function Etape6RenfordPage() {
   const { mutate: skipStep, isPending: isSkipping } = useSkipRenfordStep();
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   const [carteIdentite, setCarteIdentite] = useState<string | null>(
-    user?.profilRenford?.carteIdentiteChemin || null
+    user?.profilRenford?.carteIdentiteChemin || null,
   );
+  const carteIdentiteFileName = carteIdentite
+    ? carteIdentite.split("/").pop()
+    : null;
 
   const {
     register,
@@ -71,104 +74,109 @@ export default function Etape6RenfordPage() {
   };
 
   return (
-    <OnboardingCard
-      currentStep={6}
-      totalSteps={8}
-      title="Informations bancaires"
-      subtitle="Pour recevoir vos paiements"
-    >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <div>
-          <Label htmlFor="iban">IBAN*</Label>
-          <Input
-            id="iban"
-            placeholder="FR76 1234 5678 9012 3456 7890 123"
-            {...register("iban")}
-          />
-          <ErrorMessage>{errors.iban?.message}</ErrorMessage>
-        </div>
+    <>
+      <OnboardingCard
+        currentStep={6}
+        totalSteps={8}
+        title="Informations bancaires"
+        subtitle="Pour recevoir vos paiements"
+        description="Renford s’appuie sur Stripe pour la gestion, la sécurisation et la
+          vérification de vos informations bancaires. Vos données (IBAN et
+          justificatifs d’identité) sont transmises de manière chiffrée à
+          Stripe, qui les traite conformément aux obligations légales (KYC) et
+          aux normes de sécurité internationales. Renford n’accède jamais à vos
+          documents ou données bancaires. En continuant, vous acceptez le
+          traitement de ces informations par Stripe conformément à sa politique
+          de confidentialité."
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div>
+            <Label htmlFor="iban">IBAN*</Label>
+            <Input
+              id="iban"
+              placeholder="FR76 1234 5678 9012 3456 7890 123"
+              {...register("iban")}
+            />
+            <ErrorMessage>{errors.iban?.message}</ErrorMessage>
+          </div>
 
-        <div>
-          <Label>Carte d&apos;identité*</Label>
-          <p className="text-sm text-gray-500 mb-2">
-            Document obligatoire pour vérifier votre identité
-          </p>
+          <div>
+            <Label>Carte d&apos;identité*</Label>
 
-          {carteIdentite ? (
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <FileText className="h-8 w-8 text-gray-400" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Document téléchargé</p>
-                <p className="text-xs text-gray-500">Cliquez pour modifier</p>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={removeFile}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-32 border-2 border-dashed"
-              onClick={() => setDocumentDialogOpen(true)}
-            >
-              <div className="flex flex-col items-center gap-2">
+            {carteIdentite ? (
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <FileText className="h-8 w-8 text-gray-400" />
-                <div className="text-center">
-                  <p className="text-sm text-gray-500">
-                    Cliquez pour télécharger
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    PDF, JPG ou PNG (max 5 Mo)
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Document téléchargé</p>
+                  <p className="text-xs text-gray-500">
+                    {carteIdentiteFileName || "Cliquez pour modifier"}
                   </p>
                 </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={removeFile}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-            </Button>
-          )}
-          <ErrorMessage>{errors.carteIdentiteChemin?.message}</ErrorMessage>
+            ) : (
+              <div className="w-full p-6 flex flex-col justify-center items-center gap-2 border-2 border-dashed bg-gray-50 rounded-xl">
+                <p className="text-sm text-gray-500 text-center">
+                  Ajoutez votre carte d&apos;identité (PDF, JPG, PNG)
+                </p>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setDocumentDialogOpen(true)}
+                >
+                  Télécharger un document
+                </Button>
+              </div>
+            )}
+            <ErrorMessage>{errors.carteIdentiteChemin?.message}</ErrorMessage>
+          </div>
 
-          <DocumentUploadDialog
-            open={documentDialogOpen}
-            setOpen={setDocumentDialogOpen}
-            setFileValue={handleDocumentUploaded}
-            path="documents/identite"
-            accept=".pdf,.jpg,.jpeg,.png"
-            maxSizeMB={5}
-          />
-        </div>
-
-        <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
-          <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 pt-4">
             <Button
               type="button"
-              variant="outline"
-              onClick={() => router.back()}
+              variant="link"
+              onClick={handleSkip}
               disabled={isPending || isSkipping}
+              className="text-gray-500"
             >
-              Retour
+              {isSkipping && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
+              Passer cette étape
             </Button>
-            <Button type="submit" disabled={isPending || !carteIdentite}>
-              {isPending && <Loader2 className="animate-spin" />}
-              Suivant
-            </Button>
+
+            <div className="flex flex-col md:flex-row md:justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                disabled={isPending || isSkipping}
+              >
+                Retour
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending && <Loader2 className="animate-spin" />}
+                Suivant
+              </Button>
+            </div>
           </div>
-          <Button
-            type="button"
-            variant="link"
-            onClick={handleSkip}
-            disabled={isPending || isSkipping}
-            className="text-gray-500"
-          >
-            {isSkipping && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
-            Passer cette étape
-          </Button>
-        </div>
-      </form>
-    </OnboardingCard>
+        </form>
+
+        <DocumentUploadDialog
+          open={documentDialogOpen}
+          setOpen={setDocumentDialogOpen}
+          setFileValue={handleDocumentUploaded}
+          path="documents/identite"
+          accept=".pdf,.jpg,.jpeg,.png"
+          maxSizeMB={5}
+          name="carte-identite"
+        />
+      </OnboardingCard>
+    </>
   );
 }

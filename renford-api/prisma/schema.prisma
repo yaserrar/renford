@@ -296,7 +296,7 @@ model ProfilRenford {
     carteIdentiteChemin                    String?
     justificatifDiplomeChemin              String? // Justificatif de diplôme
     justificatifCarteProfessionnelleChemin String? // Justificatif de carte professionnelle
-    diplomes                               String? @db.Text // Description des diplômes
+    diplomes                               String[] @default([]) // Clés de diplômes sélectionnées
 
     // Expérience (étape 5)
     niveauExperience NiveauExperience?
