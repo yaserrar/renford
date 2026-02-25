@@ -265,10 +265,10 @@ model ProfilRenford {
 
     // Profil public (étape 4)
     titreProfil       String?
-    descriptionProfil String?      @db.Text
+    descriptionProfil String?       @db.Text
     photoProfil       String? // Chemin vers la photo de profil
-    typeMission       TypeMission? // volant, mission_longue, les_deux
-    assuranceRCPro    Boolean      @default(false)
+    typeMission       TypeMission[] @default([])
+    assuranceRCPro    Boolean       @default(false)
 
     // Informations légales (étape 3)
     siret                       String? // Numéro SIRET (14 chiffres)
@@ -355,9 +355,21 @@ enum NiveauExperience {
 }
 
 enum TypeMission {
-    volant
-    mission_longue
-    les_deux
+    coaching_individuel
+    sessions_en_groupe
+    ateliers_workshops
+    evenements_speciaux
+    remplacement_temporaire
+    consultation_accompagnement
+    programmes_specifiques
+    encadrement_enfants_adolescents
+    formation_certification
+    maintenance_gestion_equipements
+    suivi_evaluation_clients
+    encadrement_competitions
+    animation_activites_loisirs
+    seances_initiation
+    consulting_amelioration_performances
 }
 
 enum JourSemaine {

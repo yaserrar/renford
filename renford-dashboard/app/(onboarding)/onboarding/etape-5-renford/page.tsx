@@ -120,7 +120,7 @@ export default function Etape5RenfordPage() {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div>
-          <Label>Niveau d&apos;expérience*</Label>
+          <Label>Niveau d&apos;expérience</Label>
           <Controller
             name="niveauExperience"
             control={control}
@@ -132,7 +132,7 @@ export default function Etape5RenfordPage() {
                     type="button"
                     onClick={() => field.onChange(niveau)}
                     className={cn(
-                      "w-full flex items-center gap-3 p-4 rounded-full border-2 transition-all text-left",
+                      "w-full flex items-center gap-3 px-4 py-2 rounded-full border-2 transition-all text-left",
                       field.value === niveau
                         ? "border-primary bg-primary"
                         : "border-gray-200 hover:border-gray-300"

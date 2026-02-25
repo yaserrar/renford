@@ -2,16 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Combobox } from "@/components/ui/combobox";
 import ErrorMessage from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateRenfordProfil } from "@/hooks/onboarding";
 import { useCurrentUser } from "@/hooks/utilisateur";
@@ -24,12 +19,13 @@ import {
   TYPE_MISSION_LABELS,
 } from "@/validations/profil-renford";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Image as ImageIcon, Loader2 } from "lucide-react";
+import { Image as ImageIcon, Loader2, Trash } from "lucide-react";
 import ImageUploadDialog from "@/components/common/image-upload-dialog";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { OnboardingCard } from "../-components";
+import { getUrl } from "@/lib/utils";
 
 export default function Etape4RenfordPage() {
   const router = useRouter();
@@ -52,7 +48,7 @@ export default function Etape4RenfordPage() {
       photoProfil: user?.profilRenford?.photoProfil || undefined,
       titreProfil: user?.profilRenford?.titreProfil || "",
       descriptionProfil: user?.profilRenford?.descriptionProfil || "",
-      typeMission: user?.profilRenford?.typeMission || undefined,
+      typeMission: user?.profilRenford?.typeMission || [],
       assuranceRCPro: user?.profilRenford?.assuranceRCPro || false,
     },
   });
@@ -80,27 +76,36 @@ export default function Etape4RenfordPage() {
       currentStep={4}
       totalSteps={8}
       title="Parfait ! Finalisons votre profil 💪"
-      subtitle="Ces informations seront visibles par les établissements"
+      subtitle="Ces infos permettront aux structures de mieux vous connaître."
     >
+      <ImageUploadDialog
+        open={photoDialogOpen}
+        setOpen={setPhotoDialogOpen}
+        setImageValue={handlePhotoUploaded}
+        path="profils/photos"
+        aspect={1}
+      />
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div>
-          <Label>Photo de profil (optionnel)</Label>
-          <p className="text-sm text-gray-500 mb-2">
-            Une photo professionnelle augmente vos chances d&apos;être contacté
-          </p>
-
+          <Label>Photo</Label>
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center shrink-0">
-              {photoProfil ? (
-                <img
-                  src={photoProfil}
+            <Avatar
+              className="h-20 w-20 bg-gray-200 cursor-pointer"
+              onClick={() => setPhotoDialogOpen(true)}
+            >
+              {photoProfil && (
+                <AvatarImage
+                  src={getUrl(photoProfil)}
                   alt="Photo de profil"
-                  className="h-full w-full object-cover"
+                  width={80}
+                  height={80}
+                  className="object-cover"
                 />
-              ) : (
-                <ImageIcon className="h-6 w-6 text-gray-400" />
               )}
-            </div>
+              <AvatarFallback className="bg-gray-200">
+                <ImageIcon className="h-6 w-6 text-gray-400" />
+              </AvatarFallback>
+            </Avatar>
 
             <div className="flex items-center gap-2">
               <Button
@@ -111,20 +116,17 @@ export default function Etape4RenfordPage() {
                 {photoProfil ? "Modifier la photo" : "Télécharger une photo"}
               </Button>
               {photoProfil && (
-                <Button type="button" variant="ghost" onClick={removePhoto}>
-                  Supprimer
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost-destructive"
+                  onClick={removePhoto}
+                >
+                  <Trash className="h-4 w-4" />
                 </Button>
               )}
             </div>
           </div>
-
-          <ImageUploadDialog
-            open={photoDialogOpen}
-            setOpen={setPhotoDialogOpen}
-            setImageValue={handlePhotoUploaded}
-            path="profils/photos"
-            aspect={1}
-          />
         </div>
 
         <div>
@@ -154,24 +156,24 @@ export default function Etape4RenfordPage() {
             name="typeMission"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Sélectionner..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {TYPE_MISSION.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {TYPE_MISSION_LABELS[type]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                multiple
+                value={field.value || []}
+                onValueChange={(value) => field.onChange(value as string[])}
+                options={TYPE_MISSION.map((type) => ({
+                  value: type,
+                  label: TYPE_MISSION_LABELS[type],
+                }))}
+                placeholder="Sélectionner un ou plusieurs types"
+                searchPlaceholder="Rechercher un type de mission"
+                emptyMessage="Aucun type trouvé"
+              />
             )}
           />
           <ErrorMessage>{errors.typeMission?.message}</ErrorMessage>
         </div>
 
-        <div className="flex items-start gap-2 pt-2">
+        <div className="flex gap-2 pt-2">
           <Controller
             name="assuranceRCPro"
             control={control}
@@ -186,7 +188,7 @@ export default function Etape4RenfordPage() {
           />
           <Label
             htmlFor="assuranceRCPro"
-            className="cursor-pointer font-normal"
+            className="cursor-pointer font-normal mb-0"
           >
             Je certifie sur l&apos;honneur avoir une Assurance RC Pro*
           </Label>

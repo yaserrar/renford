@@ -25,8 +25,9 @@ interface ComboboxOption {
 
 interface ComboboxProps {
   options: ComboboxOption[];
-  value?: string;
-  onValueChange?: (value: string) => void;
+  value?: string | string[];
+  onValueChange?: (value: string | string[]) => void;
+  multiple?: boolean;
   placeholder?: string;
   searchPlaceholder?: string;
   emptyMessage?: string;
@@ -38,19 +39,27 @@ export function Combobox({
   options,
   value,
   onValueChange,
-  placeholder = "Sélectionner...",
-  searchPlaceholder = "Rechercher...",
-  emptyMessage = "Aucun résultat.",
+  multiple = false,
+  placeholder = "Select...",
+  searchPlaceholder = "Search...",
+  emptyMessage = "No results.",
   className,
   disabled = false,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
 
-  const selectedOption = options.find((option) => option.value === value);
+  const selectedValues = React.useMemo(
+    () => (Array.isArray(value) ? value : value ? [value] : []),
+    [value]
+  );
+
+  const selectedOptions = options.filter((option) =>
+    selectedValues.includes(option.value)
+  );
 
   const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(searchValue.toLowerCase()),
+    option.label.toLowerCase().includes(searchValue.toLowerCase())
   );
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -58,6 +67,30 @@ export function Combobox({
     if (!newOpen) {
       setSearchValue("");
     }
+  };
+
+  const triggerLabel = React.useMemo(() => {
+    if (selectedOptions.length === 0) return placeholder;
+    if (!multiple) return selectedOptions[0]?.label ?? placeholder;
+    if (selectedOptions.length <= 10) {
+      return selectedOptions.map((option) => option.label).join(", ");
+    }
+    return `${selectedOptions.length} sélectionnés`;
+  }, [selectedOptions, placeholder, multiple]);
+
+  const handleSelect = (optionValue: string) => {
+    if (multiple) {
+      const exists = selectedValues.includes(optionValue);
+      const newValues = exists
+        ? selectedValues.filter((item) => item !== optionValue)
+        : [...selectedValues, optionValue];
+      onValueChange?.(newValues);
+      return;
+    }
+
+    const newValue = optionValue === selectedValues[0] ? "" : optionValue;
+    onValueChange?.(newValue);
+    setOpen(false);
   };
 
   return (
@@ -69,12 +102,12 @@ export function Combobox({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "w-full h-12 justify-between font-normal px-3 bg-primary-background text-black",
-            !value && "text-primary-dark/30",
-            className,
+            "bg-white border border-input h-12 py-1 w-full justify-between px-3 text-gray-400",
+            selectedOptions.length > 0 && "text-black",
+            className
           )}
         >
-          {selectedOption ? selectedOption.label : placeholder}
+          <span className="truncate">{triggerLabel}</span>
           <ChevronsUpDown className="h-4 w-4 shrink-0" />
         </Button>
       </PopoverTrigger>
@@ -93,19 +126,15 @@ export function Combobox({
                 <CommandItem
                   key={option.value}
                   value={option.label}
-                  onSelect={() => {
-                    onValueChange?.(
-                      // @ts-ignore
-                      option.value === value ? null : option.value,
-                    );
-                    setOpen(false);
-                  }}
+                  onSelect={() => handleSelect(option.value)}
                 >
                   {option.label}
                   <Check
                     className={cn(
                       "ml-auto h-4 w-4",
-                      value === option.value ? "opacity-100" : "opacity-0",
+                      selectedValues.includes(option.value)
+                        ? "opacity-100"
+                        : "opacity-0"
                     )}
                   />
                 </CommandItem>

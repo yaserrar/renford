@@ -165,7 +165,23 @@ export const updateRenfordIdentiteSchema = z
 
 export type UpdateRenfordIdentiteSchema = z.infer<typeof updateRenfordIdentiteSchema>;
 
-export const TYPE_MISSION = ['volant', 'mission_longue', 'les_deux'] as const;
+export const TYPE_MISSION = [
+  'coaching_individuel',
+  'sessions_en_groupe',
+  'ateliers_workshops',
+  'evenements_speciaux',
+  'remplacement_temporaire',
+  'consultation_accompagnement',
+  'programmes_specifiques',
+  'encadrement_enfants_adolescents',
+  'formation_certification',
+  'maintenance_gestion_equipements',
+  'suivi_evaluation_clients',
+  'encadrement_competitions',
+  'animation_activites_loisirs',
+  'seances_initiation',
+  'consulting_amelioration_performances',
+] as const;
 
 // Schéma pour le profil Renford (étape 4)
 export const updateRenfordProfilSchema = z.object({
@@ -175,9 +191,12 @@ export const updateRenfordProfilSchema = z.object({
     .string()
     .min(20, '20 caractères minimum')
     .max(1000, '1000 caractères maximum'),
-  typeMission: z.enum(TYPE_MISSION, {
-    required_error: 'Le type de mission est obligatoire',
-  }),
+  typeMission: z
+    .array(z.enum(TYPE_MISSION), {
+      required_error: 'Veuillez sélectionner au moins un type de mission',
+      invalid_type_error: 'Le type de mission doit être un tableau de valeurs valides',
+    })
+    .min(1, 'Veuillez sélectionner au moins un type de mission'),
   assuranceRCPro: z.boolean(),
 });
 

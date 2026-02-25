@@ -180,9 +180,13 @@ export const onboardingRenfordProfilSchema = z.object({
     .string()
     .min(20, "La description doit contenir au moins 20 caractères")
     .max(1000, "La description ne peut pas dépasser 1000 caractères"),
-  typeMission: z.enum(TYPE_MISSION, {
-    required_error: "Veuillez sélectionner un type de mission",
-  }),
+  typeMission: z
+    .array(z.enum(TYPE_MISSION), {
+      required_error: "Veuillez sélectionner au moins un type de mission",
+      invalid_type_error:
+        "Le type de mission doit être un tableau de valeurs valides",
+    })
+    .min(1, "Veuillez sélectionner au moins un type de mission"),
   assuranceRCPro: z.boolean().refine((val) => val === true, {
     message: "Vous devez certifier avoir une assurance RC Pro",
   }),

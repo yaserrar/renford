@@ -43,7 +43,7 @@ export type ProfilRenford = {
   titreProfil: string | null;
   descriptionProfil: string | null;
   photoProfil: string | null;
-  typeMission: TypeMission | null;
+  typeMission: TypeMission[];
   assuranceRCPro: boolean;
   // Informations légales (étape 3)
   siret: string | null;

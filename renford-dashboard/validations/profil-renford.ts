@@ -70,13 +70,42 @@ export const TYPE_POSTE_LABELS: Record<(typeof TYPE_POSTE)[number], string> = {
 };
 
 // Type de mission
-export const TYPE_MISSION = ["volant", "mission_longue", "les_deux"] as const;
+export const TYPE_MISSION = [
+  "coaching_individuel",
+  "sessions_en_groupe",
+  "ateliers_workshops",
+  "evenements_speciaux",
+  "remplacement_temporaire",
+  "consultation_accompagnement",
+  "programmes_specifiques",
+  "encadrement_enfants_adolescents",
+  "formation_certification",
+  "maintenance_gestion_equipements",
+  "suivi_evaluation_clients",
+  "encadrement_competitions",
+  "animation_activites_loisirs",
+  "seances_initiation",
+  "consulting_amelioration_performances",
+] as const;
 export type TypeMission = (typeof TYPE_MISSION)[number];
 
 export const TYPE_MISSION_LABELS: Record<TypeMission, string> = {
-  volant: "Volant (missions ponctuelles)",
-  mission_longue: "Mission longue durée",
-  les_deux: "Les deux",
+  coaching_individuel: "Coaching Individuel",
+  sessions_en_groupe: "Sessions en Groupe",
+  ateliers_workshops: "Ateliers et Workshops",
+  evenements_speciaux: "Événements Spéciaux",
+  remplacement_temporaire: "Remplacement Temporaire",
+  consultation_accompagnement: "Consultation et Accompagnement",
+  programmes_specifiques: "Programmes Spécifiques",
+  encadrement_enfants_adolescents: "Encadrement d’Enfants et d’Adolescents",
+  formation_certification: "Formation et Certification",
+  maintenance_gestion_equipements: "Maintenance et Gestion des Équipements",
+  suivi_evaluation_clients: "Suivi et Évaluation des Clients",
+  encadrement_competitions: "Encadrement de Compétitions",
+  animation_activites_loisirs: "Animation d’activités de loisirs",
+  seances_initiation: "Séances d’initiation",
+  consulting_amelioration_performances:
+    "Consulting en Amélioration des Performances",
 };
 
 // Créneaux horaires pour les disponibilités
