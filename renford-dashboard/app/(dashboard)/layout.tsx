@@ -1,5 +1,6 @@
 import "@/app/globals.css";
-import { Header } from "@/components/layout/header";
+import AppSidebar from "@/components/layout/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import CurrentUserProvider from "@/providers/current-user-provider";
 import SessionProvider from "@/providers/session-provider";
 import TanstackQueryProvider from "@/providers/tanstack-query-provider";
@@ -31,7 +32,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-export default async function RootLayout({ children }: Props) {
+export default function RootLayout({ children }: Props) {
   return (
     <html lang="fr">
       <body className={`${poppins.className}`}>
@@ -39,10 +40,12 @@ export default async function RootLayout({ children }: Props) {
         <TanstackQueryProvider>
           <SessionProvider>
             <CurrentUserProvider>
-              <main>
-                <Header />
-                <div className="h-full bg-background pt-20">{children}</div>
-              </main>
+              <SidebarProvider>
+                <AppSidebar />
+                <SidebarInset>
+                  <main className="h-full bg-background">{children}</main>
+                </SidebarInset>
+              </SidebarProvider>
             </CurrentUserProvider>
           </SessionProvider>
         </TanstackQueryProvider>

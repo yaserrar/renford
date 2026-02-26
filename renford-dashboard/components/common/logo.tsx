@@ -9,7 +9,7 @@ type Props = {
 
 export function Logo({ className, size }: Props) {
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex items-center gap-2 text-black", className)}>
       <Image src="/logo.png" alt="Renford" width={40} height={40} />
       <H4>renford</H4>
     </div>
