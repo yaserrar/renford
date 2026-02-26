@@ -29,9 +29,9 @@ export default function RenfordIndicatorsSection() {
       {CARDS.map((card) => (
         <article
           key={card.title}
-          className="rounded-2xl bg-secondary-dark text-white px-4 py-5"
+          className="rounded-2xl bg-[#02162E] text-white px-4 py-5"
         >
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <p className="text-sm font-semibold">{card.title}</p>
             <button className="inline-flex items-center gap-1 text-xs underline underline-offset-2">
               {card.ctaLabel}

@@ -44,12 +44,16 @@ export default function Etape5RenfordPage() {
   const { mutate, isPending } = useUpdateRenfordQualifications();
   const [diplomeDialogOpen, setDiplomeDialogOpen] = useState(false);
   const [carteProDialogOpen, setCarteProDialogOpen] = useState(false);
+  const [activeDiplomeForUpload, setActiveDiplomeForUpload] = useState<
+    string | null
+  >(null);
 
   const {
     register,
     handleSubmit,
     control,
     watch,
+    getValues,
     setValue,
     formState: { errors, isDirty },
   } = useForm<
@@ -61,8 +65,8 @@ export default function Etape5RenfordPage() {
     defaultValues: {
       niveauExperience: user?.profilRenford?.niveauExperience || undefined,
       diplomes: user?.profilRenford?.diplomes || [],
-      justificatifDiplomeChemin:
-        user?.profilRenford?.justificatifDiplomeChemin || "",
+      justificatifDiplomeChemins:
+        user?.profilRenford?.justificatifDiplomeChemins || [],
       justificatifCarteProfessionnelleChemin:
         user?.profilRenford?.justificatifCarteProfessionnelleChemin || "",
       tarifHoraire: user?.profilRenford?.tarifHoraire || undefined,
@@ -75,12 +79,9 @@ export default function Etape5RenfordPage() {
 
   const proposeJournee = watch("proposeJournee");
   const proposeDemiJournee = watch("proposeDemiJournee");
-  const justificatifDiplome = watch("justificatifDiplomeChemin");
+  const diplomesSelectionnes = watch("diplomes") || [];
+  const justificatifDiplomeChemins = watch("justificatifDiplomeChemins") || [];
   const justificatifCartePro = watch("justificatifCarteProfessionnelleChemin");
-  const justificatifDiplomeFileName = useMemo(
-    () => (justificatifDiplome ? justificatifDiplome.split("/").pop() : null),
-    [justificatifDiplome],
-  );
   const justificatifCarteProFileName = useMemo(
     () => (justificatifCartePro ? justificatifCartePro.split("/").pop() : null),
     [justificatifCartePro],
@@ -96,13 +97,29 @@ export default function Etape5RenfordPage() {
 
   const handleDiplomeUploaded = useCallback(
     (path: string) => {
-      setValue("justificatifDiplomeChemin", path, {
+      if (!activeDiplomeForUpload) return;
+
+      const diplomes = getValues("diplomes") || [];
+      const index = diplomes.findIndex(
+        (diplome) => diplome === activeDiplomeForUpload,
+      );
+
+      if (index < 0) return;
+
+      const updatedChemins = [
+        ...(getValues("justificatifDiplomeChemins") || []),
+      ];
+      updatedChemins[index] = path;
+
+      setValue("justificatifDiplomeChemins", updatedChemins, {
         shouldDirty: true,
         shouldTouch: true,
         shouldValidate: true,
       });
+
+      setActiveDiplomeForUpload(null);
     },
-    [setValue],
+    [activeDiplomeForUpload, getValues, setValue],
   );
 
   const handleCarteProUploaded = useCallback(
@@ -164,7 +181,28 @@ export default function Etape5RenfordPage() {
                 multiple
                 value={field.value || []}
                 onValueChange={(value) => {
-                  field.onChange(value as string[]);
+                  const nextDiplomes = value as string[];
+                  const currentDiplomes = field.value || [];
+                  const currentChemins =
+                    getValues("justificatifDiplomeChemins") || [];
+
+                  const cheminByDiplome = new Map(
+                    currentDiplomes.map((diplome, index) => [
+                      diplome,
+                      currentChemins[index] || "",
+                    ]),
+                  );
+
+                  const nextChemins = nextDiplomes.map(
+                    (diplome) => cheminByDiplome.get(diplome) || "",
+                  );
+
+                  field.onChange(nextDiplomes);
+                  setValue("justificatifDiplomeChemins", nextChemins, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                    shouldValidate: true,
+                  });
                 }}
                 options={diplomeOptions as { value: string; label: string }[]}
                 placeholder="Sélectionner un ou plusieurs diplômes"
@@ -180,47 +218,97 @@ export default function Etape5RenfordPage() {
         </div>
 
         <div>
-          <Label>Justificatif diplôme *</Label>
-          {Boolean(justificatifDiplome) ? (
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <FileText className="h-8 w-8 text-gray-400" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Document téléchargé</p>
-                <p className="text-xs text-gray-500">
-                  {justificatifDiplomeFileName || "Cliquez pour modifier"}
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setValue("justificatifDiplomeChemin", "", {
-                    shouldDirty: true,
-                    shouldTouch: true,
-                    shouldValidate: true,
-                  });
-                }}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
+          <Label>Justificatifs de diplôme *</Label>
+          {diplomesSelectionnes.length === 0 ? (
             <div className="w-full p-6 flex flex-col justify-center items-center gap-2 border-2 border-dashed bg-gray-50 rounded-xl">
               <p className="text-sm text-gray-500 text-center">
-                Ajoutez votre justificatif de diplôme (PDF, JPG, PNG)
+                Sélectionnez au moins un diplôme pour ajouter ses justificatifs.
               </p>
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => setDiplomeDialogOpen(true)}
-              >
-                Télécharger un document
-              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {diplomesSelectionnes.map((diplome, index) => {
+                const chemin = justificatifDiplomeChemins[index] || "";
+                const fileName = chemin ? chemin.split("/").pop() : null;
+
+                return (
+                  <div
+                    key={diplome}
+                    className="border rounded-lg p-3 bg-gray-50"
+                  >
+                    <p className="text-sm font-medium mb-2">
+                      {DIPLOME_LABELS[diplome as keyof typeof DIPLOME_LABELS]}
+                    </p>
+
+                    {chemin ? (
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-8 w-8 text-gray-400" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">
+                            Document téléchargé
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {fileName || "Cliquez pour modifier"}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setActiveDiplomeForUpload(diplome);
+                            setDiplomeDialogOpen(true);
+                          }}
+                        >
+                          Modifier
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const updated = [...justificatifDiplomeChemins];
+                            updated[index] = "";
+                            setValue("justificatifDiplomeChemins", updated, {
+                              shouldDirty: true,
+                              shouldTouch: true,
+                              shouldValidate: true,
+                            });
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm text-gray-500">
+                          Aucun justificatif ajouté pour ce diplôme.
+                        </p>
+                        <Button
+                          variant="outline"
+                          type="button"
+                          onClick={() => {
+                            setActiveDiplomeForUpload(diplome);
+                            setDiplomeDialogOpen(true);
+                          }}
+                        >
+                          Télécharger un document
+                        </Button>
+                      </div>
+                    )}
+
+                    <ErrorMessage>
+                      {
+                        (errors.justificatifDiplomeChemins as any)?.[index]
+                          ?.message
+                      }
+                    </ErrorMessage>
+                  </div>
+                );
+              })}
             </div>
           )}
           <ErrorMessage>
-            {errors.justificatifDiplomeChemin?.message}
+            {(errors.justificatifDiplomeChemins as any)?.message}
           </ErrorMessage>
         </div>
 
@@ -451,7 +539,7 @@ export default function Etape5RenfordPage() {
         setOpen={setDiplomeDialogOpen}
         setFileValue={handleDiplomeUploaded}
         path="documents/diplomes"
-        name="justificatif-diplome"
+        name={`justificatif-diplome-${activeDiplomeForUpload ?? "renford"}`}
         accept=".pdf,.jpg,.jpeg,.png"
         maxSizeMB={10}
       />

@@ -252,9 +252,9 @@ export const onboardingRenfordQualificationsSchema = z
         invalid_type_error: "Le format des diplômes est invalide",
       })
       .min(1, "Veuillez sélectionner au moins un diplôme"),
-    justificatifDiplomeChemin: z
-      .string({ required_error: "Le justificatif diplôme est obligatoire" })
-      .min(1, "Le justificatif diplôme est obligatoire"),
+    justificatifDiplomeChemins: z.array(
+      z.string().min(1, "Le justificatif diplôme est obligatoire"),
+    ),
     justificatifCarteProfessionnelleChemin: z
       .string({
         required_error: "Le justificatif carte professionnelle est obligatoire",
@@ -267,6 +267,14 @@ export const onboardingRenfordQualificationsSchema = z
     tarifDemiJournee: tarifDemiJourneeSchema,
   })
   .superRefine((data, ctx) => {
+    if (data.justificatifDiplomeChemins.length !== data.diplomes.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["justificatifDiplomeChemins"],
+        message: "Chaque diplôme sélectionné doit avoir un justificatif associé",
+      });
+    }
+
     if (data.proposeJournee && data.tarifJournee === undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

@@ -49,7 +49,7 @@ export type ProfilRenford = {
   dateCertification: Date | null;
   // Documents (étape 5 et 6)
   carteIdentiteChemin: string | null;
-  justificatifDiplomeChemin: string | null;
+  justificatifDiplomeChemins: string[];
   justificatifCarteProfessionnelleChemin: string | null;
   diplomes: DiplomeKey[];
   // Expérience (étape 5)

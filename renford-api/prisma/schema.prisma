@@ -135,11 +135,6 @@ model ProfilEtablissement {
     codePostalSiege        String?
     villeSiege             String?
 
-    // Contact
-    emailPrincipal      String?
-    telephonePrincipal  String?
-    nomContactPrincipal String?
-
     // Métadonnées
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
@@ -162,6 +157,7 @@ model Etablissement {
     profilEtablissement   ProfilEtablissement @relation(fields: [profilEtablissementId], references: [id], onDelete: Cascade)
 
     // Informations
+    siret             String
     nom               String
     typeEtablissement TypeEtablissement
     roleEtablissement RoleEtablissement @default(principal)
@@ -171,22 +167,20 @@ model Etablissement {
     adresseLigne2 String?
     codePostal    String
     ville         String
-    departement   DepartementIDF
     pays          String         @default("France")
-    latitude      Float?
-    longitude     Float?
 
     // Contact
-    telephone String?
-    email     String?
+    emailPrincipal         String?
+    telephonePrincipal     String?
+    nomContactPrincipal    String?
+    prenomContactPrincipal String?
 
-    // Hiérarchie (pour chaînes avec établissements principal/secondaires)
-    etablissementPrincipalId  String?
-    etablissementPrincipal    Etablissement?  @relation("HierarchieEtablissement", fields: [etablissementPrincipalId], references: [id])
-    etablissementsSecondaires Etablissement[] @relation("HierarchieEtablissement")
-
-    // Nom du groupe (si établissement secondaire sans principal inscrit)
-    nomGroupePrincipal String?
+    // Adresse de facturation
+    adresseFacturationDifferente Boolean       @default(false)
+    adresseFacturation           String
+    adresseFacturationLigne2     String?
+    codePostalFacturation        String
+    villeFacturation             String
 
     // Statut
     actif Boolean @default(true)
@@ -200,7 +194,6 @@ model Etablissement {
     favorisRenfords FavoriRenford[]
 
     @@index([profilEtablissementId])
-    @@index([departement])
     @@index([typeEtablissement])
     @@index([roleEtablissement])
     @@map("etablissements")
@@ -243,17 +236,6 @@ enum RoleEtablissement {
     secondaire
 }
 
-enum DepartementIDF {
-    paris_75
-    seine_et_marne_77
-    yvelines_78
-    essonne_91
-    hauts_de_seine_92
-    seine_saint_denis_93
-    val_de_marne_94
-    val_doise_95
-}
-
 // ============================================================================
 // TABLE: Profil Renford (Freelancer sportif)
 // ============================================================================
@@ -293,10 +275,10 @@ model ProfilRenford {
     dateCertification   DateTime?
 
     // Documents (étape 5 et 6)
-    carteIdentiteChemin                    String?
-    justificatifDiplomeChemin              String? // Justificatif de diplôme
-    justificatifCarteProfessionnelleChemin String? // Justificatif de carte professionnelle
     diplomes                               String[] @default([]) // Clés de diplômes sélectionnées
+    justificatifDiplomeChemins             String[] @default([]) // Justificatifs de diplôme
+    justificatifCarteProfessionnelleChemin String? // Justificatif de carte professionnelle
+    carteIdentiteChemin                    String?
 
     // Expérience (étape 5)
     niveauExperience NiveauExperience?
@@ -1332,16 +1314,3 @@ model StatistiqueQuotidienne {
     @@map("statistiques_quotidiennes")
 }
 
-// ============================================================================
-// TABLE: Départements adjacents (pour matching géographique)
-// ============================================================================
-
-model DepartementAdjacent {
-    id String @id @default(uuid())
-
-    departement         DepartementIDF
-    departementAdjacent DepartementIDF
-
-    @@unique([departement, departementAdjacent])
-    @@map("departements_adjacents")
-}

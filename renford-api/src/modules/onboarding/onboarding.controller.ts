@@ -367,6 +367,56 @@ export const completeOnboarding = async (req: Request, res: Response, next: Next
       return res.status(401).json({ message: 'Utilisateur non authentifié' });
     }
 
+    const profilEtablissement = await prisma.profilEtablissement.findUnique({
+      where: { utilisateurId: userId },
+      include: {
+        etablissements: {
+          where: { roleEtablissement: 'principal' },
+          orderBy: { dateCreation: 'asc' },
+          take: 1,
+        },
+      },
+    });
+
+    if (!profilEtablissement) {
+      return res.status(400).json({
+        message: "Profil établissement incomplet. Veuillez compléter l'étape établissement.",
+      });
+    }
+
+    if (!profilEtablissement.etablissements[0]) {
+      if (!profilEtablissement.typeEtablissement) {
+        return res.status(400).json({
+          message:
+            "Informations établissement insuffisantes pour créer l'établissement par défaut.",
+        });
+      }
+
+      await prisma.etablissement.create({
+        data: {
+          profilEtablissementId: profilEtablissement.id,
+          siret: profilEtablissement.siret,
+          nom: profilEtablissement.raisonSociale,
+          typeEtablissement: profilEtablissement.typeEtablissement,
+          roleEtablissement: 'principal',
+          adresse: profilEtablissement.adresse,
+          adresseLigne2: null,
+          codePostal: profilEtablissement.codePostal,
+          ville: profilEtablissement.ville,
+          pays: 'France',
+          emailPrincipal: null,
+          telephonePrincipal: null,
+          nomContactPrincipal: null,
+          prenomContactPrincipal: null,
+          adresseFacturationDifferente: false,
+          adresseFacturation: profilEtablissement.adresse,
+          adresseFacturationLigne2: null,
+          codePostalFacturation: profilEtablissement.codePostal,
+          villeFacturation: profilEtablissement.ville,
+        },
+      });
+    }
+
     const utilisateur = await prisma.utilisateur.update({
       where: { id: userId },
       data: {
@@ -576,7 +626,7 @@ export const updateRenfordQualifications = async (
     const {
       niveauExperience,
       diplomes,
-      justificatifDiplomeChemin,
+      justificatifDiplomeChemins,
       justificatifCarteProfessionnelleChemin,
       tarifHoraire,
       proposeJournee,
@@ -590,7 +640,7 @@ export const updateRenfordQualifications = async (
       data: {
         niveauExperience,
         diplomes,
-        justificatifDiplomeChemin,
+        justificatifDiplomeChemins,
         justificatifCarteProfessionnelleChemin,
         tarifHoraire,
         proposeJournee,

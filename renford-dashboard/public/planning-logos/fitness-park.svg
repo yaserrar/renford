@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none">
-  <rect width="120" height="120" rx="16" fill="#1E3A4D"/>
-  <text x="60" y="52" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="18" font-weight="700">FITNESS</text>
-  <text x="60" y="74" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="18" font-weight="700">PARK</text>
-  <path d="M15 86C26 78 36 78 47 86C58 94 68 94 79 86C90 78 100 78 111 86" stroke="#FFD54A" stroke-width="4" stroke-linecap="round"/>
-</svg>

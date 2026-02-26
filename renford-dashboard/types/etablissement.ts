@@ -1,7 +1,4 @@
-import {
-  DEPARTEMENT_IDF,
-  ROLE_ETABLISSEMENT,
-} from "@/validations/etablissement";
+import { ROLE_ETABLISSEMENT } from "@/validations/etablissement";
 import { TYPE_ETABLISSEMENT } from "@/validations/profil-etablissement";
 
 // Type d'établissement
@@ -9,9 +6,6 @@ export type TypeEtablissement = (typeof TYPE_ETABLISSEMENT)[number];
 
 // Rôle d'établissement
 export type RoleEtablissement = (typeof ROLE_ETABLISSEMENT)[number];
-
-// Département Île-de-France
-export type DepartementIDF = (typeof DEPARTEMENT_IDF)[number];
 
 // Profil établissement
 export type ProfilEtablissement = {
@@ -27,9 +21,7 @@ export type ProfilEtablissement = {
   adresseSiege: string | null;
   codePostalSiege: string | null;
   villeSiege: string | null;
-  emailPrincipal: string | null;
-  telephonePrincipal: string | null;
-  nomContactPrincipal: string | null;
+  etablissements: Etablissement[];
   dateCreation: Date;
   dateMiseAJour: Date;
 };
@@ -41,18 +33,21 @@ export type Etablissement = {
   nom: string;
   typeEtablissement: TypeEtablissement;
   roleEtablissement: RoleEtablissement;
+  siret: string;
   adresse: string;
   adresseLigne2: string | null;
   codePostal: string;
   ville: string;
-  departement: DepartementIDF;
   pays: string;
-  latitude: number | null;
-  longitude: number | null;
-  telephone: string | null;
-  email: string | null;
-  etablissementPrincipalId: string | null;
-  nomGroupePrincipal: string | null;
+  emailPrincipal: string | null;
+  telephonePrincipal: string | null;
+  nomContactPrincipal: string | null;
+  prenomContactPrincipal: string | null;
+  adresseFacturationDifferente: boolean;
+  adresseFacturation: string;
+  adresseFacturationLigne2: string | null;
+  codePostalFacturation: string;
+  villeFacturation: string;
   actif: boolean;
   dateCreation: Date;
   dateMiseAJour: Date;
@@ -64,5 +59,4 @@ export type EtablissementSimple = {
   nom: string;
   typeEtablissement: TypeEtablissement;
   ville: string;
-  departement: DepartementIDF;
 };
