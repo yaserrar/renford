@@ -56,7 +56,7 @@ const NavMain = ({ items }: Props) => {
                   )}
                   <p
                     className={cn(
-                      "text-gray-500 font-normal text-base",
+                      "text-gray-500 font-normal text-sm",
                       isActive(item.url) && "text-black font-medium",
                     )}
                   >

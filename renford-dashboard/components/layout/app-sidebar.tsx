@@ -10,6 +10,7 @@ import {
   Heart,
   Percent,
   Plus,
+  ScrollText,
 } from "lucide-react";
 import * as React from "react";
 import Image from "next/image";
@@ -34,7 +35,7 @@ const RENFORD_MAIN_LINKS = [
   {
     title: "Facture & Paiements",
     url: "/dashboard/renford/factures-paiements",
-    icon: FileText,
+    icon: ScrollText,
   },
 ];
 
@@ -58,7 +59,7 @@ const ETABLISSEMENT_MAIN_LINKS = [
   {
     title: "Facture & Paiements",
     url: "/dashboard/etablissement/factures-paiements",
-    icon: FileText,
+    icon: ScrollText,
   },
   {
     title: "Gérer les sites",
