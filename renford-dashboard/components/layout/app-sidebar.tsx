@@ -113,7 +113,7 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
 
       <SidebarContent className="px-1 pt-2 pb-4">
         {isEtablissement && (
-          <Button asChild variant="outline-primary">
+          <Button asChild variant="outline-primary" className="mx-2 rounded-sm">
             <Link href="/dashboard/etablissement/missions/nouvelle">
               <Plus className="h-6 w-6" />
               Demande de mission
