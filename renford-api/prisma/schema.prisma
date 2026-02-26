@@ -312,8 +312,14 @@ model ProfilRenford {
     iban String?
 
     // Disponibilité (étape 7)
-    joursDisponibles Json? // Objet avec les jours: { lundi: true, mardi: false, ... }
-    creneaux         Json? // Array de créneaux: [{ debut: "09:00", fin: "12:00" }]
+    disponibilitesLundi    CreneauDisponibilite[] @default([])
+    disponibilitesMardi    CreneauDisponibilite[] @default([])
+    disponibilitesMercredi CreneauDisponibilite[] @default([])
+    disponibilitesJeudi    CreneauDisponibilite[] @default([])
+    disponibilitesVendredi CreneauDisponibilite[] @default([])
+    disponibilitesSamedi   CreneauDisponibilite[] @default([])
+    disponibilitesDimanche CreneauDisponibilite[] @default([])
+   
     dureeIllimitee   Boolean   @default(true) // Je suis disponible pour une durée illimitée
     dateDebut        DateTime?
     dateFin          DateTime?
@@ -380,6 +386,13 @@ enum JourSemaine {
     vendredi
     samedi
     dimanche
+}
+
+enum CreneauDisponibilite {
+    matin
+    midi
+    apres_midi
+    soir
 }
 
 // ============================================================================

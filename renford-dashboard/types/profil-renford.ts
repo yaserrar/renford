@@ -1,4 +1,5 @@
 import {
+  CRENEAUX_DISPONIBILITE,
   DIPLOME_KEYS,
   JOUR_SEMAINE,
   NIVEAU_EXPERIENCE,
@@ -19,23 +20,7 @@ export type JourSemaine = (typeof JOUR_SEMAINE)[number];
 // Type de poste
 export type TypePoste = (typeof TYPE_POSTE)[number];
 export type DiplomeKey = (typeof DIPLOME_KEYS)[number];
-
-// Type pour les jours de disponibilité
-export type JoursDisponibles = {
-  lundi: boolean;
-  mardi: boolean;
-  mercredi: boolean;
-  jeudi: boolean;
-  vendredi: boolean;
-  samedi: boolean;
-  dimanche: boolean;
-};
-
-// Type pour un créneau horaire
-export type CreneauHoraire = {
-  debut: string;
-  fin: string;
-};
+export type CreneauDisponibilite = (typeof CRENEAUX_DISPONIBILITE)[number];
 
 // Profil Renford (Freelancer)
 export type ProfilRenford = {
@@ -78,8 +63,13 @@ export type ProfilRenford = {
   // Informations bancaires (étape 6)
   iban: string | null;
   // Disponibilité (étape 7)
-  joursDisponibles: JoursDisponibles | null;
-  creneaux: CreneauHoraire[] | null;
+  disponibilitesLundi: CreneauDisponibilite[];
+  disponibilitesMardi: CreneauDisponibilite[];
+  disponibilitesMercredi: CreneauDisponibilite[];
+  disponibilitesJeudi: CreneauDisponibilite[];
+  disponibilitesVendredi: CreneauDisponibilite[];
+  disponibilitesSamedi: CreneauDisponibilite[];
+  disponibilitesDimanche: CreneauDisponibilite[];
   dureeIllimitee: boolean;
   dateDebut: Date | null;
   dateFin: Date | null;

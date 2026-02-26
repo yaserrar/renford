@@ -28,7 +28,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileText, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { OnboardingCard } from "../-components";
@@ -44,12 +44,6 @@ export default function Etape5RenfordPage() {
   const { mutate, isPending } = useUpdateRenfordQualifications();
   const [diplomeDialogOpen, setDiplomeDialogOpen] = useState(false);
   const [carteProDialogOpen, setCarteProDialogOpen] = useState(false);
-  const [justificatifDiplome, setJustificatifDiplome] = useState<string | null>(
-    user?.profilRenford?.justificatifDiplomeChemin || null,
-  );
-  const [justificatifCartePro, setJustificatifCartePro] = useState<
-    string | null
-  >(user?.profilRenford?.justificatifCarteProfessionnelleChemin || null);
 
   const {
     register,
@@ -81,12 +75,16 @@ export default function Etape5RenfordPage() {
 
   const proposeJournee = watch("proposeJournee");
   const proposeDemiJournee = watch("proposeDemiJournee");
-  const justificatifDiplomeFileName = justificatifDiplome
-    ? justificatifDiplome.split("/").pop()
-    : null;
-  const justificatifCarteProFileName = justificatifCartePro
-    ? justificatifCartePro.split("/").pop()
-    : null;
+  const justificatifDiplome = watch("justificatifDiplomeChemin");
+  const justificatifCartePro = watch("justificatifCarteProfessionnelleChemin");
+  const justificatifDiplomeFileName = useMemo(
+    () => (justificatifDiplome ? justificatifDiplome.split("/").pop() : null),
+    [justificatifDiplome],
+  );
+  const justificatifCarteProFileName = useMemo(
+    () => (justificatifCartePro ? justificatifCartePro.split("/").pop() : null),
+    [justificatifCartePro],
+  );
 
   const onSubmit = (data: OnboardingRenfordQualificationsSchema) => {
     mutate(data, {
@@ -95,6 +93,28 @@ export default function Etape5RenfordPage() {
       },
     });
   };
+
+  const handleDiplomeUploaded = useCallback(
+    (path: string) => {
+      setValue("justificatifDiplomeChemin", path, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+    },
+    [setValue],
+  );
+
+  const handleCarteProUploaded = useCallback(
+    (path: string) => {
+      setValue("justificatifCarteProfessionnelleChemin", path, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+    },
+    [setValue],
+  );
 
   return (
     <OnboardingCard
@@ -117,7 +137,7 @@ export default function Etape5RenfordPage() {
                     type="button"
                     onClick={() => field.onChange(niveau)}
                     className={cn(
-                      "w-full flex text-sm items-center gap-3 px-4 py-2 rounded-full border-2 transition-all text-left",
+                      "w-full flex text-sm items-center gap-3 px-4 py-2 rounded-full border-1 transition-all text-left",
                       field.value === niveau
                         ? "border-primary bg-primary"
                         : "border-gray-200 hover:border-gray-300",
@@ -161,7 +181,7 @@ export default function Etape5RenfordPage() {
 
         <div>
           <Label>Justificatif diplôme *</Label>
-          {justificatifDiplome ? (
+          {Boolean(justificatifDiplome) ? (
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <FileText className="h-8 w-8 text-gray-400" />
               <div className="flex-1">
@@ -175,9 +195,10 @@ export default function Etape5RenfordPage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => {
-                  setJustificatifDiplome(null);
                   setValue("justificatifDiplomeChemin", "", {
                     shouldDirty: true,
+                    shouldTouch: true,
+                    shouldValidate: true,
                   });
                 }}
               >
@@ -205,7 +226,7 @@ export default function Etape5RenfordPage() {
 
         <div>
           <Label>Justificatif carte professionnelle *</Label>
-          {justificatifCartePro ? (
+          {Boolean(justificatifCartePro) ? (
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <FileText className="h-8 w-8 text-gray-400" />
               <div className="flex-1">
@@ -219,9 +240,10 @@ export default function Etape5RenfordPage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => {
-                  setJustificatifCartePro(null);
                   setValue("justificatifCarteProfessionnelleChemin", "", {
                     shouldDirty: true,
+                    shouldTouch: true,
+                    shouldValidate: true,
                   });
                 }}
               >
@@ -427,10 +449,7 @@ export default function Etape5RenfordPage() {
       <DocumentUploadDialog
         open={diplomeDialogOpen}
         setOpen={setDiplomeDialogOpen}
-        setFileValue={(path) => {
-          setJustificatifDiplome(path);
-          setValue("justificatifDiplomeChemin", path, { shouldDirty: true });
-        }}
+        setFileValue={handleDiplomeUploaded}
         path="documents/diplomes"
         name="justificatif-diplome"
         accept=".pdf,.jpg,.jpeg,.png"
@@ -440,12 +459,7 @@ export default function Etape5RenfordPage() {
       <DocumentUploadDialog
         open={carteProDialogOpen}
         setOpen={setCarteProDialogOpen}
-        setFileValue={(path) => {
-          setJustificatifCartePro(path);
-          setValue("justificatifCarteProfessionnelleChemin", path, {
-            shouldDirty: true,
-          });
-        }}
+        setFileValue={handleCarteProUploaded}
         path="documents/carte-pro"
         name="justificatif-carte-professionnelle"
         accept=".pdf,.jpg,.jpeg,.png"

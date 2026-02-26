@@ -148,11 +148,22 @@ export const DIPLOME_LABELS: Record<DiplomeKey, string> = {
   diplome_de_preparateur_physique: "Diplôme de Préparateur Physique",
 };
 
-// Créneaux horaires pour les disponibilités
-export const CRENEAUX_HORAIRES = [
-  { debut: "06:00", fin: "09:00" },
-  { debut: "09:00", fin: "12:00" },
-  { debut: "12:00", fin: "14:00" },
-  { debut: "14:00", fin: "18:00" },
-  { debut: "18:00", fin: "21:00" },
+// Créneaux de disponibilité par moment de la journée
+export const CRENEAUX_DISPONIBILITE = [
+  "matin",
+  "midi",
+  "apres_midi",
+  "soir",
 ] as const;
+
+export type CreneauDisponibilite = (typeof CRENEAUX_DISPONIBILITE)[number];
+
+export const CRENEAUX_DISPONIBILITE_LABELS: Record<
+  CreneauDisponibilite,
+  string
+> = {
+  matin: "Matin",
+  midi: "Midi",
+  apres_midi: "Après-midi",
+  soir: "Soir",
+};

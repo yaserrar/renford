@@ -86,10 +86,10 @@ export default function Etape2Page() {
                     type="button"
                     onClick={() => field.onChange(option.value)}
                     className={cn(
-                      "w-full flex items-center gap-3 p-4 rounded-full border-2 transition-all text-left",
+                      "w-full flex items-center gap-3 p-4 rounded-full border-1 transition-all text-left",
                       field.value === option.value
                         ? "border-primary bg-primary"
-                        : "border-gray-200 hover:border-gray-300"
+                        : "border-gray-200 hover:border-gray-300",
                     )}
                   >
                     <div>

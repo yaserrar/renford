@@ -17,7 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FileText, Loader2, X } from "lucide-react";
 import DocumentUploadDialog from "@/components/common/document-upload-dialog";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { OnboardingCard } from "../-components";
 
@@ -27,16 +27,11 @@ export default function Etape6RenfordPage() {
   const { mutate, isPending } = useUpdateRenfordBancaire();
   const { mutate: skipStep, isPending: isSkipping } = useSkipRenfordStep();
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
-  const [carteIdentite, setCarteIdentite] = useState<string | null>(
-    user?.profilRenford?.carteIdentiteChemin || null,
-  );
-  const carteIdentiteFileName = carteIdentite
-    ? carteIdentite.split("/").pop()
-    : null;
 
   const {
     register,
     handleSubmit,
+    watch,
     setValue,
     formState: { errors, isDirty },
   } = useForm<OnboardingRenfordBancaireSchema>({
@@ -47,15 +42,30 @@ export default function Etape6RenfordPage() {
     },
   });
 
-  const handleDocumentUploaded = (path: string) => {
-    setCarteIdentite(path);
-    setValue("carteIdentiteChemin", path, { shouldDirty: true });
-  };
+  const carteIdentite = watch("carteIdentiteChemin");
+  const carteIdentiteFileName = useMemo(
+    () => (carteIdentite ? carteIdentite.split("/").pop() : null),
+    [carteIdentite],
+  );
 
-  const removeFile = () => {
-    setCarteIdentite(null);
-    setValue("carteIdentiteChemin", "", { shouldDirty: true });
-  };
+  const handleDocumentUploaded = useCallback(
+    (path: string) => {
+      setValue("carteIdentiteChemin", path, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+    },
+    [setValue],
+  );
+
+  const removeFile = useCallback(() => {
+    setValue("carteIdentiteChemin", "", {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+  }, [setValue]);
 
   const onSubmit = (data: OnboardingRenfordBancaireSchema) => {
     mutate(data, {
@@ -103,7 +113,7 @@ export default function Etape6RenfordPage() {
           <div>
             <Label>Carte d&apos;identité*</Label>
 
-            {carteIdentite ? (
+            {Boolean(carteIdentite) ? (
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <FileText className="h-8 w-8 text-gray-400" />
                 <div className="flex-1">

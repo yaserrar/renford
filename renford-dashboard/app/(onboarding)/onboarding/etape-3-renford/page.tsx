@@ -6,6 +6,11 @@ import { DatePicker } from "@/components/ui/date-picker";
 import ErrorMessage from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useUpdateRenfordIdentite } from "@/hooks/onboarding";
 import { useCurrentUser } from "@/hooks/utilisateur";
 import {
@@ -16,7 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FileText, Loader2, X } from "lucide-react";
 import DocumentUploadDialog from "@/components/common/document-upload-dialog";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { OnboardingCard } from "../-components";
 
@@ -25,9 +30,6 @@ export default function Etape3RenfordPage() {
   const { data: user } = useCurrentUser();
   const { mutate, isPending } = useUpdateRenfordIdentite();
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
-  const [attestationVigilance, setAttestationVigilance] = useState<
-    string | null
-  >(user?.profilRenford?.attestationVigilanceChemin || null);
 
   const {
     register,
@@ -57,21 +59,30 @@ export default function Etape3RenfordPage() {
   });
 
   const siretEnCoursObtention = watch("siretEnCoursObtention");
-  const attestationFileName = attestationVigilance
-    ? attestationVigilance.split("/").pop()
-    : null;
+  const attestationVigilance = watch("attestationVigilanceChemin");
+  const attestationFileName = useMemo(
+    () => (attestationVigilance ? attestationVigilance.split("/").pop() : null),
+    [attestationVigilance],
+  );
 
-  const handleDocumentUploaded = (path: string) => {
-    setAttestationVigilance(path);
-    setValue("attestationVigilanceChemin", path, {
+  const handleDocumentUploaded = useCallback(
+    (path: string) => {
+      setValue("attestationVigilanceChemin", path, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+    },
+    [setValue],
+  );
+
+  const removeFile = useCallback(() => {
+    setValue("attestationVigilanceChemin", null, {
       shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
     });
-  };
-
-  const removeFile = () => {
-    setAttestationVigilance(null);
-    setValue("attestationVigilanceChemin", null, { shouldDirty: true });
-  };
+  }, [setValue]);
 
   const onSubmit = (data: OnboardingRenfordIdentiteSchema) => {
     mutate(data, {
@@ -199,7 +210,7 @@ export default function Etape3RenfordPage() {
         <div>
           <Label>Attestation de vigilance</Label>
 
-          {attestationVigilance ? (
+          {Boolean(attestationVigilance) ? (
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <FileText className="h-8 w-8 text-gray-400" />
               <div className="flex-1">
@@ -226,21 +237,37 @@ export default function Etape3RenfordPage() {
                 Ton attestation de vigilance URSSAF pour anticiper tes missions
                 supérieures à 5000 euros (obligatoire)
               </p>
-              <Button variant="outline">Télécharger un document</Button>
+              <Button variant="outline" type="button">
+                Télécharger un document
+              </Button>
             </div>
           )}
 
           <ErrorMessage>
             {errors.attestationVigilanceChemin?.message}
           </ErrorMessage>
-
-          <div className="bg-secondary-dark text-white text-sm p-2 mt-4 rounded">
-            L'attestation de vigilance est une obligation légale avant le début
-            de la prestation pour s'assurer que le prestataire est en règle avec
-            ses obligations sociales (conformément à l'article L.8222-1 du Code
-            du travail). Cette attestation est fournie par l’URSSAF. Vous pouvez
-            télécharger vos attestations directement depuis votre espace en
-            ligne sur urssaf.fr.
+          <div className="mt-4">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                >
+                  Pourquoi c&apos;est requis ?
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-sm text-left leading-relaxed">
+                L&apos;attestation de vigilance est une obligation légale avant
+                le début de la prestation pour s&apos;assurer que le prestataire
+                est en règle avec ses obligations sociales (conformément à
+                l&apos;article L.8222-1 du Code du travail). Cette attestation
+                est fournie par l&apos;URSSAF. Vous pouvez télécharger vos
+                attestations directement depuis votre espace en ligne sur
+                urssaf.fr.
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 

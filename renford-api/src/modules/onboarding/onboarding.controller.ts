@@ -664,14 +664,30 @@ export const updateRenfordDisponibilites = async (
       return res.status(401).json({ message: 'Utilisateur non authentifié' });
     }
 
-    const { joursDisponibles, creneaux, dureeIllimitee, dateDebut, dateFin, zoneDeplacement } =
-      req.body;
+    const {
+      disponibilitesLundi,
+      disponibilitesMardi,
+      disponibilitesMercredi,
+      disponibilitesJeudi,
+      disponibilitesVendredi,
+      disponibilitesSamedi,
+      disponibilitesDimanche,
+      dureeIllimitee,
+      dateDebut,
+      dateFin,
+      zoneDeplacement,
+    } = req.body;
 
     const profilRenford = await prisma.profilRenford.update({
       where: { utilisateurId: userId },
       data: {
-        joursDisponibles: joursDisponibles as any,
-        creneaux: creneaux as any,
+        disponibilitesLundi,
+        disponibilitesMardi,
+        disponibilitesMercredi,
+        disponibilitesJeudi,
+        disponibilitesVendredi,
+        disponibilitesSamedi,
+        disponibilitesDimanche,
         dureeIllimitee,
         dateDebut: dateDebut ? new Date(dateDebut) : null,
         dateFin: dateFin ? new Date(dateFin) : null,
@@ -718,6 +734,49 @@ export const completeRenfordOnboarding = async (
         statut: true,
       },
     });
+
+    const utilisateurInfos = await prisma.utilisateur.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        prenom: true,
+      },
+    });
+
+    if (utilisateurInfos?.email) {
+      const prenom = utilisateurInfos.prenom?.trim() || '';
+
+      const welcomeHtml = `
+        <p>Bonjour ${prenom},</p>
+        <p>
+          Félicitations et bienvenue chez Renford ! Tu fais désormais partie d'une communauté qui révolutionne la façon de se connecter dans le sport.
+        </p>
+        <p>Voici trois étapes pour démarrer ton expérience :</p>
+        <p>
+          1. Renseigne tes disponibilités pour recevoir tes premières demandes de missions ;<br />
+          2. Personnalise ton profil pour mettre en avant tes compétences uniques ;<br />
+          3. Rejoins une communauté soudée en parcourant le Blog Renford.
+        </p>
+        <p>
+          Prêt à de nouvelles aventures entrepreneuriales avec Renford ? Connecte-toi <a href="https://renford.fr">ici</a>.
+        </p>
+        <p>
+          À très bientôt sur la plateforme,<br />
+          L'équipe Renford
+        </p>
+      `;
+
+      try {
+        await mail.sendMail({
+          from: process.env.EMAIL_HOST_USER,
+          to: utilisateurInfos.email,
+          subject: 'Félicitations et bienvenue chez Renford',
+          html: welcomeHtml,
+        });
+      } catch (emailError) {
+        logger.error({ err: emailError, userId }, "Échec d'envoi de l'email de bienvenue Renford");
+      }
+    }
 
     return res.json({
       message: 'Onboarding terminé avec succès',

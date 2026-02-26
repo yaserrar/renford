@@ -306,26 +306,18 @@ export const updateRenfordBancaireSchema = z.object({
 
 export type UpdateRenfordBancaireSchema = z.infer<typeof updateRenfordBancaireSchema>;
 
-// Types pour les disponibilités
-const joursSchema = z.object({
-  lundi: z.boolean(),
-  mardi: z.boolean(),
-  mercredi: z.boolean(),
-  jeudi: z.boolean(),
-  vendredi: z.boolean(),
-  samedi: z.boolean(),
-  dimanche: z.boolean(),
-});
-
-const creneauSchema = z.object({
-  debut: z.string(),
-  fin: z.string(),
-});
+const CRENEAUX_DISPONIBILITE = ['matin', 'midi', 'apres_midi', 'soir'] as const;
+const disponibilitesJourSchema = z.array(z.enum(CRENEAUX_DISPONIBILITE));
 
 // Schéma pour les disponibilités Renford (étape 7)
 export const updateRenfordDisponibilitesSchema = z.object({
-  joursDisponibles: joursSchema,
-  creneaux: z.array(creneauSchema).optional(),
+  disponibilitesLundi: disponibilitesJourSchema,
+  disponibilitesMardi: disponibilitesJourSchema,
+  disponibilitesMercredi: disponibilitesJourSchema,
+  disponibilitesJeudi: disponibilitesJourSchema,
+  disponibilitesVendredi: disponibilitesJourSchema,
+  disponibilitesSamedi: disponibilitesJourSchema,
+  disponibilitesDimanche: disponibilitesJourSchema,
   dureeIllimitee: z.boolean().default(true),
   dateDebut: z.string().or(z.date()).optional(),
   dateFin: z.string().or(z.date()).optional(),

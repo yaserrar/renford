@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TYPE_ETABLISSEMENT } from "./profil-etablissement";
 import {
+  CRENEAUX_DISPONIBILITE,
   DIPLOME_KEYS,
   NIVEAU_EXPERIENCE,
   TYPE_MISSION,
@@ -299,27 +300,17 @@ export type OnboardingRenfordBancaireSchema = z.infer<
   typeof onboardingRenfordBancaireSchema
 >;
 
-// Schéma pour les jours de disponibilité
-const joursDisponiblesSchema = z.object({
-  lundi: z.boolean(),
-  mardi: z.boolean(),
-  mercredi: z.boolean(),
-  jeudi: z.boolean(),
-  vendredi: z.boolean(),
-  samedi: z.boolean(),
-  dimanche: z.boolean(),
-});
-
-// Schéma pour un créneau horaire
-const creneauSchema = z.object({
-  debut: z.string(),
-  fin: z.string(),
-});
+const disponibilitesJourSchema = z.array(z.enum(CRENEAUX_DISPONIBILITE));
 
 // Étape 7 Renford: Disponibilités
 export const onboardingRenfordDisponibilitesSchema = z.object({
-  joursDisponibles: joursDisponiblesSchema,
-  creneaux: z.array(creneauSchema).optional(),
+  disponibilitesLundi: disponibilitesJourSchema,
+  disponibilitesMardi: disponibilitesJourSchema,
+  disponibilitesMercredi: disponibilitesJourSchema,
+  disponibilitesJeudi: disponibilitesJourSchema,
+  disponibilitesVendredi: disponibilitesJourSchema,
+  disponibilitesSamedi: disponibilitesJourSchema,
+  disponibilitesDimanche: disponibilitesJourSchema,
   dureeIllimitee: z.boolean(),
   dateDebut: z.date().optional(),
   dateFin: z.date().optional(),
