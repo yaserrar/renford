@@ -1,16 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import ErrorMessage from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useUpdateEtablissementProfil } from "@/hooks/onboarding";
 import { useCurrentUser } from "@/hooks/utilisateur";
 import {
@@ -76,6 +70,11 @@ export default function Etape3Page() {
       },
     });
   };
+
+  const typeEtablissementOptions = TYPE_ETABLISSEMENT.map((type) => ({
+    value: type,
+    label: TYPE_ETABLISSEMENT_LABELS[type],
+  }));
 
   return (
     <OnboardingCard currentStep={3} title="Confirmons vos informations">
@@ -179,18 +178,14 @@ export default function Etape3Page() {
             name="typeEtablissement"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Sélectionner..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {TYPE_ETABLISSEMENT.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {TYPE_ETABLISSEMENT_LABELS[type]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={field.value}
+                onValueChange={(value) => field.onChange(value as string)}
+                options={typeEtablissementOptions}
+                placeholder="Sélectionner..."
+                searchPlaceholder="Rechercher un type"
+                emptyMessage="Aucun type trouvé"
+              />
             )}
           />
           <ErrorMessage>{errors.typeEtablissement?.message}</ErrorMessage>
