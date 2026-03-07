@@ -39,6 +39,8 @@ const NavAccount = () => {
     router.push("/connexion");
   };
 
+  console.log("Current user in NavAccount:", getUrl(me?.avatarChemin));
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>

@@ -9,33 +9,36 @@ import Link from "next/link";
 const PLANNING = [
   {
     dateGroup: "Aujourd'hui - Lundi 8 janvier",
-    title: "Jessica - coach de yoga",
+    nameLabel: "Jessica",
+    title: "Coach yoga",
     subtitle: "Aujourd'hui - Lundi 8 janvier",
     dateLabel: "Séance",
     timeLabel: "8h00 - 10h00 · 2h",
-    logoSrc: "/planning-people/jessica.svg",
+    logoSrc: "/planning-people/coach1.jpg",
     amountValue: "30 €",
     amountSuffix: "HT",
     visualType: "avatar" as const,
   },
   {
     dateGroup: "Demain - Mardi 9 janvier",
-    title: "Jérôme - coach de yoga",
+    nameLabel: "Jérôme",
+    title: "Coach pilates",
     subtitle: "Demain - Mardi 9 janvier",
     dateLabel: "Séance",
     timeLabel: "8h00 - 10h00 · 2h",
-    logoSrc: "/planning-people/jerome.svg",
+    logoSrc: "/planning-people/coach2.jpeg",
     amountValue: "30 €",
     amountSuffix: "HT",
     visualType: "avatar" as const,
   },
   {
     dateGroup: "Demain - Mardi 9 janvier",
-    title: "Maxime - coach de yoga",
+    nameLabel: "Maxime",
+    title: "Coach cardio",
     subtitle: "Demain - Mardi 9 janvier",
     dateLabel: "Séance",
     timeLabel: "8h00 - 10h00 · 2h",
-    logoSrc: "/planning-people/maxime.svg",
+    logoSrc: "/planning-people/coach3.jpg",
     amountValue: "30 €",
     amountSuffix: "HT",
     visualType: "avatar" as const,
@@ -45,7 +48,9 @@ const PLANNING = [
 const groupedPlanning = PLANNING.reduce<
   Array<{ dateGroup: string; items: (typeof PLANNING)[number][] }>
 >((groups, entry) => {
-  const existingGroup = groups.find((group) => group.dateGroup === entry.dateGroup);
+  const existingGroup = groups.find(
+    (group) => group.dateGroup === entry.dateGroup,
+  );
 
   if (existingGroup) {
     existingGroup.items.push(entry);
@@ -91,6 +96,7 @@ export default function EtablissementPlanningSection() {
                 <PlanningItem
                   key={`${group.dateGroup}-${entry.title}-${index}`}
                   title={entry.title}
+                  nameLabel={entry.nameLabel}
                   subtitle={entry.subtitle}
                   dateLabel={entry.dateLabel}
                   timeLabel={entry.timeLabel}

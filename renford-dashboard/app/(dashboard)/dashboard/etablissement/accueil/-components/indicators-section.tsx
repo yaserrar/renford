@@ -16,7 +16,7 @@ const CARDS = [
     title: "Paiements",
     ctaLabel: "Suivre mes paiements",
     metrics: [
-      { value: "1", label: "à régler" },
+      { value: "1", label: "à régler", critical: true },
       { value: "2", label: "en attente" },
       { value: "4", label: "réglés ce mois" },
     ],
@@ -44,9 +44,15 @@ export default function EtablissementIndicatorsSection() {
                 key={`${card.title}-${metric.label}`}
                 className="text-center"
               >
-                <p className="text-3xl font-bold leading-none">
-                  {metric.value}
-                </p>
+                {metric.critical ? (
+                  <div className="mx-auto h-8 w-8 rounded-full bg-red-600 text-white flex items-center justify-center text-xl font-bold leading-none">
+                    {metric.value}
+                  </div>
+                ) : (
+                  <p className="text-3xl font-bold leading-none">
+                    {metric.value}
+                  </p>
+                )}
                 <p className="mt-1 text-xs text-white/85">{metric.label}</p>
               </div>
             ))}

@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { v4 as uuid } from 'uuid';
@@ -7,7 +7,9 @@ interface FileRequest extends Request {
   file: Express.Multer.File;
 }
 
-export const uploadController = async (req: FileRequest, res: Response, next: NextFunction) => {
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+
+export const uploadController = async (req: FileRequest, res: Response) => {
   try {
     const uploadPath = req.body.path as string;
     const uploadName = req.body.name as string | undefined;
@@ -21,6 +23,13 @@ export const uploadController = async (req: FileRequest, res: Response, next: Ne
       });
     }
 
+    if (file.size > MAX_FILE_SIZE) {
+      return res.status(413).json({
+        status: false,
+        message: 'File size exceeds 20MB limit',
+      });
+    }
+
     // Create upload directory if it doesn't exist
     const uploadDir = path.join(process.cwd(), 'uploads', uploadPath);
     await fs.mkdir(uploadDir, { recursive: true });
@@ -29,7 +38,7 @@ export const uploadController = async (req: FileRequest, res: Response, next: Ne
     const ext = path.extname(file.originalname);
     const filename =
       uploadName && uploadName != ''
-        ? `${uploadName.toLowerCase().replaceAll(' ', '-')}-${uuid().split('-')[0]}${ext}`
+        ? `${uploadName.toLowerCase().replaceAll(' ', '-')}-${uuid().split('-')[0]}${uuid().split('-')[0]}${ext}`
         : `${uuid()}${ext}`;
     const filepath = path.join(uploadDir, filename);
 
@@ -40,7 +49,7 @@ export const uploadController = async (req: FileRequest, res: Response, next: Ne
     return res.status(201).json({
       path: `uploads/${uploadPath}/${filename}`,
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({
       status: false,
       message: 'Error uploading file',

@@ -16,6 +16,7 @@ import {
 } from "@/validations/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { register } from "module";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -113,25 +114,28 @@ const PasswordResetForm = () => {
             onSubmit={step2Form.handleSubmit(onStep2Submit)}
           >
             <div>
-              <Label htmlFor="code">Code de vérification*</Label>
+              <p className="text-sm text-gray-600 text-center">
+                Un code a été envoyé à{" "}
+              </p>
+              <p className="font-medium text-sm text-secondary text-center">
+                {step1Form.watch("email")}
+              </p>
+            </div>
+
+            <div>
               <Input
                 id="code"
-                placeholder="123456"
                 type="text"
+                inputMode="numeric"
                 maxLength={6}
+                placeholder="000000"
+                className="text-center text-2xl tracking-[0.5em] font-mono"
                 {...step2Form.register("code")}
               />
               <ErrorMessage>
                 {step2Form.formState.errors.code?.message}
               </ErrorMessage>
             </div>
-
-            <p className="text-sm text-gray-600">
-              Un code a été envoyé à{" "}
-              <span className="font-medium text-primary">
-                {step1Form.watch("email")}
-              </span>
-            </p>
 
             <Button disabled={validateCode.isPending} className="w-full">
               {validateCode.isPending && <Loader2 className="animate-spin" />}

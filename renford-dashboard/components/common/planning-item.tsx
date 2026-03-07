@@ -6,6 +6,7 @@ import Image from "next/image";
 
 type PlanningItemProps = {
   title: string;
+  nameLabel?: string;
   subtitle?: string;
   establishmentName?: string;
   establishmentAddress?: string;
@@ -22,6 +23,7 @@ type PlanningItemProps = {
 
 export default function PlanningItem({
   title,
+  nameLabel,
   subtitle,
   establishmentName,
   establishmentAddress,
@@ -63,7 +65,14 @@ export default function PlanningItem({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
-            <p className="text-base md:text-lg font-semibold text-foreground">
+            <p
+              className={cn(
+                "text-base md:text-lg text-foreground",
+                nameLabel ? "font-normal" : "font-semibold",
+              )}
+            >
+              {nameLabel && <span className="font-semibold">{nameLabel}</span>}
+              {nameLabel && " - "}
               {title}
             </p>
             {amountValue && (
@@ -78,7 +87,7 @@ export default function PlanningItem({
             )}
           </div>
 
-          {establishmentName || establishmentAddress ? (
+          {(establishmentName || establishmentAddress) && (
             <div className="mt-1 flex items-start gap-2 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
               <p className="truncate">
@@ -91,21 +100,9 @@ export default function PlanningItem({
                 {establishmentAddress}
               </p>
             </div>
-          ) : (
-            subtitle && (
-              <p className="text-sm text-muted-foreground truncate">
-                {subtitle}
-              </p>
-            )
           )}
 
-          <div className="pt-2 flex flex-wrap items-center gap-4 text-sm text-secondary-dark">
-            {!hideDate && dateLabel && (
-              <span className="inline-flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-                {dateLabel}
-              </span>
-            )}
+          <div className="pt-2 flex flex-wrap items-center gap-4 text-sm">
             <span className="inline-flex items-center gap-2 font-semibold">
               <Clock3 className="h-4 w-4" />
               {timeLabel}

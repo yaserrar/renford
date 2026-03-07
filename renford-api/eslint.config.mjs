@@ -25,6 +25,7 @@ export default tseslint.config(
       ],
       '@typescript-eslint/consistent-type-imports': 'error',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
+      '@typescript-eslint/consistent-type-imports': 'off', // Disable to allow type imports without 'type' keyword
     },
   },
 );

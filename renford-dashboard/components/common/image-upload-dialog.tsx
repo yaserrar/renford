@@ -41,8 +41,9 @@ const ImageUploadDialog = ({
 
   const {
     handleSubmit,
-    watch,
     setValue,
+    setError,
+    clearErrors,
     reset,
     formState: { errors, isDirty },
   } = useForm<ImageSchema>({
@@ -63,7 +64,7 @@ const ImageUploadDialog = ({
 
   const imageUrl = useMemo(
     () => (uncroppedImage ? URL.createObjectURL(uncroppedImage) : undefined),
-    [uncroppedImage]
+    [uncroppedImage],
   );
 
   const onCropComplete = useCallback(
@@ -72,7 +73,7 @@ const ImageUploadDialog = ({
       try {
         const blob = await getCroppedImgFromFile(
           uncroppedImage,
-          croppedAreaPixels
+          croppedAreaPixels,
         );
         const croppedFile = new File([blob], "cropped.jpeg", {
           type: "image/jpeg",
@@ -87,7 +88,7 @@ const ImageUploadDialog = ({
         console.error(err);
       }
     },
-    [uncroppedImage, setValue]
+    [uncroppedImage, setValue],
   );
 
   return (
@@ -116,6 +117,19 @@ const ImageUploadDialog = ({
                     onChange={(e) => {
                       const image = e.target.files?.[0];
                       if (!image) return;
+
+                      const imageValidation =
+                        imageSchema.shape.file.safeParse(image);
+                      if (!imageValidation.success) {
+                        setUncroppedImage(null);
+                        setError("file", {
+                          type: "custom",
+                          message: imageValidation.error.issues[0]?.message,
+                        });
+                        return;
+                      }
+
+                      clearErrors("file");
                       setUncroppedImage(image);
                     }}
                   />

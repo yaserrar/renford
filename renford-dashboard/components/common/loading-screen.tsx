@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { Logo } from "./logo";
 
 type Props = {
   className?: string;
@@ -10,16 +11,10 @@ const LoadingScreen = ({ className }: Props) => {
     <main
       className={cn(
         "flex h-screen w-full items-center justify-center",
-        className
+        className,
       )}
     >
-      <Image
-        alt="Renford Logo"
-        src="/logo.png"
-        width={150}
-        height={150}
-        className="animate-bounce"
-      />
+      <Logo size="lg" className="animate-bounce" />
     </main>
   );
 };

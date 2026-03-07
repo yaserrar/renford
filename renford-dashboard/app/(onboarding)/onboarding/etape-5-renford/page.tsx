@@ -47,6 +47,8 @@ export default function Etape5RenfordPage() {
   const [activeDiplomeForUpload, setActiveDiplomeForUpload] = useState<
     string | null
   >(null);
+  const [activeDiplomeIndexForUpload, setActiveDiplomeIndexForUpload] =
+    useState<number | null>(null);
 
   const {
     register,
@@ -97,19 +99,12 @@ export default function Etape5RenfordPage() {
 
   const handleDiplomeUploaded = useCallback(
     (path: string) => {
-      if (!activeDiplomeForUpload) return;
-
-      const diplomes = getValues("diplomes") || [];
-      const index = diplomes.findIndex(
-        (diplome) => diplome === activeDiplomeForUpload,
-      );
-
-      if (index < 0) return;
+      if (activeDiplomeIndexForUpload === null) return;
 
       const updatedChemins = [
         ...(getValues("justificatifDiplomeChemins") || []),
       ];
-      updatedChemins[index] = path;
+      updatedChemins[activeDiplomeIndexForUpload] = path;
 
       setValue("justificatifDiplomeChemins", updatedChemins, {
         shouldDirty: true,
@@ -118,9 +113,16 @@ export default function Etape5RenfordPage() {
       });
 
       setActiveDiplomeForUpload(null);
+      setActiveDiplomeIndexForUpload(null);
     },
-    [activeDiplomeForUpload, getValues, setValue],
+    [activeDiplomeIndexForUpload, getValues, setValue],
   );
+
+  const openDiplomeDialog = useCallback((diplome: string, index: number) => {
+    setActiveDiplomeForUpload(diplome);
+    setActiveDiplomeIndexForUpload(index);
+    setDiplomeDialogOpen(true);
+  }, []);
 
   const handleCarteProUploaded = useCallback(
     (path: string) => {
@@ -181,7 +183,9 @@ export default function Etape5RenfordPage() {
                 multiple
                 value={field.value || []}
                 onValueChange={(value) => {
-                  const nextDiplomes = value as string[];
+                  const nextDiplomes = value as Array<
+                    (typeof DIPLOME_KEYS)[number]
+                  >;
                   const currentDiplomes = field.value || [];
                   const currentChemins =
                     getValues("justificatifDiplomeChemins") || [];
@@ -242,12 +246,12 @@ export default function Etape5RenfordPage() {
 
                     {chemin ? (
                       <div className="flex items-center gap-3">
-                        <FileText className="h-8 w-8 text-gray-400" />
-                        <div className="flex-1">
+                        <FileText className="h-8 w-8 text-gray-400 shrink-0" />
+                        <div className="flex-auto">
                           <p className="text-sm font-medium">
                             Document téléchargé
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 break-words whitespace-break-spaces">
                             {fileName || "Cliquez pour modifier"}
                           </p>
                         </div>
@@ -255,8 +259,7 @@ export default function Etape5RenfordPage() {
                           type="button"
                           variant="outline"
                           onClick={() => {
-                            setActiveDiplomeForUpload(diplome);
-                            setDiplomeDialogOpen(true);
+                            openDiplomeDialog(diplome, index);
                           }}
                         >
                           Modifier
@@ -287,8 +290,7 @@ export default function Etape5RenfordPage() {
                           variant="outline"
                           type="button"
                           onClick={() => {
-                            setActiveDiplomeForUpload(diplome);
-                            setDiplomeDialogOpen(true);
+                            openDiplomeDialog(diplome, index);
                           }}
                         >
                           Télécharger un document
@@ -535,11 +537,25 @@ export default function Etape5RenfordPage() {
       </form>
 
       <DocumentUploadDialog
+        key={`diplome-upload-${activeDiplomeForUpload ?? "none"}-${activeDiplomeIndexForUpload ?? "none"}`}
         open={diplomeDialogOpen}
-        setOpen={setDiplomeDialogOpen}
+        setOpen={(open) => {
+          setDiplomeDialogOpen(open);
+          if (!open) {
+            setActiveDiplomeForUpload(null);
+            setActiveDiplomeIndexForUpload(null);
+          }
+        }}
         setFileValue={handleDiplomeUploaded}
         path="documents/diplomes"
-        name={`justificatif-diplome-${activeDiplomeForUpload ?? "renford"}`}
+        name={`justificatif-diplome-${(activeDiplomeForUpload
+          ? (DIPLOME_LABELS[
+              activeDiplomeForUpload as keyof typeof DIPLOME_LABELS
+            ] ?? activeDiplomeForUpload)
+          : "renford"
+        )
+          .toLowerCase()
+          .replace(/[\s_]+/g, "-")}`}
         accept=".pdf,.jpg,.jpeg,.png"
         maxSizeMB={10}
       />
