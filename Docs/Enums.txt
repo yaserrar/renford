@@ -1,0 +1,131 @@
+TymMission:
+
+ID_Spécialité	Spécialité
+1	Matwork
+2	Reformer
+3	Hot Pilates
+4	Cadillac
+5	Chair (Wunda Chair)
+6	Petits matériels
+7	Pilates prénatal / postnatal
+8	Lagree Fitness
+9	Hatha Yoga
+10	Vinyasa Yoga
+11	Ashtanga Yoga
+12	Yin Yoga
+13	Hot Yoga
+14	Kundalini Yoga
+15	Yoga prénatal / postnatal
+16	Yoga Nidra
+17	Yoga Flow
+18	Qi Gong / Tai Chi
+19	CAF (Cuisses Abdos Fessiers)
+20	LIA (Low Impact Aerobic)
+21	Step
+22	HIIT
+23	Circuit training
+24	Cross Training / CrossFit
+25	TRX
+26	Biking / Spinning
+27	Body barre
+28	Stretching / Mobilité
+29	Cardio Boxing
+30	Bootcamp
+31	Gym posturale / dos
+32	EMS (Électrostimulation)
+33	Préparation Physique Générale
+34	Body Pump
+35	Body Attack
+36	Body Combat
+37	Body Step
+38	Body Balance
+39	Body Jam
+40	RPM
+41	Zumba classique
+42	Zumba® Kids
+43	Strong Toning®
+44	Zumba® Step
+45	Zumba® Gold
+46	Zumba Sentoa
+47	Zumba In The Circuit
+48	Zumba Strong
+49	Aqua Zumba®
+50	Éducateur sportif multisport
+51	Animateur sportif (enfants / ados)
+52	Intervenant scolaire / EPS
+53	Animateur sport santé / seniors / APA
+54	Animateur aquatique
+55	Hôte / Hôtesse d’accueil sportif
+56	Encadrement en salle (bloc / voie)
+57	Encadrement en milieu naturel
+58	Ouvreur de voies / blocs
+59	Encadrement Escalade (performance)
+60	Cours enfants / ados
+61	Initiation / loisirs adultes
+62	Boxe anglaise
+63	Boxe française / Savate
+64	Kickboxing
+65	Karaté
+66	Judo
+67	MMA
+68	Muay Thaï
+69	Boxe éducative (enfants / ados)
+70	Cardio Boxe / Boxe fitness
+71	Coaching boxe (loisir ou compétiteur)
+72	Danse classique
+73	Danse contemporaine
+74	Jazz / Modern Jazz
+75	Hip Hop / Street Dance
+76	Ragga Dancehall
+77	Danses latines (salsa, bachata…)
+78	Danse africaine
+79	Danse enfants
+80	Barre au sol
+81	Massages bien-être / sportifs
+82	Kinésithérapie sportive (hors acte médical)
+83	Massage deep tissue / récupération
+84	Réflexologie
+85	Relaxation / cohérence cardiaque
+86	Sonothérapie / Bains sonores
+87	Sophrologie
+88	Méditation / pleine conscience
+89	Stretch & mobilité douce
+90	Cryothérapie / pressothérapie
+91	Nutrition / diététique
+92	Préparation mentale
+
+
+
+Diplomes:
+ID	Diplome
+1	BPJEPS AF - Mention Cours Collectifs
+2	BPJEPS AF - Mention Haltérophilie, Musculation
+3	BPJEPS MAPST
+4	BPJEPS APT
+5	BPJEPS LTP
+6	BPJEPS AGFF (ancienne appellation)
+7	DEJEPS - Option Force Athlétique / Musculation
+8	DEJEPS - Perfectionnement Sportif
+9	DEJEPS - Spécialité sportive
+10	DESJEPS - Performance Sportives
+11	Licence STAPS - Management du Sport
+12	Licence STAPS - Education et motricité
+13	Licence STAPS - Entraînement Sportif
+14	Licence STAPS APA
+15	Master Staps - APA
+16	Master STAPS - Entrainement Sportif
+17	Master STAPS - Préparation physique
+18	Master STAPS - Management du Sport
+19	CQP IF - Option Cours Collectifs
+20	CQP IF - Option Musculation & Personal Training
+21	CQP ALS - Option AGEE
+22	BEES Métiers de la Forme
+23	DU - Préparation Physique
+24	Certification Yoga
+25	Certification Pilates
+26	Certification Zumba
+27	BPJEPS Escalade
+28	DEJEPS Escalade
+29	CQP Escalade
+30	BEES Escalade
+31	DESJEPS Escalade
