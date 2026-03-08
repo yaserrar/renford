@@ -1,56 +1,80 @@
-version: "3.8"
+version: "3.9"
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: renford-postgres
+  renford-api:
+    container_name: "renford-api"
+    build:
+      context: ./renford-api
+      dockerfile: Dockerfile
+    env_file:
+      - ./renford-api/.env
     restart: always
-    environment:
-      POSTGRES_USER: renford_user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-renford_secure_password_2026}
-      POSTGRES_DB: renford_db
-      PGDATA: /var/lib/postgresql/data/pgdata
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     networks:
-      - renford-network
-    command:
-      - "postgres"
-      - "-c"
-      - "listen_addresses=*"
-      - "-c"
-      - "max_connections=200"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U renford_user -d renford_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - network
+    volumes:
+      - uploads:/uploads
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: renford-pgadmin
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@renford.fr}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin_password_2026}
-      PGADMIN_LISTEN_PORT: 80
-    ports:
-      - "5050:80"
+  renford-nginx:
+    container_name: "renford-nginx"
+    build: ./nginx
     volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    networks:
-      - renford-network
+      - uploads:/uploads
+    restart: always
     depends_on:
-      - postgres
+      - renford-api
+    networks:
+      - network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=network
+      - traefik.http.routers.renford-nginx.rule=Host(`api.renford.online`)
+      - traefik.http.routers.renford-nginx.entrypoints=websecure
+      - traefik.http.routers.renford-nginx.tls.certresolver=letsencryptresolver
+      - traefik.http.services.renford-nginx.loadbalancer.server.port=80
 
-volumes:
-  postgres_data:
-    driver: local
-  pgadmin_data:
-    driver: local
+  renford-prisma:
+    container_name: "renford-prisma"
+    build:
+      context: ./renford-api/prisma
+      dockerfile: Dockerfile
+    env_file:
+      - ./renford-api/.env
+    restart: always
+    networks:
+      - network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=network
+      - traefik.http.routers.renford-prisma.rule=Host(`prisma.renford.online`)
+      - traefik.http.routers.renford-prisma.entrypoints=websecure
+      - traefik.http.routers.renford-prisma.tls.certresolver=letsencryptresolver
+      - traefik.http.services.renford-prisma.loadbalancer.server.port=5000
+
+  renford-dashboard:
+    container_name: "renford-dashboard"
+    build:
+      context: ./renford-dashboard
+      dockerfile: Dockerfile
+    env_file:
+      - ./renford-dashboard/.env
+    restart: always
+    networks:
+      - network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=network
+      - traefik.http.routers.renford-dashboard.rule=Host(`renford.online`)
+      - traefik.http.routers.renford-dashboard.entrypoints=websecure
+      - traefik.http.routers.renford-dashboard.tls.certresolver=letsencryptresolver
+      - traefik.http.services.renford-dashboard.loadbalancer.server.port=80
 
 networks:
-  renford-network:
-    driver: bridge
+  network:
+    external:
+      name: "saas_network"
+
+volumes:
+  uploads:
