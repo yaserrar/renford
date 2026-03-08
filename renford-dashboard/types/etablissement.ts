@@ -19,7 +19,6 @@ export type Etablissement = {
   adresse: string;
   codePostal: string;
   ville: string;
-  pays: string;
   latitude: number | null;
   longitude: number | null;
   emailPrincipal: string | null;

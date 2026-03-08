@@ -105,3 +105,85 @@ export const updateIdentiteProfilEtablissementSchema = z
 export type UpdateIdentiteProfilEtablissementSchema = z.infer<
   typeof updateIdentiteProfilEtablissementSchema
 >;
+
+const optionalNullableStringFromInput = z.preprocess(
+  (value) => {
+    if (value === '' || value === undefined || value === null) return null;
+    return value;
+  },
+  z.string().nullable(),
+);
+
+const optionalNullableEmailFromInput = z.preprocess(
+  (value) => {
+    if (value === '' || value === undefined || value === null) return null;
+    return value;
+  },
+  z.string().email('Email invalide').nullable(),
+);
+
+export const createEtablissementSiteSchema = z
+  .object({
+    nom: z
+      .string()
+      .min(2, "Le nom de l'établissement doit contenir au moins 2 caractères")
+      .max(120, "Le nom de l'établissement ne peut pas dépasser 120 caractères"),
+    adresse: z
+      .string()
+      .min(5, "L'adresse doit contenir au moins 5 caractères")
+      .max(200, "L'adresse ne peut pas dépasser 200 caractères"),
+    codePostal: z.string().min(1, 'Le code postal est obligatoire'),
+    ville: z
+      .string()
+      .min(2, 'La ville doit contenir au moins 2 caractères')
+      .max(100, 'La ville ne peut pas dépasser 100 caractères'),
+    latitude: z.number().min(-90, 'Latitude invalide').max(90, 'Latitude invalide'),
+    longitude: z.number().min(-180, 'Longitude invalide').max(180, 'Longitude invalide'),
+    siret: z
+      .string()
+      .length(14, 'Le numéro SIRET doit contenir exactement 14 chiffres')
+      .regex(/^\d{14}$/, 'Le numéro SIRET ne doit contenir que des chiffres')
+      .optional(),
+    typeEtablissement: z.enum(TYPE_ETABLISSEMENT).optional(),
+    emailPrincipal: optionalNullableEmailFromInput.optional(),
+    telephonePrincipal: optionalNullableStringFromInput.optional(),
+    nomContactPrincipal: optionalNullableStringFromInput.optional(),
+    prenomContactPrincipal: optionalNullableStringFromInput.optional(),
+    adresseFacturationDifferente: z.boolean().default(false),
+    adresseFacturation: z.string().optional(),
+    codePostalFacturation: z.string().optional(),
+    villeFacturation: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.adresseFacturationDifferente) {
+      if (!data.adresseFacturation || data.adresseFacturation.length < 5) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['adresseFacturation'],
+          message: "L'adresse de facturation doit contenir au moins 5 caractères",
+        });
+      }
+
+      if (!data.codePostalFacturation || data.codePostalFacturation.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['codePostalFacturation'],
+          message: 'Le code postal de facturation est obligatoire',
+        });
+      }
+
+      if (!data.villeFacturation || data.villeFacturation.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['villeFacturation'],
+          message: 'La ville de facturation doit contenir au moins 2 caractères',
+        });
+      }
+    }
+  });
+
+export type CreateEtablissementSiteSchema = z.infer<typeof createEtablissementSiteSchema>;
+
+export const updateEtablissementSiteSchema = createEtablissementSiteSchema;
+
+export type UpdateEtablissementSiteSchema = z.infer<typeof updateEtablissementSiteSchema>;

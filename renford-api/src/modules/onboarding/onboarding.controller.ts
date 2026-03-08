@@ -408,7 +408,6 @@ export const completeOnboarding = async (req: Request, res: Response, next: Next
           adresse: profilEtablissement.adresse,
           codePostal: profilEtablissement.codePostal,
           ville: profilEtablissement.ville,
-          pays: 'France',
           latitude: profilEtablissement.latitude,
           longitude: profilEtablissement.longitude,
           emailPrincipal: null,

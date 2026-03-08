@@ -2,14 +2,18 @@ import { Router } from 'express';
 import { authenticateToken } from '../../middleware/auth.middleware';
 import { validateResource } from '../../middleware/validate.resource';
 import {
+  createEtablissementSite,
   updateAvatarProfilEtablissement,
   updateCouvertureProfilEtablissement,
+  updateEtablissementSite,
   updateIdentiteProfilEtablissement,
   updateInfosProfilEtablissement,
 } from './profil-etablissement.controller';
 import {
+  createEtablissementSiteSchema,
   updateAvatarProfilEtablissementSchema,
   updateCouvertureProfilEtablissementSchema,
+  updateEtablissementSiteSchema,
   updateIdentiteProfilEtablissementSchema,
   updateInfosProfilEtablissementSchema,
 } from './profil-etablissement.schema';
@@ -42,6 +46,20 @@ router.put(
   authenticateToken(),
   validateResource(updateIdentiteProfilEtablissementSchema),
   updateIdentiteProfilEtablissement,
+);
+
+router.post(
+  '/etablissements',
+  authenticateToken(),
+  validateResource(createEtablissementSiteSchema),
+  createEtablissementSite,
+);
+
+router.put(
+  '/etablissements/:etablissementId',
+  authenticateToken(),
+  validateResource(updateEtablissementSiteSchema),
+  updateEtablissementSite,
 );
 
 export default router;

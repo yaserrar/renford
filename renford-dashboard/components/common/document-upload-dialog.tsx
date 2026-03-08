@@ -116,7 +116,7 @@ const DocumentUploadDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <div>
           <form onSubmit={handleSubmit(onSubmit)}>
             <DialogHeader>

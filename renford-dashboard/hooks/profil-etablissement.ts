@@ -1,4 +1,5 @@
 import { getErrorMessage } from "@/lib/utils";
+import { UpsertEtablissementSiteSchema } from "@/validations/etablissement";
 import {
   UpdateProfilEtablissementAvatarSchema,
   UpdateProfilEtablissementCouvertureSchema,
@@ -77,6 +78,56 @@ export const useUpdateProfilEtablissementIdentite = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success("Informations personnelles mises à jour");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+export const useCreateEtablissementSite = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: UpsertEtablissementSiteSchema) => {
+      return (await axios.post("/profil-etablissement/etablissements", data))
+        .data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+      toast.success("Établissement ajouté");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+export const useUpdateEtablissementSite = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      etablissementId,
+      data,
+    }: {
+      etablissementId: string;
+      data: UpsertEtablissementSiteSchema;
+    }) => {
+      return (
+        await axios.put(
+          `/profil-etablissement/etablissements/${etablissementId}`,
+          data
+        )
+      ).data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+      toast.success("Établissement mis à jour");
     },
     onError: (error: any) => {
       const message = getErrorMessage(error?.response?.data?.message);

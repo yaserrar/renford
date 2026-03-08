@@ -1,22 +1,60 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
 import { Etablissement } from "@/types/etablissement";
 import { MapPin } from "lucide-react";
+import { useMemo, useState } from "react";
+import SiteFormDialog from "./site-form-dialog";
 
 type SitesTabContentProps = {
   etablissements: Etablissement[];
+  defaultSiret?: string;
+  defaultTypeEtablissement?: Etablissement["typeEtablissement"] | null;
 };
 
 export default function SitesTabContent({
   etablissements,
+  defaultSiret,
+  defaultTypeEtablissement,
 }: SitesTabContentProps) {
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editingSiteId, setEditingSiteId] = useState<string | null>(null);
+
+  const editingSite = useMemo(
+    () => etablissements.find((site) => site.id === editingSiteId),
+    [editingSiteId, etablissements]
+  );
+
   return (
-    <div className="space-y-4">
+    <>
+      <SiteFormDialog
+        open={createOpen}
+        setOpen={setCreateOpen}
+        mode="create"
+        defaultSiret={defaultSiret}
+        defaultTypeEtablissement={defaultTypeEtablissement}
+      />
+
+      <SiteFormDialog
+        open={Boolean(editingSiteId)}
+        setOpen={(open) => {
+          if (!open) setEditingSiteId(null);
+        }}
+        mode="edit"
+        site={editingSite}
+        defaultSiret={defaultSiret}
+        defaultTypeEtablissement={defaultTypeEtablissement}
+      />
+
+      <div className="space-y-4">
       <div className="flex justify-end">
-        <button
+        <Button
           type="button"
-          className="h-10 px-4 rounded-full border border-input bg-white text-sm"
+          variant="outline"
+          onClick={() => setCreateOpen(true)}
         >
           Ajouter un établissement
-        </button>
+        </Button>
       </div>
 
       {etablissements.map((site) => (
@@ -31,14 +69,21 @@ export default function SitesTabContent({
               {site.adresse}, {site.codePostal} {site.ville}
             </p>
           </div>
-          <button
+          <Button
             type="button"
-            className="h-10 px-4 rounded-full bg-black text-white text-sm"
+            onClick={() => setEditingSiteId(site.id)}
           >
             Modifier
-          </button>
+          </Button>
         </div>
       ))}
+
+      {etablissements.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-input p-6 text-center text-sm text-muted-foreground">
+          Aucun établissement ajouté pour le moment.
+        </div>
+      ) : null}
     </div>
+    </>
   );
 }

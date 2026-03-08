@@ -42,7 +42,11 @@ export default function ProfileEtablissementPage() {
         </TabsContent> */}
 
           <TabsContent value="sites">
-            <SitesTabContent etablissements={etablissements} />
+            <SitesTabContent
+              etablissements={etablissements}
+              defaultSiret={profil?.siret}
+              defaultTypeEtablissement={profil?.typeEtablissement ?? null}
+            />
           </TabsContent>
         </div>
       </Tabs>

@@ -64,7 +64,7 @@ const ImageUploadDialog = ({
 
   const imageUrl = useMemo(
     () => (uncroppedImage ? URL.createObjectURL(uncroppedImage) : undefined),
-    [uncroppedImage],
+    [uncroppedImage]
   );
 
   const onCropComplete = useCallback(
@@ -73,7 +73,7 @@ const ImageUploadDialog = ({
       try {
         const blob = await getCroppedImgFromFile(
           uncroppedImage,
-          croppedAreaPixels,
+          croppedAreaPixels
         );
         const croppedFile = new File([blob], "cropped.jpeg", {
           type: "image/jpeg",
@@ -88,12 +88,12 @@ const ImageUploadDialog = ({
         console.error(err);
       }
     },
-    [uncroppedImage, setValue],
+    [uncroppedImage, setValue]
   );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Télécharger une image</DialogTitle>

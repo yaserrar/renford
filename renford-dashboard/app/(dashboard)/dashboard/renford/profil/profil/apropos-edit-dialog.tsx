@@ -68,7 +68,7 @@ export default function AproposEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Modifier la section à propos</DialogTitle>
           <DialogDescription>
