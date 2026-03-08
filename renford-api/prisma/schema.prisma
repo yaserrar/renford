@@ -439,40 +439,6 @@ enum TypeMission {
     preparation_mentale
 }
 
-enum Diplome {
-    bpjeps_af_mention_cours_collectifs
-    bpjeps_af_mention_halterophilie_musculation
-    bpjeps_mapst
-    bpjeps_apt
-    bpjeps_ltp
-    bpjeps_agff_ancienne_appellation
-    dejeps_option_force_athletique_musculation
-    dejeps_perfectionnement_sportif
-    dejeps_specialite_sportive
-    desjeps_performance_sportives
-    licence_staps_management_du_sport
-    licence_staps_education_et_motricite
-    licence_staps_entrainement_sportif
-    licence_staps_apa
-    master_staps_apa
-    master_staps_entrainement_sportif
-    master_staps_preparation_physique
-    master_staps_management_du_sport
-    cqp_if_option_cours_collectifs
-    cqp_if_option_musculation_and_personal_training
-    cqp_als_option_agee
-    bees_metiers_de_la_forme
-    du_preparation_physique
-    certification_yoga
-    certification_pilates
-    certification_zumba
-    bpjeps_escalade
-    dejeps_escalade
-    cqp_escalade
-    bees_escalade
-    desjeps_escalade
-}
-
 enum CreneauDisponibilite {
     matin
     midi
@@ -520,6 +486,40 @@ model ExperienceProfessionnelleRenford {
 
     @@index([profilRenfordId])
     @@map("experiences_professionnelles_renford")
+}
+
+enum Diplome {
+    bpjeps_af_mention_cours_collectifs
+    bpjeps_af_mention_halterophilie_musculation
+    bpjeps_mapst
+    bpjeps_apt
+    bpjeps_ltp
+    bpjeps_agff_ancienne_appellation
+    dejeps_option_force_athletique_musculation
+    dejeps_perfectionnement_sportif
+    dejeps_specialite_sportive
+    desjeps_performance_sportives
+    licence_staps_management_du_sport
+    licence_staps_education_et_motricite
+    licence_staps_entrainement_sportif
+    licence_staps_apa
+    master_staps_apa
+    master_staps_entrainement_sportif
+    master_staps_preparation_physique
+    master_staps_management_du_sport
+    cqp_if_option_cours_collectifs
+    cqp_if_option_musculation_and_personal_training
+    cqp_als_option_agee
+    bees_metiers_de_la_forme
+    du_preparation_physique
+    certification_yoga
+    certification_pilates
+    certification_zumba
+    bpjeps_escalade
+    dejeps_escalade
+    cqp_escalade
+    bees_escalade
+    desjeps_escalade
 }
 
 // enum StatutDocument {

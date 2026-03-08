@@ -1,7 +1,7 @@
 "use client";
 
+import Loading from "@/components/common/loading";
 import { useCurrentUser } from "@/hooks/utilisateur";
-import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -25,11 +25,7 @@ export default function ProfilePage() {
   }, [me?.typeUtilisateur, router]);
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto flex items-center justify-center h-64 mt-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <Loading className="mt-12" />;
   }
 
   return null;
