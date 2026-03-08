@@ -44,6 +44,7 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
         setImageValue={handleCouvertureUploaded}
         path="profils/couvertures"
         name="couverture-etablissement"
+        aspect={16 / 5}
       />
 
       <ImageUploadDialog

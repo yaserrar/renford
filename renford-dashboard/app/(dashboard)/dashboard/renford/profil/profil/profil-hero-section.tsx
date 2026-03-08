@@ -45,7 +45,8 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
         setOpen={setCoverDialogOpen}
         setImageValue={handleCouvertureUploaded}
         path="profils/couvertures"
-        name="couverture"
+        name="couverture-renford"
+        aspect={16 / 5}
       />
 
       <ImageUploadDialog
@@ -54,7 +55,7 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
         setImageValue={handleAvatarUploaded}
         path="profils/avatars"
         aspect={1}
-        name="avatar"
+        name="avatar-renford"
       />
 
       <ProfilInfosEditDialog
