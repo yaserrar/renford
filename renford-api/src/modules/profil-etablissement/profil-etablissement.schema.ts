@@ -106,21 +106,15 @@ export type UpdateIdentiteProfilEtablissementSchema = z.infer<
   typeof updateIdentiteProfilEtablissementSchema
 >;
 
-const optionalNullableStringFromInput = z.preprocess(
-  (value) => {
-    if (value === '' || value === undefined || value === null) return null;
-    return value;
-  },
-  z.string().nullable(),
-);
+const optionalNullableStringFromInput = z.preprocess((value) => {
+  if (value === '' || value === undefined || value === null) return null;
+  return value;
+}, z.string().nullable());
 
-const optionalNullableEmailFromInput = z.preprocess(
-  (value) => {
-    if (value === '' || value === undefined || value === null) return null;
-    return value;
-  },
-  z.string().email('Email invalide').nullable(),
-);
+const optionalNullableEmailFromInput = z.preprocess((value) => {
+  if (value === '' || value === undefined || value === null) return null;
+  return value;
+}, z.string().email('Email invalide').nullable());
 
 export const createEtablissementSiteSchema = z
   .object({

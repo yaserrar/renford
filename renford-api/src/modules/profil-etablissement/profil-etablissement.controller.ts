@@ -260,15 +260,11 @@ export const createEtablissementSite = async (
         nomContactPrincipal: nomContactPrincipal ?? null,
         prenomContactPrincipal: prenomContactPrincipal ?? null,
         adresseFacturationDifferente,
-        adresseFacturation: adresseFacturationDifferente
-          ? (adresseFacturation as string)
-          : adresse,
+        adresseFacturation: adresseFacturationDifferente ? (adresseFacturation as string) : adresse,
         codePostalFacturation: adresseFacturationDifferente
           ? (codePostalFacturation as string)
           : codePostal,
-        villeFacturation: adresseFacturationDifferente
-          ? (villeFacturation as string)
-          : ville,
+        villeFacturation: adresseFacturationDifferente ? (villeFacturation as string) : ville,
       },
     });
 

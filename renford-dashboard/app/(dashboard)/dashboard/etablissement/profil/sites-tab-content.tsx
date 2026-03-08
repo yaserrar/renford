@@ -47,43 +47,40 @@ export default function SitesTabContent({
       />
 
       <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setCreateOpen(true)}
-        >
-          Ajouter un établissement
-        </Button>
-      </div>
-
-      {etablissements.map((site) => (
-        <div
-          key={site.id}
-          className="bg-white rounded-2xl border border-input p-4 flex items-center justify-between gap-4"
-        >
-          <div className="space-y-1">
-            <p className="text-xl font-semibold">{site.nom}</p>
-            <p className="text-sm text-muted-foreground flex items-center gap-1">
-              <MapPin className="h-4 w-4" />
-              {site.adresse}, {site.codePostal} {site.ville}
-            </p>
-          </div>
+        <div className="flex justify-end">
           <Button
             type="button"
-            onClick={() => setEditingSiteId(site.id)}
+            variant="outline"
+            onClick={() => setCreateOpen(true)}
           >
-            Modifier
+            Ajouter un établissement
           </Button>
         </div>
-      ))}
 
-      {etablissements.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-input p-6 text-center text-sm text-muted-foreground">
-          Aucun établissement ajouté pour le moment.
-        </div>
-      ) : null}
-    </div>
+        {etablissements.map((site) => (
+          <div
+            key={site.id}
+            className="bg-white rounded-2xl border border-input p-4 flex items-center justify-between gap-4"
+          >
+            <div className="space-y-1">
+              <p className="text-xl font-semibold">{site.nom}</p>
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <MapPin className="h-4 w-4" />
+                {site.adresse}, {site.codePostal} {site.ville}
+              </p>
+            </div>
+            <Button type="button" onClick={() => setEditingSiteId(site.id)}>
+              Modifier
+            </Button>
+          </div>
+        ))}
+
+        {etablissements.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-input p-6 text-center text-sm text-muted-foreground">
+            Aucun établissement ajouté pour le moment.
+          </div>
+        ) : null}
+      </div>
     </>
   );
 }
