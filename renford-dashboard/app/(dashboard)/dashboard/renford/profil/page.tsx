@@ -27,18 +27,20 @@ export default function ProfileRenfordPage() {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profil">
-          <ProfilTabContent me={me} />
-        </TabsContent>
-        <TabsContent value="infos">
-          <InformationsTabContent me={me} />
-        </TabsContent>
-        <TabsContent value="password">
-          <PasswordTabContent />
-        </TabsContent>
-        <TabsContent value="notifications">
-          <NotificationsTabContent me={me} />
-        </TabsContent>
+        <div className="bg-secondary-background rounded-2xl m-1 p-4 h-full">
+          <TabsContent value="profil">
+            <ProfilTabContent me={me} />
+          </TabsContent>
+          <TabsContent value="infos">
+            <InformationsTabContent me={me} />
+          </TabsContent>
+          <TabsContent value="password">
+            <PasswordTabContent />
+          </TabsContent>
+          <TabsContent value="notifications">
+            <NotificationsTabContent me={me} />
+          </TabsContent>
+        </div>
       </Tabs>
     </main>
   );

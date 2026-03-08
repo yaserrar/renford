@@ -1,9 +1,9 @@
 "use client";
 
 import { useCurrentUser } from "@/hooks/utilisateur";
-import RenfordIndicatorsSection from "./-components/indicators-section";
-import RenfordPlanningSection from "./-components/planning-section";
-import RenfordTopActionsSection from "./-components/top-actions-section";
+import RenfordIndicatorsSection from "./indicators-section";
+import RenfordPlanningSection from "./planning-section";
+import RenfordTopActionsSection from "./top-actions-section";
 
 export default function RenfordAccueilPage() {
   const { data: currentUser } = useCurrentUser();
@@ -16,7 +16,7 @@ export default function RenfordAccueilPage() {
   }).format(new Date());
 
   return (
-    <main className="min-h-screen px-4 md:px-8 py-6 md:py-8">
+    <main className="min-h-screen px-4 bg-secondary-background rounded-2xl m-1 border md:px-8 py-6 md:py-8">
       <div className="mx-auto w-full max-w-6xl space-y-5 md:space-y-6">
         <section className="space-y-1">
           <p className="text-sm text-muted-foreground capitalize">

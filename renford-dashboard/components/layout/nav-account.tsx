@@ -76,7 +76,13 @@ const NavAccount = () => {
             sideOffset={4}
           >
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/profil">
+              <Link
+                href={
+                  me?.typeUtilisateur === "etablissement"
+                    ? "/dashboard/etablissement/profil"
+                    : "/dashboard/renford/profil"
+                }
+              >
                 <User />
                 Gérer mon compte
               </Link>

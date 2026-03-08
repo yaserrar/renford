@@ -1,9 +1,9 @@
 "use client";
 
 import { useCurrentUser } from "@/hooks/utilisateur";
-import EtablissementIndicatorsSection from "./-components/indicators-section";
-import EtablissementPlanningSection from "./-components/planning-section";
-import EtablissementTopActionsSection from "./-components/top-actions-section";
+import EtablissementIndicatorsSection from "./indicators-section";
+import EtablissementPlanningSection from "./planning-section";
+import EtablissementTopActionsSection from "./top-actions-section";
 
 export default function EtablissementAccueilPage() {
   const { data: currentUser } = useCurrentUser();
@@ -16,7 +16,7 @@ export default function EtablissementAccueilPage() {
   }).format(new Date());
 
   return (
-    <main className="min-h-screen bg-background px-4 md:px-8 py-6 md:py-8">
+    <main className="min-h-screen bg-secondary-background rounded-2xl m-1 px-4 md:px-8 py-6 md:py-8">
       <div className="mx-auto w-full max-w-6xl space-y-5 md:space-y-6">
         <section className="space-y-1">
           <p className="text-sm text-muted-foreground capitalize">
