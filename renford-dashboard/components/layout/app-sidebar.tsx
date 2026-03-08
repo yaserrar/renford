@@ -43,45 +43,45 @@ const ETABLISSEMENT_MAIN_LINKS = [
   { title: "Accueil", url: "/dashboard/etablissement/accueil", icon: Home },
   {
     title: "Missions",
-    url: "/dashboard/etablissement/missions",
+    url: "#",
     icon: Handshake,
   },
   {
     title: "Planning",
-    url: "/dashboard/etablissement/planning",
+    url: "#",
     icon: CalendarDays,
   },
   {
     title: "Mes Renfords",
-    url: "/dashboard/etablissement/mes-renfords",
+    url: "#",
     icon: Heart,
   },
   {
     title: "Facture & Paiements",
-    url: "/dashboard/etablissement/factures-paiements",
+    url: "#",
     icon: ScrollText,
   },
   {
     title: "Gérer les sites",
-    url: "/dashboard/etablissement/sites",
+    url: "#",
     icon: Building2,
   },
 ];
 
 const RENFORD_FOOTER_LINKS = [
-  { title: "Bons plans", url: "/dashboard/renford/bons-plans", icon: Percent },
-  { title: "Support", url: "/dashboard/renford/support", icon: CircleHelp },
+  { title: "Bons plans", url: "#", icon: Percent },
+  { title: "Support", url: "#", icon: CircleHelp },
 ];
 
 const ETABLISSEMENT_FOOTER_LINKS = [
   {
     title: "Bons plans",
-    url: "/dashboard/etablissement/bons-plans",
+    url: "#",
     icon: Percent,
   },
   {
     title: "Support",
-    url: "/dashboard/etablissement/support",
+    url: "#",
     icon: CircleHelp,
   },
 ];
@@ -95,14 +95,14 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
   const mainLinks = isEtablissement
     ? ETABLISSEMENT_MAIN_LINKS
     : isRenford
-      ? RENFORD_MAIN_LINKS
-      : RENFORD_MAIN_LINKS;
+    ? RENFORD_MAIN_LINKS
+    : RENFORD_MAIN_LINKS;
 
   const footerLinks = isEtablissement
     ? ETABLISSEMENT_FOOTER_LINKS
     : isRenford
-      ? RENFORD_FOOTER_LINKS
-      : RENFORD_FOOTER_LINKS;
+    ? RENFORD_FOOTER_LINKS
+    : RENFORD_FOOTER_LINKS;
 
   const homeHref = isEtablissement
     ? "/dashboard/etablissement/accueil"
