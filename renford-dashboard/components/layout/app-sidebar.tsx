@@ -29,12 +29,12 @@ import { useCurrentUser } from "@/hooks/utilisateur";
 import { Logo } from "../common/logo";
 
 const RENFORD_MAIN_LINKS = [
-  { title: "Accueil", url: "/dashboard/renford/accueil", icon: Home },
-  { title: "Missions", url: "/dashboard/renford/missions", icon: Handshake },
-  { title: "Planning", url: "/dashboard/renford/planning", icon: CalendarDays },
+  { title: "Accueil", url: "#", icon: Home },
+  { title: "Missions", url: "#", icon: Handshake },
+  { title: "Planning", url: "#", icon: CalendarDays },
   {
     title: "Facture & Paiements",
-    url: "/dashboard/renford/factures-paiements",
+    url: "#",
     icon: ScrollText,
   },
 ];

@@ -250,7 +250,6 @@ model ProfilRenford {
     // Profil public (étape 4)
     titreProfil       String?
     descriptionProfil String?       @db.Text
-    photoProfil       String? // Chemin vers la photo de profil
     typeMission       TypeMission[] @default([])
     assuranceRCPro    Boolean       @default(false)
     portfolio         String[]      @default([])
@@ -263,7 +262,6 @@ model ProfilRenford {
 
     // Informations personnelles
     dateNaissance DateTime? @db.Date
-    telephone     String?
 
     // Localisation
     adresse    String?

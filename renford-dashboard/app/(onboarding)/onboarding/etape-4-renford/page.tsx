@@ -32,8 +32,8 @@ export default function Etape4RenfordPage() {
   const { data: user } = useCurrentUser();
   const { mutate, isPending } = useUpdateRenfordProfil();
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
-  const [photoProfil, setPhotoProfil] = useState<string | null>(
-    user?.profilRenford?.photoProfil || null,
+  const [avatarChemin, setAvatarChemin] = useState<string | null>(
+    user?.profilRenford?.avatarChemin || null
   );
 
   const {
@@ -45,7 +45,7 @@ export default function Etape4RenfordPage() {
   } = useForm<OnboardingRenfordProfilSchema>({
     resolver: zodResolver(onboardingRenfordProfilSchema),
     defaultValues: {
-      photoProfil: user?.profilRenford?.photoProfil || undefined,
+      avatarChemin: user?.profilRenford?.avatarChemin || undefined,
       titreProfil: user?.profilRenford?.titreProfil || "",
       descriptionProfil: user?.profilRenford?.descriptionProfil || "",
       typeMission: user?.profilRenford?.typeMission || [],
@@ -54,13 +54,13 @@ export default function Etape4RenfordPage() {
   });
 
   const handlePhotoUploaded = (path: string) => {
-    setPhotoProfil(path);
-    setValue("photoProfil", path, { shouldDirty: true });
+    setAvatarChemin(path);
+    setValue("avatarChemin", path, { shouldDirty: true });
   };
 
   const removePhoto = () => {
-    setPhotoProfil(null);
-    setValue("photoProfil", null, { shouldDirty: true });
+    setAvatarChemin(null);
+    setValue("avatarChemin", null, { shouldDirty: true });
   };
 
   const onSubmit = (data: OnboardingRenfordProfilSchema) => {
@@ -93,9 +93,9 @@ export default function Etape4RenfordPage() {
               className="h-20 w-20 bg-gray-200 cursor-pointer"
               onClick={() => setPhotoDialogOpen(true)}
             >
-              {photoProfil && (
+              {avatarChemin && (
                 <AvatarImage
-                  src={getUrl(photoProfil)}
+                  src={getUrl(avatarChemin)}
                   alt="Photo de profil"
                   width={80}
                   height={80}
@@ -113,9 +113,9 @@ export default function Etape4RenfordPage() {
                 variant="outline"
                 onClick={() => setPhotoDialogOpen(true)}
               >
-                {photoProfil ? "Modifier la photo" : "Télécharger une photo"}
+                {avatarChemin ? "Modifier la photo" : "Télécharger une photo"}
               </Button>
-              {photoProfil && (
+              {avatarChemin && (
                 <Button
                   type="button"
                   size="icon"

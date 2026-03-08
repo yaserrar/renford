@@ -297,7 +297,7 @@ export const DIPLOME_KEYS = [
 
 // Schéma pour le profil Renford (étape 4)
 export const updateRenfordProfilSchema = z.object({
-  photoProfil: z.string().nullable().optional(),
+  avatarChemin: z.string().nullable().optional(),
   titreProfil: z.string().min(5, '5 caractères minimum').max(100, '100 caractères maximum'),
   descriptionProfil: z
     .string()

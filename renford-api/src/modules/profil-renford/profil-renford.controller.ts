@@ -401,7 +401,6 @@ export const updateIdentiteProfil = async (
     }
 
     const {
-      telephone,
       siret,
       siretEnCoursObtention,
       attestationAutoEntrepreneur,
@@ -415,44 +414,36 @@ export const updateIdentiteProfil = async (
       attestationVigilanceChemin,
     } = req.body;
 
-    const [, profilRenford] = await prisma.$transaction([
-      prisma.utilisateur.update({
-        where: { id: userId },
-        data: {
-          telephone,
-        },
-      }),
-      prisma.profilRenford.upsert({
-        where: { utilisateurId: userId },
-        update: {
-          siret: siretEnCoursObtention ? null : (siret ?? null),
-          siretEnCoursObtention,
-          attestationAutoEntrepreneur,
-          adresse,
-          codePostal,
-          ville,
-          latitude: latitude ?? null,
-          longitude: longitude ?? null,
-          pays,
-          dateNaissance: new Date(dateNaissance),
-          attestationVigilanceChemin: attestationVigilanceChemin ?? null,
-        },
-        create: {
-          utilisateurId: userId,
-          siret: siretEnCoursObtention ? null : (siret ?? null),
-          siretEnCoursObtention,
-          attestationAutoEntrepreneur,
-          adresse,
-          codePostal,
-          ville,
-          latitude: latitude ?? null,
-          longitude: longitude ?? null,
-          pays,
-          dateNaissance: new Date(dateNaissance),
-          attestationVigilanceChemin: attestationVigilanceChemin ?? null,
-        },
-      }),
-    ]);
+    const profilRenford = await prisma.profilRenford.upsert({
+      where: { utilisateurId: userId },
+      update: {
+        siret: siretEnCoursObtention ? null : (siret ?? null),
+        siretEnCoursObtention,
+        attestationAutoEntrepreneur,
+        adresse,
+        codePostal,
+        ville,
+        latitude: latitude ?? null,
+        longitude: longitude ?? null,
+        pays,
+        dateNaissance: new Date(dateNaissance),
+        attestationVigilanceChemin: attestationVigilanceChemin ?? null,
+      },
+      create: {
+        utilisateurId: userId,
+        siret: siretEnCoursObtention ? null : (siret ?? null),
+        siretEnCoursObtention,
+        attestationAutoEntrepreneur,
+        adresse,
+        codePostal,
+        ville,
+        latitude: latitude ?? null,
+        longitude: longitude ?? null,
+        pays,
+        dateNaissance: new Date(dateNaissance),
+        attestationVigilanceChemin: attestationVigilanceChemin ?? null,
+      },
+    });
 
     return res.json(profilRenford);
   } catch (err) {

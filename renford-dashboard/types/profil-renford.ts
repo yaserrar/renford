@@ -27,7 +27,6 @@ export type ProfilRenford = {
   // Profil public (étape 4)
   titreProfil: string | null;
   descriptionProfil: string | null;
-  photoProfil: string | null;
   typeMission: TypeMission[];
   assuranceRCPro: boolean;
 
@@ -38,7 +37,6 @@ export type ProfilRenford = {
   attestationVigilanceChemin: string | null;
   // Informations personnelles
   dateNaissance: Date | null;
-  telephone: string | null;
   adresse: string | null;
   codePostal: string | null;
   ville: string | null;
@@ -89,7 +87,7 @@ export type ProfilRenfordSimple = {
   id: string;
   utilisateurId: string;
   titreProfil: string | null;
-  photoProfil: string | null;
+  avatarChemin: string | null;
   statutCertification: StatutCertification;
   niveauExperience: NiveauExperience | null;
   noteMoyenne: number | null;

@@ -565,10 +565,6 @@ export type UpdateProfilRenfordQualificationsSchema = z.infer<
 
 export const updateProfilRenfordIdentiteSchema = z
   .object({
-    telephone: z
-      .string()
-      .min(10, "Le numéro de téléphone doit contenir au moins 10 chiffres")
-      .max(15, "Le numéro de téléphone ne peut pas dépasser 15 chiffres"),
     siret: z.string().optional(),
     siretEnCoursObtention: z.boolean(),
     attestationAutoEntrepreneur: z.boolean(),

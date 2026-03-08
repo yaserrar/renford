@@ -593,13 +593,13 @@ export const updateRenfordProfil = async (
       return res.status(401).json({ message: 'Utilisateur non authentifié' });
     }
 
-    const { photoProfil, titreProfil, descriptionProfil, typeMission, assuranceRCPro } = req.body;
+    const { avatarChemin, titreProfil, descriptionProfil, typeMission, assuranceRCPro } = req.body;
 
     // Mettre à jour le profil Renford
     const profilRenford = await prisma.profilRenford.update({
       where: { utilisateurId: userId },
       data: {
-        photoProfil,
+        avatarChemin,
         titreProfil,
         descriptionProfil,
         typeMission,

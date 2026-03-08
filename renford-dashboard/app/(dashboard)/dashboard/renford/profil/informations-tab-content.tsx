@@ -46,7 +46,6 @@ export default function InformationsTabContent({
   >({
     resolver: zodResolver(updateProfilRenfordIdentiteSchema),
     defaultValues: {
-      telephone: me?.telephone || profil?.telephone || "",
       siret: profil?.siret || "",
       siretEnCoursObtention: profil?.siretEnCoursObtention || false,
       attestationAutoEntrepreneur: profil?.attestationAutoEntrepreneur || false,
@@ -94,12 +93,6 @@ export default function InformationsTabContent({
             <h3 className="text-lg font-semibold">Identité</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
-              <div>
-                <Label htmlFor="telephone">Numéro de téléphone*</Label>
-                <Input id="telephone" {...register("telephone")} />
-                <ErrorMessage>{errors.telephone?.message}</ErrorMessage>
-              </div>
-
               <div>
                 <Label htmlFor="siret">Numéro SIRET (14 chiffres)</Label>
                 <Input

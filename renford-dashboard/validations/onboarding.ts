@@ -186,7 +186,7 @@ export type OnboardingRenfordIdentiteSchema = z.infer<
 
 // Étape 4 Renford: Profil public
 export const onboardingRenfordProfilSchema = z.object({
-  photoProfil: z.string().nullable().optional(),
+  avatarChemin: z.string().nullable().optional(),
   titreProfil: z
     .string()
     .min(5, "Le titre doit contenir au moins 5 caractères")
