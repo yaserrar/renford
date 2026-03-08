@@ -72,7 +72,7 @@ export function Combobox({
   const triggerLabel = React.useMemo(() => {
     if (selectedOptions.length === 0) return placeholder;
     if (!multiple) return selectedOptions[0]?.label ?? placeholder;
-    if (selectedOptions.length <= 10) {
+    if (selectedOptions.length <= 3) {
       return selectedOptions.map((option) => option.label).join(", ");
     }
     return `${selectedOptions.length} sélectionnés`;

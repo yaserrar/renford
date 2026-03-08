@@ -17,7 +17,7 @@ export default function EtablissementAccueilPage() {
 
   return (
     <main className="min-h-screen bg-secondary-background rounded-2xl m-1 px-4 md:px-8 py-6 md:py-8">
-      <div className="mx-auto w-full max-w-6xl space-y-5 md:space-y-6">
+      <div className="mx-auto w-full space-y-5 md:space-y-6">
         <section className="space-y-1">
           <p className="text-sm text-muted-foreground capitalize">
             {todayLabel}

@@ -1,7 +1,11 @@
 import bcrypt from 'bcryptjs';
 import type { NextFunction, Request, Response } from 'express';
 import prisma from '../../config/prisma';
-import { ChangePasswordSchema, UpdateProfileSchema } from './utilisateur.schema';
+import {
+  ChangePasswordSchema,
+  UpdateNotificationSettingsSchema,
+  UpdateProfileSchema,
+} from './utilisateur.schema';
 
 // GET /user/me - Obtenir l'utilisateur connecté
 export const getCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -20,7 +24,6 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
         nom: true,
         prenom: true,
         telephone: true,
-        avatarChemin: true,
         typeUtilisateur: true,
         statut: true,
         etapeOnboarding: true,
@@ -73,7 +76,6 @@ export const updateProfile = async (
       nom,
       prenom,
       telephone,
-      avatarChemin,
       notificationsEmail,
       typeNotificationsEmail,
       notificationsMobile,
@@ -86,7 +88,6 @@ export const updateProfile = async (
         ...(nom && { nom }),
         ...(prenom && { prenom }),
         ...(telephone !== undefined && { telephone }),
-        ...(avatarChemin !== undefined && { avatarChemin }),
         ...(notificationsEmail !== undefined && { notificationsEmail }),
         ...(typeNotificationsEmail !== undefined && { typeNotificationsEmail }),
         ...(notificationsMobile !== undefined && { notificationsMobile }),
@@ -98,7 +99,6 @@ export const updateProfile = async (
         nom: true,
         prenom: true,
         telephone: true,
-        avatarChemin: true,
         notificationsEmail: true,
         typeNotificationsEmail: true,
         notificationsMobile: true,
@@ -153,6 +153,48 @@ export const changePassword = async (
     });
 
     return res.json({ message: 'Mot de passe mis à jour avec succès' });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const updateNotificationSettings = async (
+  req: Request<unknown, unknown, UpdateNotificationSettingsSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    const {
+      notificationsEmail,
+      typeNotificationsEmail,
+      notificationsMobile,
+      typeNotificationsMobile,
+    } = req.body;
+
+    const utilisateur = await prisma.utilisateur.update({
+      where: { id: userId },
+      data: {
+        notificationsEmail,
+        typeNotificationsEmail,
+        notificationsMobile,
+        typeNotificationsMobile,
+      },
+      select: {
+        id: true,
+        notificationsEmail: true,
+        typeNotificationsEmail: true,
+        notificationsMobile: true,
+        typeNotificationsMobile: true,
+      },
+    });
+
+    return res.json(utilisateur);
   } catch (err) {
     return next(err);
   }

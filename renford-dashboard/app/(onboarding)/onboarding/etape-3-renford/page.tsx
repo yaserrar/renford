@@ -185,6 +185,11 @@ export default function Etape3RenfordPage() {
                     shouldTouch: true,
                     shouldValidate: true,
                   });
+                  setValue("pays", selection.pays, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                    shouldValidate: true,
+                  });
                   if (selection.latitude !== null) {
                     setValue("latitude", selection.latitude, {
                       shouldDirty: true,
@@ -238,7 +243,13 @@ export default function Etape3RenfordPage() {
 
         <div>
           <Label htmlFor="pays">Pays*</Label>
-          <Input id="pays" placeholder="France" {...register("pays")} />
+          <Input
+            id="pays"
+            placeholder="France"
+            readOnly
+            className="read-only:bg-muted"
+            {...register("pays")}
+          />
           <ErrorMessage>{errors.pays?.message}</ErrorMessage>
         </div>
 

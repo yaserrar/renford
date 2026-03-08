@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 // Statut de certification
 export const STATUT_CERTIFICATION = [
   "en_attente",
@@ -354,3 +356,262 @@ export const CRENEAUX_DISPONIBILITE_LABELS: Record<
   apres_midi: "Après-midi",
   soir: "Soir",
 };
+
+export const updateProfilRenfordCouvertureSchema = z.object({
+  imageCouvertureChemin: z.string().nullable(),
+});
+
+export type UpdateProfilRenfordCouvertureSchema = z.infer<
+  typeof updateProfilRenfordCouvertureSchema
+>;
+
+export const updateProfilRenfordAvatarSchema = z.object({
+  avatarChemin: z.string().nullable(),
+});
+
+export type UpdateProfilRenfordAvatarSchema = z.infer<
+  typeof updateProfilRenfordAvatarSchema
+>;
+
+export const updateProfilRenfordInfosSchema = z.object({
+  titreProfil: z
+    .string()
+    .min(5, "Le titre doit contenir au moins 5 caractères")
+    .max(100, "Le titre ne peut pas dépasser 100 caractères"),
+  descriptionProfil: z
+    .string()
+    .min(20, "La description doit contenir au moins 20 caractères")
+    .max(1000, "La description ne peut pas dépasser 1000 caractères"),
+  typeMission: z
+    .array(z.enum(TYPE_MISSION), {
+      required_error: "Veuillez sélectionner au moins un type de mission",
+    })
+    .min(1, "Veuillez sélectionner au moins un type de mission"),
+  assuranceRCPro: z.boolean(),
+});
+
+export type UpdateProfilRenfordInfosSchema = z.infer<
+  typeof updateProfilRenfordInfosSchema
+>;
+
+export const updateProfilRenfordDescriptionSchema = z.object({
+  descriptionProfil: z
+    .string()
+    .min(20, "La description doit contenir au moins 20 caractères")
+    .max(1000, "La description ne peut pas dépasser 1000 caractères"),
+});
+
+export type UpdateProfilRenfordDescriptionSchema = z.infer<
+  typeof updateProfilRenfordDescriptionSchema
+>;
+
+const disponibilitesJourSchema = z.array(z.enum(CRENEAUX_DISPONIBILITE));
+
+export const updateProfilRenfordDisponibilitesSchema = z.object({
+  disponibilitesLundi: disponibilitesJourSchema,
+  disponibilitesMardi: disponibilitesJourSchema,
+  disponibilitesMercredi: disponibilitesJourSchema,
+  disponibilitesJeudi: disponibilitesJourSchema,
+  disponibilitesVendredi: disponibilitesJourSchema,
+  disponibilitesSamedi: disponibilitesJourSchema,
+  disponibilitesDimanche: disponibilitesJourSchema,
+  dureeIllimitee: z.boolean(),
+  dateDebut: z.date().optional(),
+  dateFin: z.date().optional(),
+  zoneDeplacement: z
+    .number()
+    .min(1, "La zone de déplacement doit être d'au moins 1 km")
+    .max(200, "La zone de déplacement ne peut pas dépasser 200 km"),
+});
+
+export type UpdateProfilRenfordDisponibilitesSchema = z.infer<
+  typeof updateProfilRenfordDisponibilitesSchema
+>;
+
+const optionalYearSchema = z.number().int().min(1900).max(2100).nullable();
+
+const optionalNullableStringSchema = z.string().nullable();
+
+const updateProfilRenfordExperienceItemSchema = z.object({
+  nom: z
+    .string()
+    .min(2, "Le nom du poste doit contenir au moins 2 caractères")
+    .max(100, "Le nom du poste ne peut pas dépasser 100 caractères"),
+  etablissement: z
+    .string()
+    .min(2, "Le nom de l'établissement doit contenir au moins 2 caractères")
+    .max(120, "Le nom de l'établissement ne peut pas dépasser 120 caractères"),
+  missions: z
+    .string()
+    .min(5, "La description des missions doit contenir au moins 5 caractères")
+    .max(
+      1000,
+      "La description des missions ne peut pas dépasser 1000 caractères"
+    ),
+  dateDebut: z.date({ required_error: "La date de début est obligatoire" }),
+  dateFin: z.date().nullable().optional(),
+});
+
+export const updateProfilRenfordExperiencesSchema = z.object({
+  experiencesProfessionnelles: z.array(updateProfilRenfordExperienceItemSchema),
+});
+
+export type UpdateProfilRenfordExperiencesSchema = z.infer<
+  typeof updateProfilRenfordExperiencesSchema
+>;
+
+const updateProfilRenfordDiplomeItemSchema = z.object({
+  typeDiplome: z.enum(DIPLOME_KEYS),
+  anneeObtention: optionalYearSchema,
+  mention: optionalNullableStringSchema,
+  etablissementFormation: optionalNullableStringSchema,
+  justificatifDiplomeChemin: optionalNullableStringSchema,
+});
+
+export const updateProfilRenfordDiplomesSchema = z.object({
+  renfordDiplomes: z.array(updateProfilRenfordDiplomeItemSchema),
+});
+
+export type UpdateProfilRenfordDiplomesSchema = z.infer<
+  typeof updateProfilRenfordDiplomesSchema
+>;
+
+export const updateProfilRenfordPortfolioSchema = z.object({
+  portfolio: z.array(z.string().min(1, "Le chemin image est requis")),
+});
+
+export type UpdateProfilRenfordPortfolioSchema = z.infer<
+  typeof updateProfilRenfordPortfolioSchema
+>;
+
+const preprocessOptionalNumber = (value: unknown) => {
+  if (value === "" || value === null || value === undefined) return undefined;
+  if (typeof value === "number" && Number.isNaN(value)) return undefined;
+  return value;
+};
+
+const tarifHoraireSchema = z.preprocess(
+  preprocessOptionalNumber,
+  z
+    .number({
+      required_error: "Le tarif horaire est obligatoire",
+      invalid_type_error: "Le tarif horaire doit être un nombre valide",
+    })
+    .min(10, "Le tarif horaire minimum est de 10€")
+    .max(500, "Le tarif horaire maximum est de 500€")
+);
+
+const tarifJourneeSchema = z.preprocess(
+  preprocessOptionalNumber,
+  z
+    .number({
+      invalid_type_error: "Le tarif journée doit être un nombre valide",
+    })
+    .min(100, "Le tarif journée minimum est de 100€")
+    .max(5000, "Le tarif journée maximum est de 5000€")
+    .optional()
+);
+
+const tarifDemiJourneeSchema = z.preprocess(
+  preprocessOptionalNumber,
+  z
+    .number({
+      invalid_type_error: "Le tarif demi-journée doit être un nombre valide",
+    })
+    .min(50, "Le tarif demi-journée minimum est de 50€")
+    .max(2000, "Le tarif demi-journée maximum est de 2000€")
+    .optional()
+);
+
+export const updateProfilRenfordQualificationsSchema = z
+  .object({
+    niveauExperience: z.enum(NIVEAU_EXPERIENCE, {
+      required_error: "Veuillez sélectionner votre niveau d'expérience",
+    }),
+    justificatifCarteProfessionnelleChemin: z
+      .string({
+        required_error: "Le justificatif carte professionnelle est obligatoire",
+      })
+      .min(1, "Le justificatif carte professionnelle est obligatoire"),
+    tarifHoraire: tarifHoraireSchema,
+    proposeJournee: z.boolean().default(false),
+    tarifJournee: tarifJourneeSchema,
+    proposeDemiJournee: z.boolean().default(false),
+    tarifDemiJournee: tarifDemiJourneeSchema,
+  })
+  .superRefine((data, ctx) => {
+    if (data.proposeJournee && data.tarifJournee === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["tarifJournee"],
+        message:
+          "Le tarif journée est obligatoire quand cette option est activée",
+      });
+    }
+
+    if (data.proposeDemiJournee && data.tarifDemiJournee === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["tarifDemiJournee"],
+        message:
+          "Le tarif demi-journée est obligatoire quand cette option est activée",
+      });
+    }
+  });
+
+export type UpdateProfilRenfordQualificationsSchema = z.infer<
+  typeof updateProfilRenfordQualificationsSchema
+>;
+
+export const updateProfilRenfordIdentiteSchema = z
+  .object({
+    telephone: z
+      .string()
+      .min(10, "Le numéro de téléphone doit contenir au moins 10 chiffres")
+      .max(15, "Le numéro de téléphone ne peut pas dépasser 15 chiffres"),
+    siret: z.string().optional(),
+    siretEnCoursObtention: z.boolean(),
+    attestationAutoEntrepreneur: z.boolean(),
+    adresse: z
+      .string()
+      .min(5, "L'adresse doit contenir au moins 5 caractères")
+      .max(200, "L'adresse ne peut pas dépasser 200 caractères"),
+    codePostal: z
+      .string()
+      .length(5, "Le code postal doit contenir exactement 5 chiffres")
+      .regex(/^\d{5}$/, "Le code postal ne doit contenir que des chiffres"),
+    ville: z
+      .string()
+      .min(2, "La ville doit contenir au moins 2 caractères")
+      .max(100, "La ville ne peut pas dépasser 100 caractères"),
+    latitude: z
+      .number()
+      .min(-90, "Latitude invalide")
+      .max(90, "Latitude invalide")
+      .optional(),
+    longitude: z
+      .number()
+      .min(-180, "Longitude invalide")
+      .max(180, "Longitude invalide")
+      .optional(),
+    pays: z.string().min(2, "Le pays est obligatoire"),
+    dateNaissance: z.date({
+      required_error: "La date de naissance est requise",
+    }),
+    attestationVigilanceChemin: z.string().nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.siretEnCoursObtention) {
+      if (!data.siret || !/^\d{14}$/.test(data.siret)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["siret"],
+          message: "Le numéro SIRET doit contenir exactement 14 chiffres",
+        });
+      }
+    }
+  });
+
+export type UpdateProfilRenfordIdentiteSchema = z.infer<
+  typeof updateProfilRenfordIdentiteSchema
+>;

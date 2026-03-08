@@ -21,7 +21,6 @@ export type CurrentUser = {
   nom: string;
   prenom: string;
   telephone: string | null;
-  avatarChemin: string | null;
   typeUtilisateur: TypeUtilisateur;
   statut: StatutCompte;
   etapeOnboarding: number;
@@ -44,7 +43,6 @@ export type UtilisateurSimple = {
   prenom: string;
   email: string;
   telephone: string | null;
-  avatarChemin: string | null;
 };
 
 // Réponse du JWT token

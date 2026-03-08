@@ -10,6 +10,7 @@ type AddressSelection = {
   address: string;
   ville: string;
   codePostal: string;
+  pays: string;
   latitude: number | null;
   longitude: number | null;
 };
@@ -137,7 +138,9 @@ export default function GoogleAddressAutocomplete({
     autocompleteServiceRef.current.getPlacePredictions(
       {
         input: trimmed,
-        componentRestrictions: { country: "fr" },
+        componentRestrictions: {
+          // country: "fr"
+        },
         types: ["address"],
       },
       (results: any[] | null, status: string) => {
@@ -196,6 +199,8 @@ export default function GoogleAddressAutocomplete({
             "postal_town",
             "administrative_area_level_2",
           ]);
+          const pays =
+            pickAddressComponent(addressComponents, ["country"]) || "France";
 
           const latitude = place.geometry?.location?.lat?.() ?? null;
           const longitude = place.geometry?.location?.lng?.() ?? null;
@@ -206,6 +211,7 @@ export default function GoogleAddressAutocomplete({
             address,
             codePostal,
             ville,
+            pays,
             latitude,
             longitude,
           });

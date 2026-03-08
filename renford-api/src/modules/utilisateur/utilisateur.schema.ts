@@ -21,7 +21,6 @@ export const updateProfileSchema = z.object({
   nom: z.string().min(2, '2 caractères minimum').optional(),
   prenom: z.string().min(2, '2 caractères minimum').optional(),
   telephone: z.string().optional().nullable(),
-  avatarChemin: z.string().optional().nullable(),
   notificationsEmail: z.boolean().optional(),
   typeNotificationsEmail: z.array(z.enum(TYPE_NOTIFICATION_PREFERENCE)).optional(),
   notificationsMobile: z.boolean().optional(),
@@ -61,3 +60,12 @@ export const changePasswordSchema = z
   });
 
 export type ChangePasswordSchema = z.infer<typeof changePasswordSchema>;
+
+export const updateNotificationSettingsSchema = z.object({
+  notificationsEmail: z.boolean(),
+  typeNotificationsEmail: z.array(z.enum(TYPE_NOTIFICATION_PREFERENCE)),
+  notificationsMobile: z.boolean(),
+  typeNotificationsMobile: z.array(z.enum(TYPE_NOTIFICATION_PREFERENCE)),
+});
+
+export type UpdateNotificationSettingsSchema = z.infer<typeof updateNotificationSettingsSchema>;

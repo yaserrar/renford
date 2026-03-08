@@ -39,7 +39,12 @@ const NavAccount = () => {
     router.push("/connexion");
   };
 
-  console.log("Current user in NavAccount:", getUrl(me?.avatarChemin));
+  const avatarChemin =
+    me?.typeUtilisateur === "etablissement"
+      ? me.profilEtablissement?.avatarChemin
+      : me?.typeUtilisateur === "renford"
+      ? me.profilRenford?.avatarChemin
+      : null;
 
   return (
     <SidebarMenu>
@@ -51,7 +56,7 @@ const NavAccount = () => {
               className="px-3 py-8 border border-input rounded-2xl"
             >
               <Avatar className="h-10 w-10">
-                <AvatarImage src={getUrl(me?.avatarChemin)} alt={nomComplet} />
+                <AvatarImage src={getUrl(avatarChemin)} alt={nomComplet} />
                 <AvatarFallback className="bg-gray-200 text-gray-600">
                   {fallbackInitiales}
                 </AvatarFallback>

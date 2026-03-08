@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { Logo } from "./logo";
 
 type Props = {
   className?: string;
@@ -10,11 +9,17 @@ const LoadingScreen = ({ className }: Props) => {
   return (
     <main
       className={cn(
-        "flex h-screen w-full items-center justify-center",
-        className,
+        "flex h-screen w-full items-center justify-center bg-secondary-background",
+        className
       )}
     >
-      <Logo size="lg" className="animate-bounce" />
+      <Image
+        src="/logo-dark.png"
+        alt="logo"
+        height={200}
+        width={200}
+        className="h-[100px] w-auto animate-pulse"
+      />
     </main>
   );
 };

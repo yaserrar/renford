@@ -29,7 +29,7 @@ export default function ProfileEtablissementPage() {
         <TabsList>
           <TabsTrigger value="profil">Profil</TabsTrigger>
           <TabsTrigger value="infos">Informations personnelles</TabsTrigger>
-          <TabsTrigger value="password">Modifier mot de passe</TabsTrigger>
+          {/* <TabsTrigger value="password">Modifier mot de passe</TabsTrigger> */}
           <TabsTrigger value="sites">Gestion des sites</TabsTrigger>
         </TabsList>
 
@@ -44,9 +44,9 @@ export default function ProfileEtablissementPage() {
           />
         </TabsContent>
 
-        <TabsContent value="password">
+        {/* <TabsContent value="password">
           <PasswordTabContent />
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="sites">
           <SitesTabContent etablissements={etablissements} />

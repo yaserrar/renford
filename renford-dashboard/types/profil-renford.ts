@@ -26,12 +26,11 @@ export type ProfilRenford = {
   imageCouvertureChemin: string | null;
   // Profil public (étape 4)
   titreProfil: string | null;
-  aPropos: string | null;
   descriptionProfil: string | null;
   photoProfil: string | null;
   typeMission: TypeMission[];
   assuranceRCPro: boolean;
-  portfolio: string[];
+
   // Informations légales (étape 3)
   siret: string | null;
   siretEnCoursObtention: boolean;
@@ -80,6 +79,7 @@ export type ProfilRenford = {
   chiffreAffairesTotal: number | null;
   renfordDiplomes: RenfordDiplome[];
   experiencesProfessionnelles: ExperienceProfessionnelleRenford[];
+  portfolio: string[];
   dateCreation: Date;
   dateMiseAJour: Date;
 };
@@ -133,7 +133,7 @@ export type ExperienceProfessionnelleRenford = {
   etablissement: string;
   missions: string;
   dateDebut: Date;
-  anneeFin: number | null;
+  dateFin: Date | null;
   dateCreation: Date;
   dateMiseAJour: Date;
 };

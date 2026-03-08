@@ -6,7 +6,7 @@ import { useCurrentUser } from "@/hooks/utilisateur";
 import InformationsTabContent from "./informations-tab-content";
 import NotificationsTabContent from "./notifications-tab-content";
 import PasswordTabContent from "./password-tab-content";
-import ProfilTabContent from "./profil-tab-content";
+import ProfilTabContent from "./profil/profil-tab-content";
 
 export default function ProfileRenfordPage() {
   const { data: me, isLoading } = useCurrentUser();
@@ -23,20 +23,20 @@ export default function ProfileRenfordPage() {
         <TabsList>
           <TabsTrigger value="profil">Profil</TabsTrigger>
           <TabsTrigger value="infos">Informations personnelles</TabsTrigger>
-          <TabsTrigger value="password">Modifier mot de passe</TabsTrigger>
+          {/* <TabsTrigger value="password">Modifier mot de passe</TabsTrigger> */}
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
 
-        <div className="bg-secondary-background rounded-2xl m-1 p-4 h-full">
+        <div className="bg-secondary-background rounded-3xl border m-1 p-6 h-full">
           <TabsContent value="profil">
             <ProfilTabContent me={me} />
           </TabsContent>
           <TabsContent value="infos">
             <InformationsTabContent me={me} />
           </TabsContent>
-          <TabsContent value="password">
+          {/* <TabsContent value="password">
             <PasswordTabContent />
-          </TabsContent>
+          </TabsContent> */}
           <TabsContent value="notifications">
             <NotificationsTabContent me={me} />
           </TabsContent>

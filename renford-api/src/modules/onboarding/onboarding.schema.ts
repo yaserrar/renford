@@ -59,6 +59,7 @@ export const updateEtablissementSchema = z
       .length(14, 'Le SIRET doit contenir 14 chiffres')
       .regex(/^\d{14}$/, 'Le SIRET ne doit contenir que des chiffres'),
     adresse: z.string().min(5, '5 caractères minimum').max(200, '200 caractères maximum'),
+    // change
     codePostal: z
       .string()
       .length(5, 'Le code postal doit contenir 5 chiffres')

@@ -79,6 +79,8 @@ export default function Etape3Page() {
     label: TYPE_ETABLISSEMENT_LABELS[type],
   }));
 
+  console.log("Errors:", watch("codePostal"), errors);
+
   return (
     <OnboardingCard currentStep={3} title="Confirmons vos informations">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

@@ -1,6 +1,7 @@
 import { CurrentUser } from "@/types/utilisateur";
 import {
   ChangePasswordSchema,
+  UpdateNotificationSettingsSchema,
   UpdateProfileSchema,
 } from "@/validations/utilisateur";
 import { getErrorMessage } from "@/lib/utils";
@@ -50,6 +51,25 @@ export const useChangePassword = () => {
     },
     onSuccess: () => {
       toast.success("Mot de passe mis à jour");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+export const useUpdateNotificationSettings = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: UpdateNotificationSettingsSchema) => {
+      return (await axios.put("/utilisateur/notifications", data)).data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+      toast.success("Préférences de notifications mises à jour");
     },
     onError: (error: any) => {
       const message = getErrorMessage(error?.response?.data?.message);

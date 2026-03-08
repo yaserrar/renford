@@ -22,10 +22,9 @@ model Utilisateur {
     typeUtilisateur TypeUtilisateur
 
     // Informations personnelles
-    nom          String
-    prenom       String
-    telephone    String?
-    avatarChemin String?
+    nom       String
+    prenom    String
+    telephone String?
 
     // Statut du compte
     statut StatutCompte @default(en_attente_verification)
@@ -251,7 +250,6 @@ model ProfilRenford {
 
     // Profil public (étape 4)
     titreProfil       String?
-    aPropos           String?       @db.Text
     descriptionProfil String?       @db.Text
     photoProfil       String? // Chemin vers la photo de profil
     typeMission       TypeMission[] @default([])
@@ -478,8 +476,8 @@ model ExperienceProfessionnelleRenford {
     nom           String
     etablissement String
     missions      String
-    dateDebut     DateTime @db.Date
-    anneeFin      Int?
+    dateDebut     DateTime  @db.Date
+    dateFin       DateTime? @db.Date
 
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
