@@ -69,7 +69,7 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
           {profil?.imageCouvertureChemin ? (
             <Image
               src={getUrl(profil.imageCouvertureChemin)}
-              alt="Couverture profil"
+              alt="Couverture renford"
               className="object-cover w-full"
               height={300}
               width={1300}
