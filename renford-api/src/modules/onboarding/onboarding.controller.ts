@@ -388,6 +388,20 @@ export const completeOnboarding = async (req: Request, res: Response, next: Next
       });
     }
 
+    const utilisateurContact = await prisma.utilisateur.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        telephone: true,
+        nom: true,
+        prenom: true,
+      },
+    });
+
+    if (!utilisateurContact) {
+      return res.status(404).json({ message: 'Utilisateur introuvable' });
+    }
+
     if (!profilEtablissement.etablissements[0]) {
       if (!profilEtablissement.typeEtablissement) {
         return res.status(400).json({
@@ -408,10 +422,10 @@ export const completeOnboarding = async (req: Request, res: Response, next: Next
           ville: profilEtablissement.ville,
           latitude: profilEtablissement.latitude,
           longitude: profilEtablissement.longitude,
-          emailPrincipal: null,
-          telephonePrincipal: null,
-          nomContactPrincipal: null,
-          prenomContactPrincipal: null,
+          emailPrincipal: utilisateurContact.email,
+          telephonePrincipal: utilisateurContact.telephone,
+          nomContactPrincipal: utilisateurContact.nom,
+          prenomContactPrincipal: utilisateurContact.prenom,
           adresseFacturationDifferente: false,
           adresseFacturation: profilEtablissement.adresse,
           codePostalFacturation: profilEtablissement.codePostal,

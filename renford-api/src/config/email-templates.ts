@@ -4,6 +4,7 @@ type BaseEmailTemplateInput = {
   preheader: string;
   title: string;
   intro: string;
+  customHtml?: string;
   bulletPoints?: string[];
   ctaLabel?: string;
   ctaUrl?: string;
@@ -29,6 +30,7 @@ export const renderBaseEmailTemplate = ({
   preheader,
   title,
   intro,
+  customHtml,
   bulletPoints,
   ctaLabel,
   ctaUrl,
@@ -77,6 +79,7 @@ export const renderBaseEmailTemplate = ({
                   <td style="padding:24px 28px 30px;">
                     <h1 style="margin:0 0 14px;font-size:24px;line-height:1.25;color:#0f172a;">${escapeHtml(title)}</h1>
                     <p style="margin:0;color:#334155;line-height:1.7;">${escapeHtml(intro)}</p>
+                    ${customHtml ?? ''}
                     ${listHtml}
                     ${ctaHtml}
                     ${closingHtml}
@@ -203,12 +206,19 @@ type CodeEmailInput = {
 };
 
 const getCodeEmailTemplate = ({ title, intro, code, subject }: CodeEmailInput) => {
+  const codeHtml = `
+    <div style="margin:20px 0 0;padding:18px 16px;border-radius:14px;background:#f8fafc;border:1px dashed #94a3b8;text-align:center;">
+      <div style="font-size:12px;line-height:1.2;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px;">Votre code</div>
+      <div style="font-size:42px;line-height:1;font-weight:800;letter-spacing:8px;color:#0f172a;">${escapeHtml(code)}</div>
+    </div>
+  `;
+
   const html = renderBaseEmailTemplate({
     preheader: `${title} - code temporaire`,
     title,
     intro,
+    customHtml: codeHtml,
     bulletPoints: [
-      `Votre code : ${code}`,
       'Ce code expire dans 15 minutes.',
       "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.",
     ],
