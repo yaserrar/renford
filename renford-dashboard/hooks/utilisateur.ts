@@ -1,5 +1,11 @@
 import { CurrentUser } from "@/types/utilisateur";
-import { useQuery } from "@tanstack/react-query";
+import {
+  ChangePasswordSchema,
+  UpdateProfileSchema,
+} from "@/validations/utilisateur";
+import { getErrorMessage } from "@/lib/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import useAxios from "./axios";
 
 // Hook pour récupérer l'utilisateur courant
@@ -13,5 +19,41 @@ export const useCurrentUser = () => {
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: false,
+  });
+};
+
+export const useUpdateProfile = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: UpdateProfileSchema) => {
+      return (await axios.put("/utilisateur/profile", data)).data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+      toast.success("Profil mis à jour");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+export const useChangePassword = () => {
+  const axios = useAxios();
+
+  return useMutation({
+    mutationFn: async (data: ChangePasswordSchema) => {
+      return (await axios.put("/utilisateur/password", data)).data;
+    },
+    onSuccess: () => {
+      toast.success("Mot de passe mis à jour");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
   });
 };

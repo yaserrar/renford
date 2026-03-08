@@ -7,27 +7,6 @@ export type TypeEtablissement = (typeof TYPE_ETABLISSEMENT)[number];
 // Rôle d'établissement
 export type RoleEtablissement = (typeof ROLE_ETABLISSEMENT)[number];
 
-// Profil établissement
-export type ProfilEtablissement = {
-  id: string;
-  utilisateurId: string;
-  raisonSociale: string;
-  siret: string;
-  adresse: string;
-  codePostal: string;
-  ville: string;
-  latitude: number | null;
-  longitude: number | null;
-  typeEtablissement: TypeEtablissement | null;
-  adresseSiegeDifferente: boolean;
-  adresseSiege: string | null;
-  codePostalSiege: string | null;
-  villeSiege: string | null;
-  etablissements: Etablissement[];
-  dateCreation: Date;
-  dateMiseAJour: Date;
-};
-
 // Établissement (site physique)
 export type Etablissement = {
   id: string;
@@ -36,8 +15,8 @@ export type Etablissement = {
   typeEtablissement: TypeEtablissement;
   roleEtablissement: RoleEtablissement;
   siret: string;
+  avatarChemin: string | null;
   adresse: string;
-  adresseLigne2: string | null;
   codePostal: string;
   ville: string;
   pays: string;
@@ -49,7 +28,6 @@ export type Etablissement = {
   prenomContactPrincipal: string | null;
   adresseFacturationDifferente: boolean;
   adresseFacturation: string;
-  adresseFacturationLigne2: string | null;
   codePostalFacturation: string;
   villeFacturation: string;
   actif: boolean;

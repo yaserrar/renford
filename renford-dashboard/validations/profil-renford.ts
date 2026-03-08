@@ -8,6 +8,16 @@ export const STATUT_CERTIFICATION = [
 // Niveau d'expérience
 export const NIVEAU_EXPERIENCE = ["debutant", "confirme", "expert"] as const;
 
+export const JOUR_SEMAINE = [
+  "lundi",
+  "mardi",
+  "mercredi",
+  "jeudi",
+  "vendredi",
+  "samedi",
+  "dimanche",
+] as const;
+
 // Labels pour le niveau d'expérience
 export const NIVEAU_EXPERIENCE_LABELS: Record<
   (typeof NIVEAU_EXPERIENCE)[number],

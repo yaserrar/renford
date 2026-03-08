@@ -66,9 +66,14 @@ export default function Etape5RenfordPage() {
     resolver: zodResolver(onboardingRenfordQualificationsSchema),
     defaultValues: {
       niveauExperience: user?.profilRenford?.niveauExperience || undefined,
-      diplomes: user?.profilRenford?.diplomes || [],
+      diplomes:
+        user?.profilRenford?.renfordDiplomes?.map((diplome) =>
+          diplome.typeDiplome,
+        ) || [],
       justificatifDiplomeChemins:
-        user?.profilRenford?.justificatifDiplomeChemins || [],
+        user?.profilRenford?.renfordDiplomes?.map(
+          (diplome) => diplome.justificatifDiplomeChemin || "",
+        ) || [],
       justificatifCarteProfessionnelleChemin:
         user?.profilRenford?.justificatifCarteProfessionnelleChemin || "",
       tarifHoraire: user?.profilRenford?.tarifHoraire || undefined,

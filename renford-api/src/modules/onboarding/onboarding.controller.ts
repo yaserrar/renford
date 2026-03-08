@@ -651,14 +651,26 @@ export const updateRenfordQualifications = async (
       where: { utilisateurId: userId },
       data: {
         niveauExperience,
-        diplomes,
-        justificatifDiplomeChemins,
         justificatifCarteProfessionnelleChemin,
         tarifHoraire,
         proposeJournee,
         tarifJournee: proposeJournee ? tarifJournee : null,
         proposeDemiJournee,
         tarifDemiJournee: proposeDemiJournee ? tarifDemiJournee : null,
+        renfordDiplomes: {
+          deleteMany: {},
+          create: diplomes.map((typeDiplome, index) => ({
+            typeDiplome,
+            justificatifDiplomeChemin: justificatifDiplomeChemins[index] ?? null,
+            nomDiplome: '',
+            mention: null,
+            anneeObtention: null,
+            etablissementFormation: null,
+          })),
+        },
+      },
+      include: {
+        renfordDiplomes: true,
       },
     });
 

@@ -25,20 +25,22 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
         statut: true,
         etapeOnboarding: true,
         emailVerifie: true,
+        notificationsEmail: true,
+        typeNotificationsEmail: true,
+        notificationsMobile: true,
+        typeNotificationsMobile: true,
         dateCreation: true,
         derniereConnexion: true,
         // Relations selon le type d'utilisateur
         profilEtablissement: {
           include: {
             etablissements: true,
-            informationsBancaires: true,
           },
         },
         profilRenford: {
           include: {
-            typesPostes: true,
-            specialisations: true,
-            documentsRenford: true,
+            renfordDiplomes: true,
+            experiencesProfessionnelles: true,
           },
         },
       },
@@ -67,7 +69,16 @@ export const updateProfile = async (
       return res.status(401).json({ message: 'Utilisateur non authentifié' });
     }
 
-    const { nom, prenom, telephone, avatarChemin } = req.body;
+    const {
+      nom,
+      prenom,
+      telephone,
+      avatarChemin,
+      notificationsEmail,
+      typeNotificationsEmail,
+      notificationsMobile,
+      typeNotificationsMobile,
+    } = req.body;
 
     const utilisateur = await prisma.utilisateur.update({
       where: { id: userId },
@@ -76,6 +87,10 @@ export const updateProfile = async (
         ...(prenom && { prenom }),
         ...(telephone !== undefined && { telephone }),
         ...(avatarChemin !== undefined && { avatarChemin }),
+        ...(notificationsEmail !== undefined && { notificationsEmail }),
+        ...(typeNotificationsEmail !== undefined && { typeNotificationsEmail }),
+        ...(notificationsMobile !== undefined && { notificationsMobile }),
+        ...(typeNotificationsMobile !== undefined && { typeNotificationsMobile }),
       },
       select: {
         id: true,
@@ -84,6 +99,10 @@ export const updateProfile = async (
         prenom: true,
         telephone: true,
         avatarChemin: true,
+        notificationsEmail: true,
+        typeNotificationsEmail: true,
+        notificationsMobile: true,
+        typeNotificationsMobile: true,
         typeUtilisateur: true,
       },
     });

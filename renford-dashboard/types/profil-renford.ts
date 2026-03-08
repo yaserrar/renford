@@ -1,7 +1,6 @@
 import {
   CRENEAUX_DISPONIBILITE,
   DIPLOME_KEYS,
-  JOUR_SEMAINE,
   NIVEAU_EXPERIENCE,
   STATUT_CERTIFICATION,
   TYPE_POSTE,
@@ -23,12 +22,15 @@ export type CreneauDisponibilite = (typeof CRENEAUX_DISPONIBILITE)[number];
 export type ProfilRenford = {
   id: string;
   utilisateurId: string;
+  avatarChemin: string | null;
   // Profil public (étape 4)
   titreProfil: string | null;
+  aPropos: string | null;
   descriptionProfil: string | null;
   photoProfil: string | null;
   typeMission: TypeMission[];
   assuranceRCPro: boolean;
+  portfolio: string[];
   // Informations légales (étape 3)
   siret: string | null;
   siretEnCoursObtention: boolean;
@@ -36,6 +38,7 @@ export type ProfilRenford = {
   attestationVigilanceChemin: string | null;
   // Informations personnelles
   dateNaissance: Date | null;
+  telephone: string | null;
   adresse: string | null;
   codePostal: string | null;
   ville: string | null;
@@ -48,13 +51,12 @@ export type ProfilRenford = {
   dateCertification: Date | null;
   // Documents (étape 5 et 6)
   carteIdentiteChemin: string | null;
-  justificatifDiplomeChemins: string[];
   justificatifCarteProfessionnelleChemin: string | null;
-  diplomes: DiplomeKey[];
   // Expérience (étape 5)
   niveauExperience: NiveauExperience | null;
   // Tarification (étape 5)
   tarifHoraire: number | null;
+  tjm: number | null;
   proposeJournee: boolean;
   tarifJournee: number | null;
   proposeDemiJournee: boolean;
@@ -76,6 +78,8 @@ export type ProfilRenford = {
   nombreMissionsCompletees: number;
   noteMoyenne: number | null;
   chiffreAffairesTotal: number | null;
+  renfordDiplomes: RenfordDiplome[];
+  experiencesProfessionnelles: ExperienceProfessionnelleRenford[];
   dateCreation: Date;
   dateMiseAJour: Date;
 };
@@ -113,15 +117,24 @@ export type RenfordSpecialisation = {
 export type RenfordDiplome = {
   id: string;
   profilRenfordId: string;
-  typeDiplome: string;
+  typeDiplome: DiplomeKey;
+  justificatifDiplomeChemin: string | null;
   nomDiplome: string;
   mention: string | null;
-  specialite: string | null;
   anneeObtention: number | null;
   etablissementFormation: string | null;
-  documentId: string | null;
-  verifie: boolean;
-  dateVerification: Date | null;
+  dateCreation: Date;
+  dateMiseAJour: Date;
+};
+
+export type ExperienceProfessionnelleRenford = {
+  id: string;
+  profilRenfordId: string;
+  nom: string;
+  etablissement: string;
+  missions: string;
+  dateDebut: Date;
+  anneeFin: number | null;
   dateCreation: Date;
   dateMiseAJour: Date;
 };

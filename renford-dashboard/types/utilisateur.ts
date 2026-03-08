@@ -1,5 +1,9 @@
-import { STATUT_COMPTE, TYPE_UTILISATEUR } from "@/validations/utilisateur";
-import { ProfilEtablissement } from "./etablissement";
+import {
+  STATUT_COMPTE,
+  TYPE_NOTIFICATION_PREFERENCE,
+  TYPE_UTILISATEUR,
+} from "@/validations/utilisateur";
+import { ProfilEtablissement } from "./profil-etablissement";
 import { ProfilRenford } from "./profil-renford";
 
 // Type d'utilisateur
@@ -7,6 +11,8 @@ export type TypeUtilisateur = (typeof TYPE_UTILISATEUR)[number];
 
 // Statut du compte
 export type StatutCompte = (typeof STATUT_COMPTE)[number];
+export type TypeNotificationPreference =
+  (typeof TYPE_NOTIFICATION_PREFERENCE)[number];
 
 // Utilisateur courant (retourné par /utilisateur/me)
 export type CurrentUser = {
@@ -20,6 +26,10 @@ export type CurrentUser = {
   statut: StatutCompte;
   etapeOnboarding: number;
   emailVerifie: boolean;
+  notificationsEmail: boolean;
+  typeNotificationsEmail: TypeNotificationPreference[];
+  notificationsMobile: boolean;
+  typeNotificationsMobile: TypeNotificationPreference[];
   dateCreation: Date;
   derniereConnexion: Date | null;
   // Relations selon le type d'utilisateur

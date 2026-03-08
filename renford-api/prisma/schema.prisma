@@ -25,6 +25,7 @@ model Utilisateur {
     nom       String
     prenom    String
     telephone String?
+    avatarChemin String?
 
     // Statut du compte
     statut StatutCompte @default(en_attente_verification)
@@ -35,6 +36,12 @@ model Utilisateur {
     // Authentification
     emailVerifie  Boolean   @default(false)
     emailVerifieA DateTime?
+
+    // Préférences notifications
+    notificationsEmail       Boolean                    @default(false)
+    typeNotificationsEmail   TypeNotificationPreference[] @default([])
+    notificationsMobile      Boolean                    @default(false)
+    typeNotificationsMobile  TypeNotificationPreference[] @default([])
 
     codeVerificationEmail String?
     dateCreationCodeVerif DateTime?
@@ -51,18 +58,6 @@ model Utilisateur {
     firebaseAuth        FirebaseAuthInfo?
     profilEtablissement ProfilEtablissement?
     profilRenford       ProfilRenford?
-
-    notificationsRecues   Notification[] @relation("destinataireNotification")
-    notificationsEnvoyees Notification[] @relation("expediteurNotification")
-
-    evaluationsEmises Evaluation[] @relation("auteurEvaluation")
-    evaluationsRecues Evaluation[] @relation("cibleEvaluation")
-
-    messagesEnvoyes Message[] @relation("expediteurMessage")
-    messagesRecus   Message[] @relation("destinataireMessage")
-
-    journalActivites JournalActivite[]
-    sessionsRefresh  SessionRefresh[]
 
     @@index([email])
     @@index([typeUtilisateur])
@@ -82,6 +77,13 @@ enum StatutCompte {
     suspendu
     en_attente_verification
     onboarding
+}
+
+enum TypeNotificationPreference {
+    marketing
+    annonces_mises_ajours
+    support
+    missions
 }
 
 // ============================================================================
@@ -120,6 +122,7 @@ model ProfilEtablissement {
     // Informations légales (obligatoires)
     raisonSociale String // Raison sociale *
     siret         String // Numéro SIRET (14 chiffres) *
+    aPropos       String? @db.Text
 
     // Adresse de l'établissement (obligatoire)
     adresse    String // Adresse *
@@ -142,8 +145,7 @@ model ProfilEtablissement {
     dateMiseAJour DateTime @updatedAt
 
     // Relations
-    etablissements        Etablissement[]
-    informationsBancaires InformationsBancaires?
+    etablissements Etablissement[]
 
     @@map("profils_etablissement")
 }
@@ -169,6 +171,7 @@ model Etablissement {
     adresse    String
     codePostal String
     ville      String
+    pays       String @default("France")
     latitude   Float?
     longitude  Float?
 
@@ -190,10 +193,6 @@ model Etablissement {
     // Métadonnées
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
-
-    // Relations
-    missions        Mission[]
-    favorisRenfords FavoriRenford[]
 
     @@index([profilEtablissementId])
     @@index([typeEtablissement])
@@ -250,10 +249,12 @@ model ProfilRenford {
 
     // Profil public (étape 4)
     titreProfil       String?
+    aPropos           String?       @db.Text
     descriptionProfil String?       @db.Text
     photoProfil       String? // Chemin vers la photo de profil
     typeMission       TypeMission[] @default([])
     assuranceRCPro    Boolean       @default(false)
+    portfolio         String[]      @default([])
 
     // Informations légales (étape 3)
     siret                       String? // Numéro SIRET (14 chiffres)
@@ -263,6 +264,7 @@ model ProfilRenford {
 
     // Informations personnelles
     dateNaissance DateTime? @db.Date
+    telephone     String?
 
     // Localisation
     adresse    String?
@@ -280,8 +282,6 @@ model ProfilRenford {
     dateCertification   DateTime?
 
     // Documents (étape 5 et 6)
-    diplomes                               Diplome[] @default([]) // Clés de diplômes sélectionnées
-    justificatifDiplomeChemins             String[]  @default([]) // Justificatifs de diplôme
     justificatifCarteProfessionnelleChemin String? // Justificatif de carte professionnelle
     carteIdentiteChemin                    String?
 
@@ -290,6 +290,7 @@ model ProfilRenford {
 
     // Tarification (étape 5)
     tarifHoraire       Decimal? @db.Decimal(8, 2)
+    tjm               Decimal? @db.Decimal(8, 2)
     proposeJournee     Boolean  @default(false)
     tarifJournee       Decimal? @db.Decimal(8, 2)
     proposeDemiJournee Boolean  @default(false)
@@ -321,13 +322,8 @@ model ProfilRenford {
     dateMiseAJour DateTime @updatedAt
 
     // Relations
-    typesPostes              RenfordTypePoste[]
-    specialisations          RenfordSpecialisation[]
-    renfordDiplomes          RenfordDiplome[]
-    documentsRenford         DocumentRenford[]
-    missionsAssignees        MissionRenford[]
-    favorisParEtablissements FavoriRenford[]
-    preferencesMission       PreferenceMission[]
+    renfordDiplomes            RenfordDiplome[]
+    experiencesProfessionnelles ExperienceProfessionnelleRenford[]
 
     @@index([statutCertification])
     @@index([niveauExperience])
@@ -484,55 +480,6 @@ enum CreneauDisponibilite {
 }
 
 // ============================================================================
-// TABLE: Types de postes du Renford (relation many-to-many)
-// ============================================================================
-
-model RenfordTypePoste {
-    id              String        @id @default(uuid())
-    profilRenfordId String
-    profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
-
-    typePoste TypePoste
-
-    dateCreation DateTime @default(now())
-
-    @@unique([profilRenfordId, typePoste])
-    @@map("renford_types_postes")
-}
-
-// ============================================================================
-// TABLE: Spécialisations du Renford
-// ============================================================================
-
-model RenfordSpecialisation {
-    id              String        @id @default(uuid())
-    profilRenfordId String
-    profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
-
-    typePoste         TypePoste // Catégorie parente
-    nomSpecialisation String // Ex: "Hatha Yoga", "Boxe anglaise", etc.
-
-    dateCreation DateTime @default(now())
-
-    @@unique([profilRenfordId, typePoste, nomSpecialisation])
-    @@index([typePoste])
-    @@map("renford_specialisations")
-}
-
-// Enum utilisée par RenfordTypePoste et RenfordSpecialisation
-enum TypePoste {
-    pilates
-    yoga
-    fitness_musculation
-    escalade
-    boxe
-    danse
-    gymnastique
-    tennis
-    apa // Activité Physique Adaptée
-}
-
-// ============================================================================
 // TABLE: Diplômes du Renford
 // ============================================================================
 
@@ -542,19 +489,12 @@ model RenfordDiplome {
     profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
 
     // Type: BPJEPS, DEJEPS, DESJEPS, Licence STAPS, Master STAPS, CQP, BEES, etc.
-    typeDiplome            Diplome
-    nomDiplome             String
-    mention                String?
-    specialite             String?
-    anneeObtention         Int?
-    etablissementFormation String?
-
-    // Document justificatif
-    documentId String?
-    document   DocumentRenford? @relation(fields: [documentId], references: [id])
-
-    verifie          Boolean   @default(false)
-    dateVerification DateTime?
+    typeDiplome               Diplome
+    justificatifDiplomeChemin String?
+    nomDiplome                String
+    mention                   String?
+    anneeObtention            Int?
+    etablissementFormation    String?
 
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
@@ -564,858 +504,809 @@ model RenfordDiplome {
     @@map("renford_diplomes")
 }
 
-// ============================================================================
-// TABLE: Documents du Renford (diplômes, carte pro, assurance, vigilance)
-// ============================================================================
-
-model DocumentRenford {
+model ExperienceProfessionnelleRenford {
     id              String        @id @default(uuid())
     profilRenfordId String
     profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
 
-    typeDocument  TypeDocument
-    nomFichier    String
-    cheminFichier String
-    tailleFichier Int? // en bytes
-    mimeType      String?
-
-    statut         StatutDocument @default(en_attente_signature)
-    dateExpiration DateTime?
-
-    // Vérification manuelle par Renford
-    verifie                 Boolean   @default(false)
-    dateVerification        DateTime?
-    commentaireVerification String?
+    nom           String
+    etablissement String
+    missions      String
+    dateDebut     DateTime @db.Date
+    anneeFin      Int?
 
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
 
-    // Relations
-    diplomes RenfordDiplome[]
-
     @@index([profilRenfordId])
-    @@index([typeDocument])
-    @@map("documents_renford")
+    @@map("experiences_professionnelles_renford")
 }
+
+// enum StatutDocument {
+//     brouillon
+//     en_attente_signature
+//     signe
+//     archive
+//     expire
+// }
 
 // Enums utilisées par DocumentRenford
-enum TypeDocument {
-    devis
-    contrat_prestation
-    facture
-    attestation_mission
-    attestation_vigilance
-    bordereau_paiement
-    diplome
-    carte_pro
-    justificatif_assurance
-    note_frais
-}
-
-enum StatutDocument {
-    brouillon
-    en_attente_signature
-    signe
-    archive
-    expire
-}
-
-// ============================================================================
-// TABLE: Informations bancaires Établissement
-// ============================================================================
-
-model InformationsBancaires {
-    id                    String              @id @default(uuid())
-    profilEtablissementId String              @unique
-    profilEtablissement   ProfilEtablissement @relation(fields: [profilEtablissementId], references: [id], onDelete: Cascade)
-
-    nomTitulaireCompte String
-    iban               String
-    bic                String?
-
-    // Informations de facturation
-    nomFacturation     String?
-    adresseFacturation String?
-    villeFacturation   String?
-    paysFacturation    String? @default("France")
-    siretFacturation   String?
-    latitude           Float?
-    longitude          Float?
-
-    // Intégration Stripe
-    stripeCustomerId      String?
-    stripePaymentMethodId String?
-
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
-
-    @@map("informations_bancaires")
-}
-
-// ============================================================================
-// TABLE: Missions
-// ============================================================================
-
-model Mission {
-    id        String @id @default(uuid())
-    reference String @unique @default(uuid())
-
-    // Établissement demandeur
-    etablissementId String
-    etablissement   Etablissement @relation(fields: [etablissementId], references: [id])
-
-    // Mode de mission (FLEX ou COACH)
-    modeMission ModeMission   @default(flex)
-    statut      StatutMission @default(envoyee)
-
-    // Détails de la mission
-    titre                    String?
-    description              String?           @db.Text
-    typePosteRecherche       TypePoste
-    specialisationRecherchee String?
-    niveauExperienceRequis   NiveauExperience?
-
-    // Dates et horaires
-    dateDebut         DateTime
-    dateFin           DateTime
-    nombreHeuresTotal Decimal? @db.Decimal(6, 2)
-
-    // Tarification
-    methodeTarification MethodeTarification  @default(horaire)
-    trancheTarifHoraire TrancheTarifHoraire?
-    tarifHorairePrecis  Decimal?             @db.Decimal(8, 2)
-    montantForfaitaire  Decimal?             @db.Decimal(10, 2)
-    nombreParticipants  Int? // Pour tarif dégressif
-
-    // Montants calculés
-    montantEstimeHT   Decimal? @db.Decimal(10, 2)
-    montantCommission Decimal? @db.Decimal(10, 2)
-    montantTotalTTC   Decimal? @db.Decimal(10, 2)
-
-    // Équipement requis (liste stockée en JSON array)
-    materielRequis String[]
-
-    // Notes de frais
-    notesFraisPrisesEnCharge Boolean @default(false)
-
-    // Diplôme spécifique requis (optionnel, mode COACH)
-    diplomeRequis String?
-
-    // Niveau du cours (mode COACH)
-    niveauCours String?
-
-    // Métadonnées
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
-
-    // Relations
-    plagesHoraires       PlageHoraireMission[]
-    renfordsAssignes     MissionRenford[]
-    documents            DocumentMission[]
-    paiements            Paiement[]
-    evaluations          Evaluation[]
-    demandesModification DemandeModification[]
-    annulation           AnnulationMission?
-
-    @@index([etablissementId])
-    @@index([statut])
-    @@index([modeMission])
-    @@index([typePosteRecherche])
-    @@index([dateDebut])
-    @@index([dateFin])
-    @@map("missions")
-}
-
-// Enums utilisées par Mission
-enum ModeMission {
-    flex // Missions express/ponctuelles
-    coach // Missions longue durée contractualisées
-}
-
-enum StatutMission {
-    envoyee
-    en_cours_de_matching
-    proposee
-    acceptee
-    contrat_signe
-    payee
-    en_cours
-    a_valider
-    validee
-    terminee
-    archivee
-    annulee
-}
-
-enum MethodeTarification {
-    horaire
-    forfait
-    degressif
-}
-
-enum TrancheTarifHoraire {
-    moins_de_45
-    entre_45_et_59
-    plus_de_60
-}
-
-// ============================================================================
-// TABLE: Plages horaires de mission (détail jour par jour)
-// ============================================================================
-
-model PlageHoraireMission {
-    id        String  @id @default(uuid())
-    missionId String
-    mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
-
-    date       DateTime @db.Date
-    heureDebut String // Format "HH:MM"
-    heureFin   String // Format "HH:MM"
-
-    dateCreation DateTime @default(now())
-
-    @@index([missionId])
-    @@index([date])
-    @@map("plages_horaires_mission")
-}
-
-// ============================================================================
-// TABLE: Association Mission-Renford (assignations, shortlist)
-// ============================================================================
-
-model MissionRenford {
-    id        String  @id @default(uuid())
-    missionId String
-    mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
-
-    profilRenfordId String
-    profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id])
-
-    // Statut de cette assignation
-    statut StatutMissionRenford @default(propose)
-
-    // Shortlist (pour mode COACH - 1 à 3 profils)
-    estShortliste  Boolean @default(false)
-    ordreShortlist Int?
-
-    // Dates clés
-    dateProposition  DateTime  @default(now())
-    dateReponse      DateTime?
-    dateContratSigne DateTime?
-
-    // Visio pré-mission (mode COACH)
-    lienVisio      String?
-    dateVisio      DateTime?
-    visioEffectuee Boolean   @default(false)
-
-    // Tarif négocié final
-    tarifNegocie Decimal? @db.Decimal(8, 2)
-
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
-
-    @@unique([missionId, profilRenfordId])
-    @@index([missionId])
-    @@index([profilRenfordId])
-    @@index([statut])
-    @@map("missions_renfords")
-}
-
-// Enum utilisée par MissionRenford
-enum StatutMissionRenford {
-    propose
-    accepte
-    refuse
-    shortliste
-    selectionne
-    contrat_envoye
-    contrat_signe
-    en_cours
-    termine
-    annule
-}
-
-// ============================================================================
-// TABLE: Documents de mission (devis, contrat, facture, attestations)
-// ============================================================================
-
-model DocumentMission {
-    id        String  @id @default(uuid())
-    missionId String
-    mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
-
-    typeDocument  TypeDocument
-    nomFichier    String
-    cheminFichier String
-    tailleFichier Int?
-    mimeType      String?
-
-    statut StatutDocument @default(brouillon)
-
-    // Signature électronique (Yousign, PandaDoc, DocuSign)
-    signatureExterneId   String? // ID chez le fournisseur de signature
-    fournisseurSignature String? // "yousign", "pandadoc", "docusign"
-    dateSigne            DateTime?
-    signeParId           String? // ID utilisateur signataire
-
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
-
-    @@index([missionId])
-    @@index([typeDocument])
-    @@index([statut])
-    @@map("documents_mission")
-}
-
-// ============================================================================
-// TABLE: Paiements (Stripe)
-// ============================================================================
-
-model Paiement {
-    id        String @id @default(uuid())
-    reference String @unique @default(uuid())
-
-    missionId String
-    mission   Mission @relation(fields: [missionId], references: [id])
-
-    // Montants
-    montantHT         Decimal @db.Decimal(10, 2)
-    montantTVA        Decimal @db.Decimal(10, 2)
-    montantTTC        Decimal @db.Decimal(10, 2)
-    montantCommission Decimal @db.Decimal(10, 2)
-    montantNetRenford Decimal @db.Decimal(10, 2)
-
-    statut StatutPaiement @default(en_attente)
-
-    // Intégration Stripe
-    stripePaymentIntentId String?
-    stripeChargeId        String?
-    stripeTransferId      String? // Transfer vers le compte Connect du Renford
-
-    // Dates
-    dateCreation   DateTime  @default(now())
-    dateCapture    DateTime? // Quand les fonds sont capturés
-    dateLiberation DateTime? // Quand les fonds sont transférés au Renford
-
-    dateMiseAJour DateTime @updatedAt
-
-    @@index([missionId])
-    @@index([statut])
-    @@index([stripePaymentIntentId])
-    @@map("paiements")
-}
-
-// Enum utilisée par Paiement
-enum StatutPaiement {
-    en_attente
-    en_cours
-    bloque // Fonds bloqués en attente de validation
-    libere // Fonds libérés au Renford
-    rembourse
-    echoue
-    conteste
-}
-
-// ============================================================================
-// TABLE: Évaluations (bidirectionnelles)
-// ============================================================================
-
-model Evaluation {
-    id        String  @id @default(uuid())
-    missionId String
-    mission   Mission @relation(fields: [missionId], references: [id])
-
-    auteurId String
-    auteur   Utilisateur @relation("auteurEvaluation", fields: [auteurId], references: [id])
-
-    cibleId String
-    cible   Utilisateur @relation("cibleEvaluation", fields: [cibleId], references: [id])
-
-    // Type d'évaluation
-    typeEvaluation TypeEvaluation
-
-    // Notes
-    noteGlobale    Int // 1-5 étoiles
-    qualiteService QualiteService?
-    notePlateforme Int? // 1-5 étoiles (satisfaction Renford)
-
-    // Questions spécifiques
-    prestationRepondAttentes Boolean?
-    motifInsatisfaction      String?  @db.Text
-    ajouterAuxFavoris        Boolean?
-    recommande               Boolean? // Recommanderiez-vous ?
-
-    // Aspects satisfaisants (choix multiple)
-    aspectsSatisfaisants String[]
-
-    // Commentaire libre
-    commentaire String? @db.Text
-
-    // Signalement de problèmes
-    absenceSignalee Boolean @default(false)
-    detailsAbsence  Json? // {dateDebut, dateFin, motif, commentaire}
-
-    ajustementDureeSignale Boolean @default(false)
-    detailsAjustement      Json? // {nouvelleHeureDebut, nouvelleHeureFin, motif, commentaire}
-
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
-
-    @@unique([missionId, auteurId])
-    @@index([missionId])
-    @@index([cibleId])
-    @@index([typeEvaluation])
-    @@map("evaluations")
-}
-
-// Enums utilisées par Evaluation
-enum TypeEvaluation {
-    etablissement_vers_renford
-    renford_vers_etablissement
-}
-
-enum QualiteService {
-    excellent
-    tres_bien
-    bien
-    moyen
-    mediocre
-}
-
-// ============================================================================
-// TABLE: Demandes de modification de mission
-// ============================================================================
-
-model DemandeModification {
-    id        String  @id @default(uuid())
-    missionId String
-    mission   Mission @relation(fields: [missionId], references: [id])
-
-    demandeurId String
-
-    typeModification       TypeDemandeModification
-    motif                  String?                 @db.Text
-    documentsJustificatifs String[] // URLs des documents
-
-    // Détails selon le type
-    nouvelleValeur Json? // Nouvelle date, nouveaux horaires, etc.
-
-    // Statut
-    statut             StatutDemandeModification @default(en_attente)
-    dateReponse        DateTime?
-    commentaireReponse String?
-    reponduParId       String?
-
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
-
-    @@index([missionId])
-    @@index([statut])
-    @@map("demandes_modification")
-}
-
-// Enums utilisées par DemandeModification
-enum TypeDemandeModification {
-    horaires
-    date_debut
-    date_fin
-    lieu
-    autre
-}
-
-enum StatutDemandeModification {
-    en_attente
-    acceptee
-    refusee
-}
-
-// ============================================================================
-// TABLE: Annulations de mission
-// ============================================================================
-
-model AnnulationMission {
-    id        String  @id @default(uuid())
-    missionId String  @unique
-    mission   Mission @relation(fields: [missionId], references: [id])
-
-    demandeurId String
-
-    motif       MotifAnnulation
-    commentaire String?         @db.Text
-
-    // Pénalités (annulation tardive < 24h)
-    estTardive        Boolean @default(false)
-    penaliteAppliquee Boolean @default(false)
-    typePenalite      String? // "suspension_7j", "suspension_permanente"
-
-    dateCreation DateTime @default(now())
-
-    @@map("annulations_mission")
-}
-
-// Enums utilisées par AnnulationMission
-enum MotifAnnulation {
-    maladie
-    probleme_personnel
-    conflit_horaire
-    autre
-}
-
-enum MotifAbsence {
-    autre_mission_imprevue
-    probleme_communication
-    probleme_disponibilite
-    absence_non_prevue
-    autre
-}
-
-enum MotifAjustementDuree {
-    retard_demarrage
-    probleme_imprevu
-    prolongation
-    changement_besoins
-    autre
-}
-
-// ============================================================================
-// TABLE: Favoris Renford (établissements gardent leurs Renfords préférés)
-// ============================================================================
-
-model FavoriRenford {
-    id              String        @id @default(uuid())
-    etablissementId String
-    etablissement   Etablissement @relation(fields: [etablissementId], references: [id], onDelete: Cascade)
-
-    // Renford inscrit sur la plateforme
-    profilRenfordId String?
-    profilRenford   ProfilRenford? @relation(fields: [profilRenfordId], references: [id])
-
-    // Données de prospection (si Renford non encore inscrit)
-    nomComplet String?
-    email      String?
-    telephone  String?
-
-    dateCreation DateTime @default(now())
-
-    @@unique([etablissementId, profilRenfordId])
-    @@index([etablissementId])
-    @@index([email])
-    @@map("favoris_renford")
-}
-
-// ============================================================================
-// TABLE: Notifications
-// ============================================================================
-
-model Notification {
-    id String @id @default(uuid())
-
-    destinataireId String
-    destinataire   Utilisateur @relation("destinataireNotification", fields: [destinataireId], references: [id], onDelete: Cascade)
-
-    expediteurId String?
-    expediteur   Utilisateur? @relation("expediteurNotification", fields: [expediteurId], references: [id])
-
-    type  TypeNotification
-    canal CanalNotification @default(tableau_de_bord)
-
-    titre   String
-    contenu String @db.Text
-
-    // Lien d'action
-    lienAction String?
-    entiteType String? // "mission", "document", "paiement", etc.
-    entiteId   String?
-
-    // Statut
-    lu       Boolean   @default(false)
-    luLe     DateTime?
-    envoye   Boolean   @default(false)
-    envoyeLe DateTime?
-
-    dateCreation DateTime @default(now())
-
-    @@index([destinataireId])
-    @@index([type])
-    @@index([lu])
-    @@index([dateCreation])
-    @@map("notifications")
-}
-
-// Enums utilisées par Notification
-enum TypeNotification {
-    nouvelle_mission
-    mission_acceptee
-    mission_refusee
-    contrat_pret
-    contrat_signe
-    paiement_traite
-    paiement_recu
-    rappel_mission_1_semaine
-    rappel_mission_2_jours
-    mission_demarree
-    mission_terminee
-    demande_evaluation
-    rappel_evaluation
-    rappel_devis
-    document_expire
-    mise_a_jour_profil_requise
-    bienvenue
-}
-
-enum CanalNotification {
-    email
-    sms
-    tableau_de_bord
-    calendrier
-}
-
-// ============================================================================
-// TABLE: Conversations (messagerie interne / support)
-// ============================================================================
-
-model Conversation {
-    id String @id @default(uuid())
-
-    // Participants (IDs utilisateurs)
-    participantIds String[]
-
-    // Mission liée (optionnel)
-    missionId String?
-
-    // Support Renford
-    estSupportRenford Boolean @default(false)
-    sujetSupport      String?
-
-    dernierMessage DateTime?
-
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
-
-    messages Message[]
-
-    @@index([participantIds])
-    @@index([missionId])
-    @@map("conversations")
-}
-
-// ============================================================================
-// TABLE: Messages
-// ============================================================================
-
-model Message {
-    id String @id @default(uuid())
-
-    conversationId String
-    conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-    expediteurId String
-    expediteur   Utilisateur @relation("expediteurMessage", fields: [expediteurId], references: [id])
-
-    destinataireId String?
-    destinataire   Utilisateur? @relation("destinataireMessage", fields: [destinataireId], references: [id])
-
-    contenu String @db.Text
-
-    // Pièces jointes
-    pieceJointeUrl String?
-    pieceJointeNom String?
-
-    lu   Boolean   @default(false)
-    luLe DateTime?
-
-    dateCreation DateTime @default(now())
-
-    @@index([conversationId])
-    @@index([expediteurId])
-    @@index([dateCreation])
-    @@map("messages")
-}
-
-// ============================================================================
-// TABLE: Préférences de mission (Renford - Annexe 16)
-// ============================================================================
-
-model PreferenceMission {
-    id              String        @id @default(uuid())
-    profilRenfordId String
-    profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
-
-    // Catégories: Coaching Individuel, Sessions en Groupe, Ateliers, etc.
-    categorie  String
-    preference String // Description de la préférence
-
-    dateCreation DateTime @default(now())
-
-    @@unique([profilRenfordId, categorie, preference])
-    @@index([profilRenfordId])
-    @@map("preferences_mission")
-}
-
-// ============================================================================
-// TABLE: Journal d'activités (audit log)
-// ============================================================================
-
-model JournalActivite {
-    id String @id @default(uuid())
-
-    utilisateurId String?
-    utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id])
-
-    action     String // "connexion", "creation_mission", "signature_contrat", etc.
-    entiteType String? // "mission", "document", "paiement", etc.
-    entiteId   String?
-
-    details   Json? // Détails supplémentaires
-    adresseIp String?
-    userAgent String?
-
-    dateCreation DateTime @default(now())
-
-    @@index([utilisateurId])
-    @@index([action])
-    @@index([dateCreation])
-    @@map("journal_activites")
-}
-
-// ============================================================================
-// TABLE: Sessions Refresh Token
-// ============================================================================
-
-model SessionRefresh {
-    id String @id @default(uuid())
-
-    utilisateurId String
-    utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
-
-    refreshToken String  @unique
-    userAgent    String?
-    adresseIp    String?
-
-    dateExpiration DateTime
-    estRevoque     Boolean   @default(false)
-    dateRevocation DateTime?
-
-    dateCreation DateTime @default(now())
-
-    @@index([utilisateurId])
-    @@index([refreshToken])
-    @@index([dateExpiration])
-    @@map("sessions_refresh")
-}
-
-// ============================================================================
-// TABLE: Suspensions de compte
-// ============================================================================
-
-model SuspensionCompte {
-    id String @id @default(uuid())
-
-    utilisateurId String
-
-    motif   String
-    details String? @db.Text
-
-    // Durée (7 jours pour 1ère infraction, permanente pour 2 infractions en 30 jours)
-    dateDebut     DateTime  @default(now())
-    dateFin       DateTime? // Null = permanente
-    estPermanente Boolean   @default(false)
-
-    // Infraction liée
-    nombreInfractions Int     @default(1)
-    missionId         String? // Mission concernée si applicable
-
-    // Levée de suspension
-    levee      Boolean   @default(false)
-    dateLeveee DateTime?
-    motifLevee String?
-    leveeParId String?
-
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
-
-    @@index([utilisateurId])
-    @@index([estPermanente])
-    @@map("suspensions_compte")
-}
-
-// ============================================================================
-// TABLE: Paramètres plateforme (configuration admin)
-// ============================================================================
-
-model ParametrePlateforme {
-    id String @id @default(uuid())
-
-    cle         String  @unique
-    valeur      String
-    description String?
-    type        String  @default("string") // string, number, boolean, json
-    categorie   String? // "paiement", "notification", "matching", etc.
-
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
-
-    @@index([categorie])
-    @@map("parametres_plateforme")
-}
-
-// ============================================================================
-// TABLE: Rappels programmés (pour notifications automatiques)
-// ============================================================================
-
-model RappelProgramme {
-    id String @id @default(uuid())
-
-    type       String // "evaluation", "mission", "document"
-    entiteType String // "mission", "evaluation", etc.
-    entiteId   String
-
-    destinataireId String
-
-    dateEnvoi         DateTime
-    envoye            Boolean   @default(false)
-    dateEnvoiEffectif DateTime?
-
-    tentatives Int @default(0)
-
-    dateCreation DateTime @default(now())
-
-    @@index([dateEnvoi])
-    @@index([envoye])
-    @@index([type])
-    @@map("rappels_programmes")
-}
-
-// ============================================================================
-// TABLE: Statistiques quotidiennes (analytics)
-// ============================================================================
-
-model StatistiqueQuotidienne {
-    id String @id @default(uuid())
-
-    date DateTime @unique @db.Date
-
-    // Utilisateurs
-    nouveauxEtablissements Int @default(0)
-    nouveauxRenfords       Int @default(0)
-    utilisateursActifs     Int @default(0)
-
-    // Missions
-    missionsCrees      Int @default(0)
-    missionsCompletees Int @default(0)
-    missionsAnnulees   Int @default(0)
-    missionsFlex       Int @default(0)
-    missionsCoach      Int @default(0)
-
-    // Financier
-    volumePaiementsHT   Decimal @default(0) @db.Decimal(12, 2)
-    commissionsGenerees Decimal @default(0) @db.Decimal(12, 2)
-
-    // Matching
-    tauxMatchingReussi Float? // Pourcentage
-    tempsMatchingMoyen Float? // En heures
-
-    dateCreation DateTime @default(now())
-
-    @@map("statistiques_quotidiennes")
-}
+// enum TypeDocument {
+//     devis
+//     contrat_prestation
+//     facture
+//     attestation_mission
+//     attestation_vigilance
+//     bordereau_paiement
+//     diplome
+//     carte_pro
+//     justificatif_assurance
+//     note_frais
+// }
+// // ============================================================================
+// // TABLE: Missions
+// // ============================================================================
+
+// model Mission {
+//     id        String @id @default(uuid())
+//     reference String @unique @default(uuid())
+
+//     // Établissement demandeur
+//     etablissementId String
+//     etablissement   Etablissement @relation(fields: [etablissementId], references: [id])
+
+//     // Mode de mission (FLEX ou COACH)
+//     modeMission ModeMission   @default(flex)
+//     statut      StatutMission @default(envoyee)
+
+//     // Détails de la mission
+//     titre                    String?
+//     description              String?           @db.Text
+//     typePosteRecherche       TypePoste
+//     specialisationRecherchee String?
+//     niveauExperienceRequis   NiveauExperience?
+
+//     // Dates et horaires
+//     dateDebut         DateTime
+//     dateFin           DateTime
+//     nombreHeuresTotal Decimal? @db.Decimal(6, 2)
+
+//     // Tarification
+//     methodeTarification MethodeTarification  @default(horaire)
+//     trancheTarifHoraire TrancheTarifHoraire?
+//     tarifHorairePrecis  Decimal?             @db.Decimal(8, 2)
+//     montantForfaitaire  Decimal?             @db.Decimal(10, 2)
+//     nombreParticipants  Int? // Pour tarif dégressif
+
+//     // Montants calculés
+//     montantEstimeHT   Decimal? @db.Decimal(10, 2)
+//     montantCommission Decimal? @db.Decimal(10, 2)
+//     montantTotalTTC   Decimal? @db.Decimal(10, 2)
+
+//     // Équipement requis (liste stockée en JSON array)
+//     materielRequis String[]
+
+//     // Notes de frais
+//     notesFraisPrisesEnCharge Boolean @default(false)
+
+//     // Diplôme spécifique requis (optionnel, mode COACH)
+//     diplomeRequis String?
+
+//     // Niveau du cours (mode COACH)
+//     niveauCours String?
+
+//     // Métadonnées
+//     dateCreation  DateTime @default(now())
+//     dateMiseAJour DateTime @updatedAt
+
+//     // Relations
+//     plagesHoraires       PlageHoraireMission[]
+//     renfordsAssignes     MissionRenford[]
+//     documents            DocumentMission[]
+//     paiements            Paiement[]
+//     evaluations          Evaluation[]
+//     demandesModification DemandeModification[]
+//     annulation           AnnulationMission?
+
+//     @@index([etablissementId])
+//     @@index([statut])
+//     @@index([modeMission])
+//     @@index([typePosteRecherche])
+//     @@index([dateDebut])
+//     @@index([dateFin])
+//     @@map("missions")
+// }
+
+// // Enums utilisées par Mission
+// enum ModeMission {
+//     flex // Missions express/ponctuelles
+//     coach // Missions longue durée contractualisées
+// }
+
+// enum StatutMission {
+//     envoyee
+//     en_cours_de_matching
+//     proposee
+//     acceptee
+//     contrat_signe
+//     payee
+//     en_cours
+//     a_valider
+//     validee
+//     terminee
+//     archivee
+//     annulee
+// }
+
+// enum MethodeTarification {
+//     horaire
+//     forfait
+//     degressif
+// }
+
+// enum TrancheTarifHoraire {
+//     moins_de_45
+//     entre_45_et_59
+//     plus_de_60
+// }
+
+// // ============================================================================
+// // TABLE: Plages horaires de mission (détail jour par jour)
+// // ============================================================================
+
+// model PlageHoraireMission {
+//     id        String  @id @default(uuid())
+//     missionId String
+//     mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+//     date       DateTime @db.Date
+//     heureDebut String // Format "HH:MM"
+//     heureFin   String // Format "HH:MM"
+
+//     dateCreation DateTime @default(now())
+
+//     @@index([missionId])
+//     @@index([date])
+//     @@map("plages_horaires_mission")
+// }
+
+// // ============================================================================
+// // TABLE: Association Mission-Renford (assignations, shortlist)
+// // ============================================================================
+
+// model MissionRenford {
+//     id        String  @id @default(uuid())
+//     missionId String
+//     mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+//     profilRenfordId String
+//     profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id])
+
+//     // Statut de cette assignation
+//     statut StatutMissionRenford @default(propose)
+
+//     // Shortlist (pour mode COACH - 1 à 3 profils)
+//     estShortliste  Boolean @default(false)
+//     ordreShortlist Int?
+
+//     // Dates clés
+//     dateProposition  DateTime  @default(now())
+//     dateReponse      DateTime?
+//     dateContratSigne DateTime?
+
+//     // Visio pré-mission (mode COACH)
+//     lienVisio      String?
+//     dateVisio      DateTime?
+//     visioEffectuee Boolean   @default(false)
+
+//     // Tarif négocié final
+//     tarifNegocie Decimal? @db.Decimal(8, 2)
+
+//     dateCreation  DateTime @default(now())
+//     dateMiseAJour DateTime @updatedAt
+
+//     @@unique([missionId, profilRenfordId])
+//     @@index([missionId])
+//     @@index([profilRenfordId])
+//     @@index([statut])
+//     @@map("missions_renfords")
+// }
+
+// // Enum utilisée par MissionRenford
+// enum StatutMissionRenford {
+//     propose
+//     accepte
+//     refuse
+//     shortliste
+//     selectionne
+//     contrat_envoye
+//     contrat_signe
+//     en_cours
+//     termine
+//     annule
+// }
+
+// // ============================================================================
+// // TABLE: Documents de mission (devis, contrat, facture, attestations)
+// // ============================================================================
+
+// model DocumentMission {
+//     id        String  @id @default(uuid())
+//     missionId String
+//     mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+//     typeDocument  TypeDocument
+//     nomFichier    String
+//     cheminFichier String
+//     tailleFichier Int?
+//     mimeType      String?
+
+//     statut StatutDocument @default(brouillon)
+
+//     // Signature électronique (Yousign, PandaDoc, DocuSign)
+//     signatureExterneId   String? // ID chez le fournisseur de signature
+//     fournisseurSignature String? // "yousign", "pandadoc", "docusign"
+//     dateSigne            DateTime?
+//     signeParId           String? // ID utilisateur signataire
+
+//     dateCreation  DateTime @default(now())
+//     dateMiseAJour DateTime @updatedAt
+
+//     @@index([missionId])
+//     @@index([typeDocument])
+//     @@index([statut])
+//     @@map("documents_mission")
+// }
+
+// // ============================================================================
+// // TABLE: Paiements (Stripe)
+// // ============================================================================
+
+// model Paiement {
+//     id        String @id @default(uuid())
+//     reference String @unique @default(uuid())
+
+//     missionId String
+//     mission   Mission @relation(fields: [missionId], references: [id])
+
+//     // Montants
+//     montantHT         Decimal @db.Decimal(10, 2)
+//     montantTVA        Decimal @db.Decimal(10, 2)
+//     montantTTC        Decimal @db.Decimal(10, 2)
+//     montantCommission Decimal @db.Decimal(10, 2)
+//     montantNetRenford Decimal @db.Decimal(10, 2)
+
+//     statut StatutPaiement @default(en_attente)
+
+//     // Intégration Stripe
+//     stripePaymentIntentId String?
+//     stripeChargeId        String?
+//     stripeTransferId      String? // Transfer vers le compte Connect du Renford
+
+//     // Dates
+//     dateCreation   DateTime  @default(now())
+//     dateCapture    DateTime? // Quand les fonds sont capturés
+//     dateLiberation DateTime? // Quand les fonds sont transférés au Renford
+
+//     dateMiseAJour DateTime @updatedAt
+
+//     @@index([missionId])
+//     @@index([statut])
+//     @@index([stripePaymentIntentId])
+//     @@map("paiements")
+// }
+
+// // Enum utilisée par Paiement
+// enum StatutPaiement {
+//     en_attente
+//     en_cours
+//     bloque // Fonds bloqués en attente de validation
+//     libere // Fonds libérés au Renford
+//     rembourse
+//     echoue
+//     conteste
+// }
+
+// // ============================================================================
+// // TABLE: Évaluations (bidirectionnelles)
+// // ============================================================================
+
+// model Evaluation {
+//     id        String  @id @default(uuid())
+//     missionId String
+//     mission   Mission @relation(fields: [missionId], references: [id])
+
+//     auteurId String
+//     auteur   Utilisateur @relation("auteurEvaluation", fields: [auteurId], references: [id])
+
+//     cibleId String
+//     cible   Utilisateur @relation("cibleEvaluation", fields: [cibleId], references: [id])
+
+//     // Type d'évaluation
+//     typeEvaluation TypeEvaluation
+
+//     // Notes
+//     noteGlobale    Int // 1-5 étoiles
+//     qualiteService QualiteService?
+//     notePlateforme Int? // 1-5 étoiles (satisfaction Renford)
+
+//     // Questions spécifiques
+//     prestationRepondAttentes Boolean?
+//     motifInsatisfaction      String?  @db.Text
+//     ajouterAuxFavoris        Boolean?
+//     recommande               Boolean? // Recommanderiez-vous ?
+
+//     // Aspects satisfaisants (choix multiple)
+//     aspectsSatisfaisants String[]
+
+//     // Commentaire libre
+//     commentaire String? @db.Text
+
+//     // Signalement de problèmes
+//     absenceSignalee Boolean @default(false)
+//     detailsAbsence  Json? // {dateDebut, dateFin, motif, commentaire}
+
+//     ajustementDureeSignale Boolean @default(false)
+//     detailsAjustement      Json? // {nouvelleHeureDebut, nouvelleHeureFin, motif, commentaire}
+
+//     dateCreation  DateTime @default(now())
+//     dateMiseAJour DateTime @updatedAt
+
+//     @@unique([missionId, auteurId])
+//     @@index([missionId])
+//     @@index([cibleId])
+//     @@index([typeEvaluation])
+//     @@map("evaluations")
+// }
+
+// // Enums utilisées par Evaluation
+// enum TypeEvaluation {
+//     etablissement_vers_renford
+//     renford_vers_etablissement
+// }
+
+// enum QualiteService {
+//     excellent
+//     tres_bien
+//     bien
+//     moyen
+//     mediocre
+// }
+
+// // ============================================================================
+// // TABLE: Demandes de modification de mission
+// // ============================================================================
+
+// model DemandeModification {
+//     id        String  @id @default(uuid())
+//     missionId String
+//     mission   Mission @relation(fields: [missionId], references: [id])
+
+//     demandeurId String
+
+//     typeModification       TypeDemandeModification
+//     motif                  String?                 @db.Text
+//     documentsJustificatifs String[] // URLs des documents
+
+//     // Détails selon le type
+//     nouvelleValeur Json? // Nouvelle date, nouveaux horaires, etc.
+
+//     // Statut
+//     statut             StatutDemandeModification @default(en_attente)
+//     dateReponse        DateTime?
+//     commentaireReponse String?
+//     reponduParId       String?
+
+//     dateCreation  DateTime @default(now())
+//     dateMiseAJour DateTime @updatedAt
+
+//     @@index([missionId])
+//     @@index([statut])
+//     @@map("demandes_modification")
+// }
+
+// // Enums utilisées par DemandeModification
+// enum TypeDemandeModification {
+//     horaires
+//     date_debut
+//     date_fin
+//     lieu
+//     autre
+// }
+
+// enum StatutDemandeModification {
+//     en_attente
+//     acceptee
+//     refusee
+// }
+
+// // ============================================================================
+// // TABLE: Annulations de mission
+// // ============================================================================
+
+// model AnnulationMission {
+//     id        String  @id @default(uuid())
+//     missionId String  @unique
+//     mission   Mission @relation(fields: [missionId], references: [id])
+
+//     demandeurId String
+
+//     motif       MotifAnnulation
+//     commentaire String?         @db.Text
+
+//     // Pénalités (annulation tardive < 24h)
+//     estTardive        Boolean @default(false)
+//     penaliteAppliquee Boolean @default(false)
+//     typePenalite      String? // "suspension_7j", "suspension_permanente"
+
+//     dateCreation DateTime @default(now())
+
+//     @@map("annulations_mission")
+// }
+
+// // Enums utilisées par AnnulationMission
+// enum MotifAnnulation {
+//     maladie
+//     probleme_personnel
+//     conflit_horaire
+//     autre
+// }
+
+// enum MotifAbsence {
+//     autre_mission_imprevue
+//     probleme_communication
+//     probleme_disponibilite
+//     absence_non_prevue
+//     autre
+// }
+
+// enum MotifAjustementDuree {
+//     retard_demarrage
+//     probleme_imprevu
+//     prolongation
+//     changement_besoins
+//     autre
+// }
+
+// // ============================================================================
+// // TABLE: Favoris Renford (établissements gardent leurs Renfords préférés)
+// // ============================================================================
+
+// model FavoriRenford {
+//     id              String        @id @default(uuid())
+//     etablissementId String
+//     etablissement   Etablissement @relation(fields: [etablissementId], references: [id], onDelete: Cascade)
+
+//     // Renford inscrit sur la plateforme
+//     profilRenfordId String?
+//     profilRenford   ProfilRenford? @relation(fields: [profilRenfordId], references: [id])
+
+//     // Données de prospection (si Renford non encore inscrit)
+//     nomComplet String?
+//     email      String?
+//     telephone  String?
+
+//     dateCreation DateTime @default(now())
+
+//     @@unique([etablissementId, profilRenfordId])
+//     @@index([etablissementId])
+//     @@index([email])
+//     @@map("favoris_renford")
+// }
+
+// // ============================================================================
+// // TABLE: Notifications
+// // ============================================================================
+
+// model Notification {
+//     id String @id @default(uuid())
+
+//     destinataireId String
+//     destinataire   Utilisateur @relation("destinataireNotification", fields: [destinataireId], references: [id], onDelete: Cascade)
+
+//     expediteurId String?
+//     expediteur   Utilisateur? @relation("expediteurNotification", fields: [expediteurId], references: [id])
+
+//     type  TypeNotification
+//     canal CanalNotification @default(tableau_de_bord)
+
+//     titre   String
+//     contenu String @db.Text
+
+//     // Lien d'action
+//     lienAction String?
+//     entiteType String? // "mission", "document", "paiement", etc.
+//     entiteId   String?
+
+//     // Statut
+//     lu       Boolean   @default(false)
+//     luLe     DateTime?
+//     envoye   Boolean   @default(false)
+//     envoyeLe DateTime?
+
+//     dateCreation DateTime @default(now())
+
+//     @@index([destinataireId])
+//     @@index([type])
+//     @@index([lu])
+//     @@index([dateCreation])
+//     @@map("notifications")
+// }
+
+// // Enums utilisées par Notification
+// enum TypeNotification {
+//     nouvelle_mission
+//     mission_acceptee
+//     mission_refusee
+//     contrat_pret
+//     contrat_signe
+//     paiement_traite
+//     paiement_recu
+//     rappel_mission_1_semaine
+//     rappel_mission_2_jours
+//     mission_demarree
+//     mission_terminee
+//     demande_evaluation
+//     rappel_evaluation
+//     rappel_devis
+//     document_expire
+//     mise_a_jour_profil_requise
+//     bienvenue
+// }
+
+// enum CanalNotification {
+//     email
+//     sms
+//     tableau_de_bord
+//     calendrier
+// }
+
+// // ============================================================================
+// // TABLE: Conversations (messagerie interne / support)
+// // ============================================================================
+
+// model Conversation {
+//     id String @id @default(uuid())
+
+//     // Participants (IDs utilisateurs)
+//     participantIds String[]
+
+//     // Mission liée (optionnel)
+//     missionId String?
+
+//     // Support Renford
+//     estSupportRenford Boolean @default(false)
+//     sujetSupport      String?
+
+//     dernierMessage DateTime?
+
+//     dateCreation  DateTime @default(now())
+//     dateMiseAJour DateTime @updatedAt
+
+//     messages Message[]
+
+//     @@index([participantIds])
+//     @@index([missionId])
+//     @@map("conversations")
+// }
+
+// // ============================================================================
+// // TABLE: Messages
+// // ============================================================================
+
+// model Message {
+//     id String @id @default(uuid())
+
+//     conversationId String
+//     conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+//     expediteurId String
+//     expediteur   Utilisateur @relation("expediteurMessage", fields: [expediteurId], references: [id])
+
+//     destinataireId String?
+//     destinataire   Utilisateur? @relation("destinataireMessage", fields: [destinataireId], references: [id])
+
+//     contenu String @db.Text
+
+//     // Pièces jointes
+//     pieceJointeUrl String?
+//     pieceJointeNom String?
+
+//     lu   Boolean   @default(false)
+//     luLe DateTime?
+
+//     dateCreation DateTime @default(now())
+
+//     @@index([conversationId])
+//     @@index([expediteurId])
+//     @@index([dateCreation])
+//     @@map("messages")
+// }
+
+// // ============================================================================
+// // TABLE: Préférences de mission (Renford - Annexe 16)
+// // ============================================================================
+
+// model PreferenceMission {
+//     id              String        @id @default(uuid())
+//     profilRenfordId String
+//     profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
+
+//     // Catégories: Coaching Individuel, Sessions en Groupe, Ateliers, etc.
+//     categorie  String
+//     preference String // Description de la préférence
+
+//     dateCreation DateTime @default(now())
+
+//     @@unique([profilRenfordId, categorie, preference])
+//     @@index([profilRenfordId])
+//     @@map("preferences_mission")
+// }
+
+// // ============================================================================
+// // TABLE: Journal d'activités (audit log)
+// // ============================================================================
+
+// model JournalActivite {
+//     id String @id @default(uuid())
+
+//     utilisateurId String?
+//     utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id])
+
+//     action     String // "connexion", "creation_mission", "signature_contrat", etc.
+//     entiteType String? // "mission", "document", "paiement", etc.
+//     entiteId   String?
+
+//     details   Json? // Détails supplémentaires
+//     adresseIp String?
+//     userAgent String?
+
+//     dateCreation DateTime @default(now())
+
+//     @@index([utilisateurId])
+//     @@index([action])
+//     @@index([dateCreation])
+//     @@map("journal_activites")
+// }
+
+// // ============================================================================
+// // TABLE: Sessions Refresh Token
+// // ============================================================================
+
+// model SessionRefresh {
+//     id String @id @default(uuid())
+
+//     utilisateurId String
+//     utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+//     refreshToken String  @unique
+//     userAgent    String?
+//     adresseIp    String?
+
+//     dateExpiration DateTime
+//     estRevoque     Boolean   @default(false)
+//     dateRevocation DateTime?
+
+//     dateCreation DateTime @default(now())
+
+//     @@index([utilisateurId])
+//     @@index([refreshToken])
+//     @@index([dateExpiration])
+//     @@map("sessions_refresh")
+// }
+
+// // ============================================================================
+// // TABLE: Suspensions de compte
+// // ============================================================================
+
+// model SuspensionCompte {
+//     id String @id @default(uuid())
+
+//     utilisateurId String
+
+//     motif   String
+//     details String? @db.Text
+
+//     // Durée (7 jours pour 1ère infraction, permanente pour 2 infractions en 30 jours)
+//     dateDebut     DateTime  @default(now())
+//     dateFin       DateTime? // Null = permanente
+//     estPermanente Boolean   @default(false)
+
+//     // Infraction liée
+//     nombreInfractions Int     @default(1)
+//     missionId         String? // Mission concernée si applicable
+
+//     // Levée de suspension
+//     levee      Boolean   @default(false)
+//     dateLeveee DateTime?
+//     motifLevee String?
+//     leveeParId String?
+
+//     dateCreation  DateTime @default(now())
+//     dateMiseAJour DateTime @updatedAt
+
+//     @@index([utilisateurId])
+//     @@index([estPermanente])
+//     @@map("suspensions_compte")
+// }
+
+// // ============================================================================
+// // TABLE: Paramètres plateforme (configuration admin)
+// // ============================================================================
+
+// model ParametrePlateforme {
+//     id String @id @default(uuid())
+
+//     cle         String  @unique
+//     valeur      String
+//     description String?
+//     type        String  @default("string") // string, number, boolean, json
+//     categorie   String? // "paiement", "notification", "matching", etc.
+
+//     dateCreation  DateTime @default(now())
+//     dateMiseAJour DateTime @updatedAt
+
+//     @@index([categorie])
+//     @@map("parametres_plateforme")
+// }
+
+// // ============================================================================
+// // TABLE: Rappels programmés (pour notifications automatiques)
+// // ============================================================================
+
+// model RappelProgramme {
+//     id String @id @default(uuid())
+
+//     type       String // "evaluation", "mission", "document"
+//     entiteType String // "mission", "evaluation", etc.
+//     entiteId   String
+
+//     destinataireId String
+
+//     dateEnvoi         DateTime
+//     envoye            Boolean   @default(false)
+//     dateEnvoiEffectif DateTime?
+
+//     tentatives Int @default(0)
+
+//     dateCreation DateTime @default(now())
+
+//     @@index([dateEnvoi])
+//     @@index([envoye])
+//     @@index([type])
+//     @@map("rappels_programmes")
+// }
+
+// // ============================================================================
+// // TABLE: Statistiques quotidiennes (analytics)
+// // ============================================================================
+
+// model StatistiqueQuotidienne {
+//     id String @id @default(uuid())
+
+//     date DateTime @unique @db.Date
+
+//     // Utilisateurs
+//     nouveauxEtablissements Int @default(0)
+//     nouveauxRenfords       Int @default(0)
+//     utilisateursActifs     Int @default(0)
+
+//     // Missions
+//     missionsCrees      Int @default(0)
+//     missionsCompletees Int @default(0)
+//     missionsAnnulees   Int @default(0)
+//     missionsFlex       Int @default(0)
+//     missionsCoach      Int @default(0)
+
+//     // Financier
+//     volumePaiementsHT   Decimal @default(0) @db.Decimal(12, 2)
+//     commissionsGenerees Decimal @default(0) @db.Decimal(12, 2)
+
+//     // Matching
+//     tauxMatchingReussi Float? // Pourcentage
+//     tempsMatchingMoyen Float? // En heures
+
+//     dateCreation DateTime @default(now())
+
+//     @@map("statistiques_quotidiennes")
+// }

@@ -9,12 +9,23 @@ export const STATUT_COMPTE = [
   'onboarding',
 ] as const;
 
+export const TYPE_NOTIFICATION_PREFERENCE = [
+  'marketing',
+  'annonces_mises_ajours',
+  'support',
+  'missions',
+] as const;
+
 // Mise à jour du profil utilisateur
 export const updateProfileSchema = z.object({
   nom: z.string().min(2, '2 caractères minimum').optional(),
   prenom: z.string().min(2, '2 caractères minimum').optional(),
   telephone: z.string().optional().nullable(),
   avatarChemin: z.string().optional().nullable(),
+  notificationsEmail: z.boolean().optional(),
+  typeNotificationsEmail: z.array(z.enum(TYPE_NOTIFICATION_PREFERENCE)).optional(),
+  notificationsMobile: z.boolean().optional(),
+  typeNotificationsMobile: z.array(z.enum(TYPE_NOTIFICATION_PREFERENCE)).optional(),
 });
 
 export type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;
