@@ -4,6 +4,7 @@ export type ProfilEtablissement = {
   id: string;
   utilisateurId: string;
   avatarChemin: string | null;
+  imageCouvertureChemin: string | null;
   raisonSociale: string;
   siret: string;
   aPropos: string | null;

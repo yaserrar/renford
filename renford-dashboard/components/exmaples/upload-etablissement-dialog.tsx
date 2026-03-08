@@ -10,20 +10,20 @@ import {
   generateExcelTemplateWithOptionsSheet,
   TemplateColumn,
 } from "@/lib/excel-template";
-import { useI18n } from "@/stores/use-i18n";
+import { useI18n } from "../../stores/use-i18n";
 import {
   useBulkCreateEtablissements,
   BulkEtablissementExcelItem,
   BulkEtablissementPayload,
-} from "@/hooks/etablissement";
-import { useGetProvinces } from "@/hooks/province";
-import { useGetRegions } from "@/hooks/region";
+} from "../../hooks/etablissement";
+import { useGetProvinces } from "../../hooks/province";
+import { useGetRegions } from "../../hooks/region";
 import { Label } from "@/components/ui/label";
 import { Combobox } from "@/components/ui/combobox";
 import {
   TYPE_ETABLISSEMENT_OPTIONS,
   SECTEUR_ETABLISSEMENT_OPTIONS,
-} from "@/validations/etablissement";
+} from "../../validations/etablissement";
 
 type UploadEtablissementDialogProps = {
   open: boolean;
@@ -65,7 +65,8 @@ export function UploadEtablissementDialog({
   );
 
   // Handlers for cascading dropdowns
-  const handleRegionChange = (regionId: string) => {
+  const handleRegionChange = (value: string | string[]) => {
+    const regionId = Array.isArray(value) ? value[0] || "" : value;
     setSelectedRegionId(regionId);
     setSelectedProvinceId("");
   };
@@ -382,7 +383,10 @@ export function UploadEtablissementDialog({
           <Combobox
             options={provinceOptions}
             value={selectedProvinceId}
-            onValueChange={setSelectedProvinceId}
+            onValueChange={(value) => {
+              const provinceId = Array.isArray(value) ? value[0] || "" : value;
+              setSelectedProvinceId(provinceId);
+            }}
             placeholder={d.selectionnerProvince}
             searchPlaceholder={d.rechercherProvince}
             emptyMessage={d.aucuneProvince}

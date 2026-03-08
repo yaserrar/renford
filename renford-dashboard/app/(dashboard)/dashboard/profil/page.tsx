@@ -1,72 +1,28 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ErrorMessage from "@/components/ui/error-message";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  useChangePassword,
-  useCurrentUser,
-  useUpdateProfile,
-} from "@/hooks/utilisateur";
-import {
-  changePasswordSchema,
-  ChangePasswordSchema,
-  updateProfileSchema,
-  UpdateProfileSchema,
-} from "@/validations/utilisateur";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useCurrentUser } from "@/hooks/utilisateur";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { data: me, isLoading } = useCurrentUser();
-  const { mutate: updateProfile, isPending: profilePending } =
-    useUpdateProfile();
-  const { mutate: changePassword, isPending: passwordPending } =
-    useChangePassword();
 
-  const profileForm = useForm<UpdateProfileSchema>({
-    resolver: zodResolver(updateProfileSchema),
-    defaultValues: {
-      nom: "",
-      prenom: "",
-      telephone: "",
-    },
-  });
-
-  const passwordForm = useForm<ChangePasswordSchema>({
-    resolver: zodResolver(changePasswordSchema),
-    defaultValues: { oldPassword: "", newPassword: "", confirmPassword: "" },
-  });
-
-  // Update form when user data loads
   useEffect(() => {
-    if (me) {
-      profileForm.reset({
-        nom: me.nom || "",
-        prenom: me.prenom || "",
-        telephone: me.telephone || "",
-      });
+    if (!me?.typeUtilisateur) return;
+    if (me.typeUtilisateur === "etablissement") {
+      router.replace("/dashboard/profile-etablissement");
+      return;
     }
-  }, [me, profileForm]);
 
-  const submitProfile = profileForm.handleSubmit((data) => {
-    updateProfile(data);
-  });
+    if (me.typeUtilisateur === "renford") {
+      router.replace("/dashboard/profile-renford");
+      return;
+    }
 
-  const submitPassword = passwordForm.handleSubmit((data) => {
-    changePassword(data, {
-      onSuccess: () =>
-        passwordForm.reset({
-          oldPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        }),
-    });
-  });
+    router.replace("/dashboard/accueil");
+  }, [me?.typeUtilisateur, router]);
 
   if (isLoading) {
     return (
@@ -76,136 +32,5 @@ export default function ProfilePage() {
     );
   }
 
-  return (
-    <main className="container mx-auto flex flex-col gap-6 mt-12">
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle className="font-medium text-primary-dark">
-              Information générale
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={submitProfile} className="space-y-4">
-              <div>
-                <Label>Nom</Label>
-                <Input {...profileForm.register("nom")} placeholder="Nom" />
-                <ErrorMessage>
-                  {profileForm.formState.errors.nom?.message}
-                </ErrorMessage>
-              </div>
-              <div>
-                <Label>Prénom</Label>
-                <Input
-                  {...profileForm.register("prenom")}
-                  placeholder="Prénom"
-                />
-                <ErrorMessage>
-                  {profileForm.formState.errors.prenom?.message}
-                </ErrorMessage>
-              </div>
-              <div>
-                <Label>Téléphone</Label>
-                <Input
-                  {...profileForm.register("telephone")}
-                  placeholder="Téléphone"
-                />
-                <ErrorMessage>
-                  {profileForm.formState.errors.telephone?.message}
-                </ErrorMessage>
-              </div>
-              <div>
-                <Label>Email</Label>
-                <Input
-                  disabled
-                  value={me?.email || ""}
-                  className="bg-gray-50"
-                />
-              </div>
-              <Button
-                type="submit"
-                disabled={profilePending}
-                className="w-full"
-              >
-                {profilePending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Enregistrement...
-                  </>
-                ) : (
-                  "Enregistrer"
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle className="font-medium text-primary-dark">
-              Sécurité
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={submitPassword} className="space-y-4">
-              <div>
-                <Label>Mot de passe actuel</Label>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  {...passwordForm.register("oldPassword")}
-                />
-                <ErrorMessage>
-                  {passwordForm.formState.errors.oldPassword?.message}
-                </ErrorMessage>
-              </div>
-              <div>
-                <Label>Nouveau mot de passe</Label>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  {...passwordForm.register("newPassword")}
-                />
-                <ErrorMessage>
-                  {passwordForm.formState.errors.newPassword?.message}
-                </ErrorMessage>
-              </div>
-              <div>
-                <Label>Confirmer le mot de passe</Label>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  {...passwordForm.register("confirmPassword")}
-                />
-                <ErrorMessage>
-                  {passwordForm.formState.errors.confirmPassword?.message}
-                </ErrorMessage>
-              </div>
-              <ul className="text-xs text-gray-500 list-disc pl-4 space-y-1">
-                <li>Minimum 8 caractères</li>
-                <li>Au moins une lettre majuscule</li>
-                <li>Au moins une lettre minuscule</li>
-                <li>Au moins un chiffre</li>
-                <li>Au moins un caractère spécial</li>
-              </ul>
-              <Button
-                type="submit"
-                disabled={passwordPending}
-                className="w-full"
-              >
-                {passwordPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Enregistrement...
-                  </>
-                ) : (
-                  "Changer le mot de passe"
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
-  );
+  return null;
 }

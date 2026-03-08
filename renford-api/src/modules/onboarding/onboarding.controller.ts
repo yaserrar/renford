@@ -662,7 +662,6 @@ export const updateRenfordQualifications = async (
           create: diplomes.map((typeDiplome, index) => ({
             typeDiplome,
             justificatifDiplomeChemin: justificatifDiplomeChemins[index] ?? null,
-            nomDiplome: '',
             mention: null,
             anneeObtention: null,
             etablissementFormation: null,

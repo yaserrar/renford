@@ -67,12 +67,12 @@ export default function Etape5RenfordPage() {
     defaultValues: {
       niveauExperience: user?.profilRenford?.niveauExperience || undefined,
       diplomes:
-        user?.profilRenford?.renfordDiplomes?.map((diplome) =>
-          diplome.typeDiplome,
+        user?.profilRenford?.renfordDiplomes?.map(
+          (diplome) => diplome.typeDiplome
         ) || [],
       justificatifDiplomeChemins:
         user?.profilRenford?.renfordDiplomes?.map(
-          (diplome) => diplome.justificatifDiplomeChemin || "",
+          (diplome) => diplome.justificatifDiplomeChemin || ""
         ) || [],
       justificatifCarteProfessionnelleChemin:
         user?.profilRenford?.justificatifCarteProfessionnelleChemin || "",
@@ -91,7 +91,7 @@ export default function Etape5RenfordPage() {
   const justificatifCartePro = watch("justificatifCarteProfessionnelleChemin");
   const justificatifCarteProFileName = useMemo(
     () => (justificatifCartePro ? justificatifCartePro.split("/").pop() : null),
-    [justificatifCartePro],
+    [justificatifCartePro]
   );
 
   const onSubmit = (data: OnboardingRenfordQualificationsSchema) => {
@@ -120,7 +120,7 @@ export default function Etape5RenfordPage() {
       setActiveDiplomeForUpload(null);
       setActiveDiplomeIndexForUpload(null);
     },
-    [activeDiplomeIndexForUpload, getValues, setValue],
+    [activeDiplomeIndexForUpload, getValues, setValue]
   );
 
   const openDiplomeDialog = useCallback((diplome: string, index: number) => {
@@ -137,7 +137,7 @@ export default function Etape5RenfordPage() {
         shouldValidate: true,
       });
     },
-    [setValue],
+    [setValue]
   );
 
   return (
@@ -164,7 +164,7 @@ export default function Etape5RenfordPage() {
                       "w-full flex text-sm items-center gap-3 px-4 py-2 rounded-full border-1 transition-all text-left",
                       field.value === niveau
                         ? "border-primary bg-primary"
-                        : "border-gray-200 hover:border-gray-300",
+                        : "border-gray-200 hover:border-gray-300"
                     )}
                   >
                     <span className="font-medium text-gray-900">
@@ -199,11 +199,11 @@ export default function Etape5RenfordPage() {
                     currentDiplomes.map((diplome, index) => [
                       diplome,
                       currentChemins[index] || "",
-                    ]),
+                    ])
                   );
 
                   const nextChemins = nextDiplomes.map(
-                    (diplome) => cheminByDiplome.get(diplome) || "",
+                    (diplome) => cheminByDiplome.get(diplome) || ""
                   );
 
                   field.onChange(nextDiplomes);
@@ -542,7 +542,9 @@ export default function Etape5RenfordPage() {
       </form>
 
       <DocumentUploadDialog
-        key={`diplome-upload-${activeDiplomeForUpload ?? "none"}-${activeDiplomeIndexForUpload ?? "none"}`}
+        key={`diplome-upload-${activeDiplomeForUpload ?? "none"}-${
+          activeDiplomeIndexForUpload ?? "none"
+        }`}
         open={diplomeDialogOpen}
         setOpen={(open) => {
           setDiplomeDialogOpen(open);
@@ -554,9 +556,9 @@ export default function Etape5RenfordPage() {
         setFileValue={handleDiplomeUploaded}
         path="documents/diplomes"
         name={`justificatif-diplome-${(activeDiplomeForUpload
-          ? (DIPLOME_LABELS[
+          ? DIPLOME_LABELS[
               activeDiplomeForUpload as keyof typeof DIPLOME_LABELS
-            ] ?? activeDiplomeForUpload)
+            ] ?? activeDiplomeForUpload
           : "renford"
         )
           .toLowerCase()

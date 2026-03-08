@@ -23,13 +23,14 @@ ALTER TABLE "etablissements"
 ADD COLUMN "pays" TEXT NOT NULL DEFAULT 'France';
 
 ALTER TABLE "profils_etablissement"
-ADD COLUMN "aPropos" TEXT;
+ADD COLUMN "aPropos" TEXT,
+ADD COLUMN "imageCouvertureChemin" TEXT;
 
 ALTER TABLE "profils_renford"
 ADD COLUMN "aPropos" TEXT,
+ADD COLUMN "imageCouvertureChemin" TEXT,
 ADD COLUMN "telephone" TEXT,
-ADD COLUMN "portfolio" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
-ADD COLUMN "tjm" DECIMAL(8,2);
+ADD COLUMN "portfolio" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
 
 ALTER TABLE "renford_diplomes"
 ADD COLUMN IF NOT EXISTS "justificatifDiplomeChemin" TEXT;
@@ -39,7 +40,6 @@ INSERT INTO "renford_diplomes" (
     "profilRenfordId",
     "typeDiplome",
     "justificatifDiplomeChemin",
-    "nomDiplome",
     "mention",
     "anneeObtention",
     "etablissementFormation",
@@ -51,7 +51,6 @@ SELECT
     pr."id",
     diplome_entry.value,
     justificatif_entry.value,
-    '',
     NULL,
     NULL,
     NULL,
@@ -66,6 +65,9 @@ LEFT JOIN LATERAL UNNEST(COALESCE(pr."justificatifDiplomeChemins", ARRAY[]::TEXT
 ALTER TABLE "profils_renford"
 DROP COLUMN "diplomes",
 DROP COLUMN "justificatifDiplomeChemins";
+
+ALTER TABLE "renford_diplomes"
+DROP COLUMN IF EXISTS "nomDiplome";
 
 CREATE TABLE "experiences_professionnelles_renford" (
     "id" TEXT NOT NULL,

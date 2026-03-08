@@ -1,10 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Eye, EyeClosed, EyeOff } from "lucide-react";
+import { Eye, EyeClosed } from "lucide-react";
 import * as React from "react";
 
-interface InputPasswordProps extends React.ComponentProps<"input"> {}
+type InputPasswordProps = React.ComponentProps<"input">;
 
 const InputPassword = React.forwardRef<HTMLInputElement, InputPasswordProps>(
   ({ className, ...props }, ref) => {

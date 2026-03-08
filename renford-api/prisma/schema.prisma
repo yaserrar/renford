@@ -22,9 +22,9 @@ model Utilisateur {
     typeUtilisateur TypeUtilisateur
 
     // Informations personnelles
-    nom       String
-    prenom    String
-    telephone String?
+    nom          String
+    prenom       String
+    telephone    String?
     avatarChemin String?
 
     // Statut du compte
@@ -38,10 +38,10 @@ model Utilisateur {
     emailVerifieA DateTime?
 
     // Préférences notifications
-    notificationsEmail       Boolean                    @default(false)
-    typeNotificationsEmail   TypeNotificationPreference[] @default([])
-    notificationsMobile      Boolean                    @default(false)
-    typeNotificationsMobile  TypeNotificationPreference[] @default([])
+    notificationsEmail      Boolean                      @default(false)
+    typeNotificationsEmail  TypeNotificationPreference[] @default([])
+    notificationsMobile     Boolean                      @default(false)
+    typeNotificationsMobile TypeNotificationPreference[] @default([])
 
     codeVerificationEmail String?
     dateCreationCodeVerif DateTime?
@@ -114,10 +114,11 @@ model FirebaseAuthInfo {
 // ============================================================================
 
 model ProfilEtablissement {
-    id            String      @id @default(uuid())
-    utilisateurId String      @unique
-    utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
-    avatarChemin  String?
+    id                    String      @id @default(uuid())
+    utilisateurId         String      @unique
+    utilisateur           Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+    avatarChemin          String?
+    imageCouvertureChemin String?
 
     // Informations légales (obligatoires)
     raisonSociale String // Raison sociale *
@@ -242,10 +243,11 @@ enum RoleEtablissement {
 // ============================================================================
 
 model ProfilRenford {
-    id            String      @id @default(uuid())
-    utilisateurId String      @unique
-    utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
-    avatarChemin  String?
+    id                    String      @id @default(uuid())
+    utilisateurId         String      @unique
+    utilisateur           Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+    avatarChemin          String?
+    imageCouvertureChemin String?
 
     // Profil public (étape 4)
     titreProfil       String?
@@ -290,7 +292,6 @@ model ProfilRenford {
 
     // Tarification (étape 5)
     tarifHoraire       Decimal? @db.Decimal(8, 2)
-    tjm               Decimal? @db.Decimal(8, 2)
     proposeJournee     Boolean  @default(false)
     tarifJournee       Decimal? @db.Decimal(8, 2)
     proposeDemiJournee Boolean  @default(false)
@@ -322,7 +323,7 @@ model ProfilRenford {
     dateMiseAJour DateTime @updatedAt
 
     // Relations
-    renfordDiplomes            RenfordDiplome[]
+    renfordDiplomes             RenfordDiplome[]
     experiencesProfessionnelles ExperienceProfessionnelleRenford[]
 
     @@index([statutCertification])
@@ -491,7 +492,6 @@ model RenfordDiplome {
     // Type: BPJEPS, DEJEPS, DESJEPS, Licence STAPS, Master STAPS, CQP, BEES, etc.
     typeDiplome               Diplome
     justificatifDiplomeChemin String?
-    nomDiplome                String
     mention                   String?
     anneeObtention            Int?
     etablissementFormation    String?

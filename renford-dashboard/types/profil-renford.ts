@@ -23,6 +23,7 @@ export type ProfilRenford = {
   id: string;
   utilisateurId: string;
   avatarChemin: string | null;
+  imageCouvertureChemin: string | null;
   // Profil public (étape 4)
   titreProfil: string | null;
   aPropos: string | null;
@@ -56,7 +57,6 @@ export type ProfilRenford = {
   niveauExperience: NiveauExperience | null;
   // Tarification (étape 5)
   tarifHoraire: number | null;
-  tjm: number | null;
   proposeJournee: boolean;
   tarifJournee: number | null;
   proposeDemiJournee: boolean;
@@ -119,7 +119,6 @@ export type RenfordDiplome = {
   profilRenfordId: string;
   typeDiplome: DiplomeKey;
   justificatifDiplomeChemin: string | null;
-  nomDiplome: string;
   mention: string | null;
   anneeObtention: number | null;
   etablissementFormation: string | null;
