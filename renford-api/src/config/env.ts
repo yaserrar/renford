@@ -18,6 +18,7 @@ const EnvSchema = z.object({
   EMAIL_HOST_USER: z.string({ required_error: 'EMAIL_HOST_USER is required' }),
   EMAIL_HOST_PASSWORD: z.string().optional(),
   RESEND_API_KEY: z.string({ required_error: 'RESEND_API_KEY is required' }),
+  PLATFORM_URL: z.string().url().default('https://renford.store'),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

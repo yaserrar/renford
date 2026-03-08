@@ -1,6 +1,12 @@
 import type { NextFunction, Request, Response } from 'express';
 import prisma from '../../config/prisma';
 import { mail } from '../../config/mail';
+import { env } from '../../config/env';
+import {
+  getFavoriInvitationEmail,
+  getWelcomeEtablissementEmail,
+  getWelcomeRenfordEmail,
+} from '../../config/email-templates';
 import { logger } from '../../config/logger';
 import type {
   UpdateContactSchema,
@@ -272,30 +278,22 @@ export const updateFavoris = async (
     }
 
     const etablissementId = profilEtablissement.etablissements[0]?.id ?? profilEtablissement.id;
-    const invitationLink = `https://renford.fr/inscription?referred_by=${encodeURIComponent(etablissementId)}`;
+    const invitationLink = `${env.PLATFORM_URL}/inscription?referred_by=${encodeURIComponent(etablissementId)}`;
 
     const sendResults = await Promise.allSettled(
       favoris.map((favori) => {
         const destinataire = favori.email;
         const nomFavori = favori.nomComplet?.trim();
-
-        const html = `
-          <p>Bonjour${nomFavori ? ` ${nomFavori}` : ''},</p>
-          <p>
-            Vous avez été invité${nomFavori ? '' : '(e)'} à rejoindre Renford par un établissement partenaire.
-          </p>
-          <p>
-            Créez votre compte en cliquant ici :
-            <a href="${invitationLink}">Rejoindre Renford</a>
-          </p>
-          <p>À très bientôt,<br />L'équipe Renford</p>
-        `;
+        const invitationEmail = getFavoriInvitationEmail({
+          nomFavori,
+          invitationUrl: invitationLink,
+        });
 
         return mail.sendMail({
-          from: process.env.EMAIL_HOST_USER,
           to: destinataire,
-          subject: 'Invitation à rejoindre Renford',
-          html,
+          subject: invitationEmail.subject,
+          html: invitationEmail.html,
+          text: invitationEmail.text,
         });
       }),
     );
@@ -453,39 +451,18 @@ export const completeOnboarding = async (req: Request, res: Response, next: Next
       const prenomNom = `${utilisateurInfos.prenom ?? ''} ${utilisateurInfos.nom ?? ''}`.trim();
       const raisonSociale =
         utilisateurInfos.profilEtablissement?.raisonSociale ?? 'votre établissement';
-
-      const welcomeHtml = `
-        <p>Bonjour ${prenomNom},</p>
-        <p>
-          Nous sommes ravis de vous accueillir au sein de Renford, votre nouvel allié dans la recherche de talents exceptionnels pour des missions à la demande.
-        </p>
-        <p>Pour tirer le meilleur parti de notre plateforme :</p>
-        <p>
-          1. Mettez à jour votre profil - Assurez-vous que vos informations sont à jour pour attirer les meilleurs Renfords ;<br />
-          2. Planifiez votre prochaine mission - Envoyez-nous votre première demande de mission ;<br />
-          3. Parcourez le blog Renford pour vous tenir au courant des dernières actualités sportives.
-        </p>
-        <p>
-          Votre réussite est notre priorité. Pour toute question ou besoin d'assistance, n'hésitez pas à contacter notre support dédié.
-        </p>
-        <p>
-          Prêt à débuter ? Connectez-vous et lancez votre première mission <a href="https://renford.fr">ici</a>.
-        </p>
-        <p>
-          Au plaisir de contribuer au succès de ${raisonSociale}
-        </p>
-        <p>
-          À très bientôt sur la plateforme,<br />
-          L'équipe Renford
-        </p>
-      `;
+      const welcomeEmail = getWelcomeEtablissementEmail({
+        prenomNom,
+        raisonSociale,
+        dashboardUrl: `${env.PLATFORM_URL}/dashboard/etablissement/accueil`,
+      });
 
       try {
         await mail.sendMail({
-          from: process.env.EMAIL_HOST_USER,
           to: utilisateurInfos.email,
-          subject: 'Bienvenue sur Renford',
-          html: welcomeHtml,
+          subject: welcomeEmail.subject,
+          html: welcomeEmail.html,
+          text: welcomeEmail.text,
         });
       } catch (emailError) {
         logger.error({ err: emailError, userId }, "Échec d'envoi de l'email de bienvenue");
@@ -817,33 +794,17 @@ export const completeRenfordOnboarding = async (
 
     if (utilisateurInfos?.email) {
       const prenom = utilisateurInfos.prenom?.trim() || '';
-
-      const welcomeHtml = `
-        <p>Bonjour ${prenom},</p>
-        <p>
-          Félicitations et bienvenue chez Renford ! Tu fais désormais partie d'une communauté qui révolutionne la façon de se connecter dans le sport.
-        </p>
-        <p>Voici trois étapes pour démarrer ton expérience :</p>
-        <p>
-          1. Renseigne tes disponibilités pour recevoir tes premières demandes de missions ;<br />
-          2. Personnalise ton profil pour mettre en avant tes compétences uniques ;<br />
-          3. Rejoins une communauté soudée en parcourant le Blog Renford.
-        </p>
-        <p>
-          Prêt à de nouvelles aventures entrepreneuriales avec Renford ? Connecte-toi <a href="https://renford.fr">ici</a>.
-        </p>
-        <p>
-          À très bientôt sur la plateforme,<br />
-          L'équipe Renford
-        </p>
-      `;
+      const welcomeEmail = getWelcomeRenfordEmail({
+        prenom,
+        dashboardUrl: `${env.PLATFORM_URL}/dashboard/renford/accueil`,
+      });
 
       try {
         await mail.sendMail({
-          from: process.env.EMAIL_HOST_USER,
           to: utilisateurInfos.email,
-          subject: 'Félicitations et bienvenue chez Renford',
-          html: welcomeHtml,
+          subject: welcomeEmail.subject,
+          html: welcomeEmail.html,
+          text: welcomeEmail.text,
         });
       } catch (emailError) {
         logger.error({ err: emailError, userId }, "Échec d'envoi de l'email de bienvenue Renford");

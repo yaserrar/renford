@@ -419,7 +419,7 @@ export default function Etape5RenfordPage() {
               />
               <Label
                 htmlFor="proposeJournee"
-                className="cursor-pointer font-normal"
+                className="cursor-pointer font-normal mb-0"
               >
                 Je propose des prestations facturées à la journée
               </Label>
@@ -477,7 +477,7 @@ export default function Etape5RenfordPage() {
               />
               <Label
                 htmlFor="proposeDemiJournee"
-                className="cursor-pointer font-normal"
+                className="cursor-pointer font-normal mb-0"
               >
                 Je propose des prestations facturées à demi-journée
               </Label>

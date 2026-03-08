@@ -122,7 +122,7 @@ export default function InformationsTabContent({
                     />
                   )}
                 />
-                <Label htmlFor="siretEnCoursObtention" className="font-normal">
+                <Label htmlFor="siretEnCoursObtention" className="mb-0">
                   Numéro SIRET en cours d&apos;obtention
                 </Label>
               </div>
@@ -141,10 +141,7 @@ export default function InformationsTabContent({
                     />
                   )}
                 />
-                <Label
-                  htmlFor="attestationAutoEntrepreneur"
-                  className="font-normal"
-                >
+                <Label htmlFor="attestationAutoEntrepreneur" className="mb-0">
                   J&apos;atteste être auto-entrepreneur/ EI/ EIRL/ SASU/ EURL
                 </Label>
               </div>

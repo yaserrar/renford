@@ -72,7 +72,8 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
               alt="Couverture profil"
               className="object-cover w-full"
               height={300}
-              width={1000}
+              width={1300}
+              quality={100}
             />
           ) : null}
 
