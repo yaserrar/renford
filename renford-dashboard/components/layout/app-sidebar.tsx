@@ -29,7 +29,7 @@ import { useCurrentUser } from "@/hooks/utilisateur";
 import { Logo } from "../common/logo";
 
 const RENFORD_MAIN_LINKS = [
-  { title: "Accueil", url: "#", icon: Home },
+  { title: "Accueil", url: "/dashboard/renford/accueil", icon: Home },
   { title: "Missions", url: "#", icon: Handshake },
   { title: "Planning", url: "#", icon: CalendarDays },
   {

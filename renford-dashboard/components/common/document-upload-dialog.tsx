@@ -153,7 +153,7 @@ const DocumentUploadDialog = ({
                   <ErrorMessage>{errors.file?.message}</ErrorMessage>
                 </div>
               ) : (
-                <div className="bg-gray-50 border border-gray-600 rounded-xl p-4">
+                <div className="bg-gray-50 border border-gray-300 rounded-xl p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                       <FileText className="text-primary" size={20} />
