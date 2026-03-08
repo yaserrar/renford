@@ -45,7 +45,7 @@ export default function Etape6RenfordPage() {
   const carteIdentite = watch("carteIdentiteChemin");
   const carteIdentiteFileName = useMemo(
     () => (carteIdentite ? carteIdentite.split("/").pop() : null),
-    [carteIdentite],
+    [carteIdentite]
   );
 
   const handleDocumentUploaded = useCallback(
@@ -56,7 +56,7 @@ export default function Etape6RenfordPage() {
         shouldValidate: true,
       });
     },
-    [setValue],
+    [setValue]
   );
 
   const removeFile = useCallback(() => {
@@ -115,7 +115,7 @@ export default function Etape6RenfordPage() {
 
             {Boolean(carteIdentite) ? (
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <FileText className="h-8 w-8 text-gray-400" />
+                <FileText className="h-6 w-6 text-gray-400" />
                 <div className="flex-1">
                   <p className="text-sm font-medium">Document téléchargé</p>
                   <p className="text-xs text-gray-500">

@@ -251,7 +251,7 @@ export default function Etape5RenfordPage() {
 
                     {chemin ? (
                       <div className="flex items-center gap-3">
-                        <FileText className="h-8 w-8 text-gray-400 shrink-0" />
+                        <FileText className="h-6 w-6 text-gray-400 shrink-0" />
                         <div className="flex-auto">
                           <p className="text-sm font-medium">
                             Document téléchargé
@@ -323,7 +323,7 @@ export default function Etape5RenfordPage() {
           <Label>Justificatif carte professionnelle *</Label>
           {Boolean(justificatifCartePro) ? (
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <FileText className="h-8 w-8 text-gray-400" />
+              <FileText className="h-6 w-6 text-gray-400" />
               <div className="flex-1">
                 <p className="text-sm font-medium">Document téléchargé</p>
                 <p className="text-xs text-gray-500">

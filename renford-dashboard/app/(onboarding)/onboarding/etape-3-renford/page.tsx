@@ -263,7 +263,7 @@ export default function Etape3RenfordPage() {
 
           {Boolean(attestationVigilance) ? (
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <FileText className="h-8 w-8 text-gray-400" />
+              <FileText className="h-6 w-6 text-gray-400" />
               <div className="flex-1">
                 <p className="text-sm font-medium">Document téléchargé</p>
                 <p className="text-xs text-gray-500">
@@ -280,34 +280,20 @@ export default function Etape3RenfordPage() {
               </Button>
             </div>
           ) : (
-            <div
-              className="w-full p-6 flex flex-col justify-center items-center gap-2 border-2 border-dashed bg-gray-50 rounded-xl"
-              onClick={() => setDocumentDialogOpen(true)}
-            >
-              <p className="text-sm text-gray-500 text-center">
-                Ton attestation de vigilance URSSAF pour anticiper tes missions
-                supérieures à 5000 euros (obligatoire)
-              </p>
-              <Button variant="outline" type="button">
-                Télécharger un document
-              </Button>
-            </div>
-          )}
-
-          <ErrorMessage>
-            {errors.attestationVigilanceChemin?.message}
-          </ErrorMessage>
-          <div className="mt-4">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
+                <div
+                  className="w-full p-6 flex flex-col justify-center items-center gap-2 border-2 border-dashed bg-gray-50 rounded-xl"
+                  onClick={() => setDocumentDialogOpen(true)}
                 >
-                  Pourquoi c&apos;est requis ?
-                </Button>
+                  <p className="text-sm text-gray-500 text-center">
+                    Ton attestation de vigilance URSSAF pour anticiper tes
+                    missions supérieures à 5000 euros (obligatoire)
+                  </p>
+                  <Button variant="outline" type="button">
+                    Télécharger un document
+                  </Button>
+                </div>
               </TooltipTrigger>
               <TooltipContent className="max-w-sm text-left leading-relaxed">
                 L&apos;attestation de vigilance est une obligation légale avant
@@ -319,7 +305,11 @@ export default function Etape3RenfordPage() {
                 urssaf.fr.
               </TooltipContent>
             </Tooltip>
-          </div>
+          )}
+
+          <ErrorMessage>
+            {errors.attestationVigilanceChemin?.message}
+          </ErrorMessage>
         </div>
 
         <div className="flex flex-col md:flex-row md:justify-end gap-3">
