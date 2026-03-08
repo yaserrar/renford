@@ -164,25 +164,6 @@ export default function InformationsTabContent({
               <ErrorMessage>{errors.ville?.message}</ErrorMessage>
             </div>
 
-            <div className="md:col-span-2">
-              <Label>Type d&apos;établissement*</Label>
-              <Controller
-                name="typeEtablissement"
-                control={control}
-                render={({ field }) => (
-                  <Combobox
-                    value={field.value}
-                    onValueChange={(value) => field.onChange(value as string)}
-                    options={typeEtablissementOptions}
-                    placeholder="Sélectionner..."
-                    searchPlaceholder="Rechercher un type"
-                    emptyMessage="Aucun type trouvé"
-                  />
-                )}
-              />
-              <ErrorMessage>{errors.typeEtablissement?.message}</ErrorMessage>
-            </div>
-
             <button
               type="button"
               onClick={() => {
@@ -247,7 +228,9 @@ export default function InformationsTabContent({
                       className="read-only:bg-muted"
                       {...register("codePostalSiege")}
                     />
-                    <ErrorMessage>{errors.codePostalSiege?.message}</ErrorMessage>
+                    <ErrorMessage>
+                      {errors.codePostalSiege?.message}
+                    </ErrorMessage>
                   </div>
 
                   <div>
@@ -263,6 +246,25 @@ export default function InformationsTabContent({
                 </div>
               </div>
             )}
+
+            <div className="md:col-span-2">
+              <Label>Type d&apos;établissement*</Label>
+              <Controller
+                name="typeEtablissement"
+                control={control}
+                render={({ field }) => (
+                  <Combobox
+                    value={field.value}
+                    onValueChange={(value) => field.onChange(value as string)}
+                    options={typeEtablissementOptions}
+                    placeholder="Sélectionner..."
+                    searchPlaceholder="Rechercher un type"
+                    emptyMessage="Aucun type trouvé"
+                  />
+                )}
+              />
+              <ErrorMessage>{errors.typeEtablissement?.message}</ErrorMessage>
+            </div>
           </div>
         </div>
 
