@@ -59,11 +59,7 @@ export const updateEtablissementSchema = z
       .length(14, 'Le SIRET doit contenir 14 chiffres')
       .regex(/^\d{14}$/, 'Le SIRET ne doit contenir que des chiffres'),
     adresse: z.string().min(5, '5 caractères minimum').max(200, '200 caractères maximum'),
-    // change
-    codePostal: z
-      .string()
-      .length(5, 'Le code postal doit contenir 5 chiffres')
-      .regex(/^\d{5}$/, 'Le code postal ne doit contenir que des chiffres'),
+    codePostal: z.string().min(1, 'Le code postal est obligatoire'),
     ville: z.string().min(2, '2 caractères minimum').max(100, '100 caractères maximum'),
     latitude: z.number().min(-90, 'Latitude invalide').max(90, 'Latitude invalide'),
     longitude: z.number().min(-180, 'Longitude invalide').max(180, 'Longitude invalide'),
@@ -90,12 +86,12 @@ export const updateEtablissementSchema = z
   .refine(
     (data) => {
       if (data.adresseSiegeDifferente) {
-        return !!data.codePostalSiege && /^\d{5}$/.test(data.codePostalSiege);
+        return !!data.codePostalSiege && data.codePostalSiege.trim().length > 0;
       }
       return true;
     },
     {
-      message: 'Le code postal du siège est obligatoire (5 chiffres)',
+      message: 'Le code postal du siège est obligatoire',
       path: ['codePostalSiege'],
     },
   )
@@ -148,7 +144,7 @@ export const updateRenfordIdentiteSchema = z
     siretEnCoursObtention: z.boolean(),
     attestationAutoEntrepreneur: z.boolean(),
     adresse: z.string().min(5, '5 caractères minimum'),
-    codePostal: z.string().length(5, 'Le code postal doit contenir 5 chiffres'),
+    codePostal: z.string().min(1, 'Le code postal est obligatoire'),
     ville: z.string().min(2, '2 caractères minimum'),
     latitude: z.number().min(-90, 'Latitude invalide').max(90, 'Latitude invalide'),
     longitude: z.number().min(-180, 'Longitude invalide').max(180, 'Longitude invalide'),

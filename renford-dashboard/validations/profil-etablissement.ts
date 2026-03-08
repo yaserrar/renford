@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 // Types d'établissement (enum TypeEtablissement du Prisma schema)
 export const TYPE_ETABLISSEMENT = [
   "salle_sport_gymnase",
@@ -63,3 +65,114 @@ export const TYPE_ETABLISSEMENT_LABELS: Record<TypeEtablissement, string> = {
   academie_sportive: "Académie sportive",
   ecole_surf: "École de surf",
 };
+
+export const updateProfilEtablissementCouvertureSchema = z.object({
+  imageCouvertureChemin: z.string().nullable(),
+});
+
+export type UpdateProfilEtablissementCouvertureSchema = z.infer<
+  typeof updateProfilEtablissementCouvertureSchema
+>;
+
+export const updateProfilEtablissementAvatarSchema = z.object({
+  avatarChemin: z.string().nullable(),
+});
+
+export type UpdateProfilEtablissementAvatarSchema = z.infer<
+  typeof updateProfilEtablissementAvatarSchema
+>;
+
+export const updateProfilEtablissementInfosSchema = z.object({
+  raisonSociale: z
+    .string()
+    .min(2, "La raison sociale doit contenir au moins 2 caractères")
+    .max(100, "La raison sociale ne peut pas dépasser 100 caractères"),
+  typeEtablissement: z.enum(TYPE_ETABLISSEMENT, {
+    required_error: "Veuillez sélectionner un type d'établissement",
+  }),
+  aPropos: z
+    .string()
+    .max(2000, "Le texte à propos ne peut pas dépasser 2000 caractères")
+    .optional()
+    .nullable(),
+});
+
+export type UpdateProfilEtablissementInfosSchema = z.infer<
+  typeof updateProfilEtablissementInfosSchema
+>;
+
+export const updateProfilEtablissementIdentiteSchema = z
+  .object({
+    raisonSociale: z
+      .string()
+      .min(2, "La raison sociale doit contenir au moins 2 caractères")
+      .max(100, "La raison sociale ne peut pas dépasser 100 caractères"),
+    siret: z
+      .string()
+      .length(14, "Le numéro SIRET doit contenir exactement 14 chiffres")
+      .regex(/^\d{14}$/, "Le numéro SIRET ne doit contenir que des chiffres"),
+    adresse: z
+      .string()
+      .min(5, "L'adresse doit contenir au moins 5 caractères")
+      .max(200, "L'adresse ne peut pas dépasser 200 caractères"),
+    codePostal: z.string().min(1, "Le code postal est obligatoire"),
+    ville: z
+      .string()
+      .min(2, "La ville doit contenir au moins 2 caractères")
+      .max(100, "La ville ne peut pas dépasser 100 caractères"),
+    latitude: z
+      .number()
+      .min(-90, "Latitude invalide")
+      .max(90, "Latitude invalide"),
+    longitude: z
+      .number()
+      .min(-180, "Longitude invalide")
+      .max(180, "Longitude invalide"),
+    typeEtablissement: z.enum(TYPE_ETABLISSEMENT, {
+      required_error: "Veuillez sélectionner un type d'établissement",
+    }),
+    adresseSiegeDifferente: z.boolean(),
+    adresseSiege: z.string().optional(),
+    codePostalSiege: z.string().optional(),
+    villeSiege: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.adresseSiegeDifferente) {
+        return !!data.adresseSiege && data.adresseSiege.length >= 5;
+      }
+      return true;
+    },
+    {
+      message: "L'adresse du siège doit contenir au moins 5 caractères",
+      path: ["adresseSiege"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.adresseSiegeDifferente) {
+        return !!data.codePostalSiege && data.codePostalSiege.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Le code postal du siège est obligatoire",
+      path: ["codePostalSiege"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.adresseSiegeDifferente) {
+        return !!data.villeSiege && data.villeSiege.length >= 2;
+      }
+      return true;
+    },
+    {
+      message: "La ville du siège doit contenir au moins 2 caractères",
+      path: ["villeSiege"],
+    }
+  );
+
+export type UpdateProfilEtablissementIdentiteSchema = z.infer<
+  typeof updateProfilEtablissementIdentiteSchema
+>;

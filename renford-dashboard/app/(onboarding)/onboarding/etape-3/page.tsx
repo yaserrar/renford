@@ -161,7 +161,6 @@ export default function Etape3Page() {
             <Input
               id="codePostal"
               placeholder="75001"
-              maxLength={5}
               readOnly
               className="read-only:bg-muted"
               {...register("codePostal")}
@@ -194,10 +193,33 @@ export default function Etape3Page() {
           <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
             <div>
               <Label htmlFor="adresseSiege">Adresse du siège*</Label>
-              <Input
-                id="adresseSiege"
-                placeholder="Adresse du siège social"
-                {...register("adresseSiege")}
+              <Controller
+                name="adresseSiege"
+                control={control}
+                render={({ field }) => (
+                  <GoogleAddressAutocomplete
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    onSelectAddress={(selection) => {
+                      setValue("adresseSiege", selection.address, {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      });
+                      setValue("villeSiege", selection.ville, {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      });
+                      setValue("codePostalSiege", selection.codePostal, {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      });
+                    }}
+                    placeholder="Commencez à saisir l'adresse du siège"
+                  />
+                )}
               />
               <ErrorMessage>{errors.adresseSiege?.message}</ErrorMessage>
             </div>
@@ -207,7 +229,8 @@ export default function Etape3Page() {
                 <Input
                   id="codePostalSiege"
                   placeholder="75001"
-                  maxLength={5}
+                  readOnly
+                  className="read-only:bg-muted"
                   {...register("codePostalSiege")}
                 />
                 <ErrorMessage>{errors.codePostalSiege?.message}</ErrorMessage>
@@ -217,6 +240,8 @@ export default function Etape3Page() {
                 <Input
                   id="villeSiege"
                   placeholder="Paris"
+                  readOnly
+                  className="read-only:bg-muted"
                   {...register("villeSiege")}
                 />
                 <ErrorMessage>{errors.villeSiege?.message}</ErrorMessage>

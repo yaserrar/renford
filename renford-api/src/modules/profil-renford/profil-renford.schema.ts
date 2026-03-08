@@ -201,10 +201,7 @@ export const updateIdentiteProfilSchema = z
       .string()
       .min(5, "L'adresse doit contenir au moins 5 caractères")
       .max(200, "L'adresse ne peut pas dépasser 200 caractères"),
-    codePostal: z
-      .string()
-      .length(5, 'Le code postal doit contenir exactement 5 chiffres')
-      .regex(/^\d{5}$/, 'Le code postal ne doit contenir que des chiffres'),
+    codePostal: z.string().min(1, 'Le code postal est obligatoire'),
     ville: z
       .string()
       .min(2, 'La ville doit contenir au moins 2 caractères')

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { getUrl } from "@/lib/utils";
+import { formatAmount, getUrl } from "@/lib/utils";
 import { CurrentUser } from "@/types/utilisateur";
 import { NIVEAU_EXPERIENCE_LABELS } from "@/validations/profil-renford";
 import { ExternalLink, FileText, Pencil } from "lucide-react";
@@ -10,11 +10,6 @@ import QualificationEditDialog from "./qualification-edit-dialog";
 
 type QualificationSectionProps = {
   me: CurrentUser | undefined;
-};
-
-const formatTarif = (value: number | null | undefined, suffix = "€") => {
-  if (value === null || value === undefined) return "-";
-  return `${value}${suffix}`;
 };
 
 export default function QualificationSection({
@@ -83,14 +78,14 @@ export default function QualificationSection({
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Tarif horaire</span>
             <span className="font-medium">
-              {formatTarif(profil?.tarifHoraire)}
+              {formatAmount(profil?.tarifHoraire)}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Tarif journée</span>
             <span className="font-medium">
               {profil?.proposeJournee
-                ? formatTarif(profil?.tarifJournee)
+                ? formatAmount(profil?.tarifJournee)
                 : "Non proposé"}
             </span>
           </div>
@@ -98,7 +93,7 @@ export default function QualificationSection({
             <span className="text-muted-foreground">Tarif demi-journée</span>
             <span className="font-medium">
               {profil?.proposeDemiJournee
-                ? formatTarif(profil?.tarifDemiJournee)
+                ? formatAmount(profil?.tarifDemiJournee)
                 : "Non proposé"}
             </span>
           </div>

@@ -18,16 +18,6 @@ type ProfilHeroSectionProps = {
   me: CurrentUser | undefined;
 };
 
-const getInitials = (name?: string | null) => {
-  if (!name) return "-";
-  const parts = name.trim().split(" ").filter(Boolean);
-  if (!parts.length) return "-";
-  return parts
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-};
-
 export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
   const profil = me?.profilRenford;
   const fullName = [me?.prenom, me?.nom].filter(Boolean).join(" ") || "-";
@@ -73,7 +63,7 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
         me={me}
       />
 
-      <div className="bg-white rounded-4xl border border-input overflow-hidden">
+      <div className="bg-white rounded-3xl border border-input overflow-hidden">
         <div className="relative h-72 w-full bg-gray-100 overflow-hidden">
           {profil?.imageCouvertureChemin ? (
             <Image
@@ -110,7 +100,7 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
                   }
                   alt={fullName}
                 />
-                <AvatarFallback>{getInitials(fullName)}</AvatarFallback>
+                <AvatarFallback></AvatarFallback>
               </Avatar>
 
               <Button

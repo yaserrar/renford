@@ -44,7 +44,20 @@ export const getUrl = (path: string | undefined | null) => {
 
 export const numberRegex = /^-?\d*\.?\d*$/;
 
-export const formatAmount = (amountCentimes: number | undefined | null) => {
-  if (amountCentimes === undefined || amountCentimes === null) return "-";
-  return `${(amountCentimes / 100).toFixed(2)} €`;
+export const formatAmount = (
+  value: number | null | undefined,
+  suffix = "€"
+) => {
+  if (value === null || value === undefined) return "-";
+  return `${value}${suffix}`;
+};
+
+export const getInitials = (name?: string | null) => {
+  if (!name) return "-";
+  const parts = name.trim().split(" ").filter(Boolean);
+  if (!parts.length) return "-";
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 };

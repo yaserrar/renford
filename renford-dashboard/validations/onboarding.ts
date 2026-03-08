@@ -49,10 +49,7 @@ export const onboardingEtablissementSchema = z
       .string()
       .min(5, "L'adresse doit contenir au moins 5 caractères")
       .max(200, "L'adresse ne peut pas dépasser 200 caractères"),
-    codePostal: z
-      .string()
-      .length(5, "Le code postal doit contenir exactement 5 chiffres")
-      .regex(/^\d{5}$/, "Le code postal ne doit contenir que des chiffres"),
+    codePostal: z.string().min(1, "Le code postal est obligatoire"),
     ville: z
       .string()
       .min(2, "La ville doit contenir au moins 2 caractères")
@@ -89,12 +86,12 @@ export const onboardingEtablissementSchema = z
   .refine(
     (data) => {
       if (data.adresseSiegeDifferente) {
-        return !!data.codePostalSiege && /^\d{5}$/.test(data.codePostalSiege);
+        return !!data.codePostalSiege && data.codePostalSiege.trim().length > 0;
       }
       return true;
     },
     {
-      message: "Le code postal du siège doit contenir exactement 5 chiffres",
+      message: "Le code postal du siège est obligatoire",
       path: ["codePostalSiege"],
     }
   )
@@ -152,10 +149,7 @@ export const onboardingRenfordIdentiteSchema = z
       .string()
       .min(5, "L'adresse doit contenir au moins 5 caractères")
       .max(200, "L'adresse ne peut pas dépasser 200 caractères"),
-    codePostal: z
-      .string()
-      .length(5, "Le code postal doit contenir exactement 5 chiffres")
-      .regex(/^\d{5}$/, "Le code postal ne doit contenir que des chiffres"),
+    codePostal: z.string().min(1, "Le code postal est obligatoire"),
     ville: z
       .string()
       .min(2, "La ville doit contenir au moins 2 caractères")

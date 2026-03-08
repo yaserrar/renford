@@ -221,7 +221,6 @@ export default function Etape3RenfordPage() {
             <Input
               id="codePostal"
               placeholder="75001"
-              maxLength={5}
               readOnly
               className="read-only:bg-muted"
               {...register("codePostal")}

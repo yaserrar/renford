@@ -43,7 +43,7 @@ export default function RootLayout({ children }: Props) {
               <SidebarProvider>
                 <AppSidebar />
                 <SidebarInset>
-                  <main className="h-full bg-white">{children}</main>
+                  <main className="h-full bg-white px-2">{children}</main>
                 </SidebarInset>
               </SidebarProvider>
             </CurrentUserProvider>

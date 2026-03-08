@@ -215,7 +215,6 @@ export default function InformationsTabContent({
                 <Label htmlFor="codePostal">Code postal*</Label>
                 <Input
                   id="codePostal"
-                  maxLength={5}
                   readOnly
                   className="read-only:bg-muted"
                   {...register("codePostal")}

@@ -4,7 +4,6 @@ import Loading from "@/components/common/loading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrentUser } from "@/hooks/utilisateur";
 import InformationsTabContent from "./informations-tab-content";
-import PasswordTabContent from "./password-tab-content";
 import ProfilTabContent from "./profil-tab-content";
 import SitesTabContent from "./sites-tab-content";
 
@@ -17,12 +16,9 @@ export default function ProfileEtablissementPage() {
 
   const profil = me?.profilEtablissement ?? null;
   const etablissements = profil?.etablissements ?? [];
-  const etablissementPrincipal =
-    etablissements.find((site) => site.roleEtablissement === "principal") ??
-    etablissements[0];
 
   return (
-    <main className="container mx-auto mt-8 space-y-4">
+    <main className="mt-8 space-y-4">
       <h1 className="text-3xl font-semibold">Mon compte</h1>
 
       <Tabs defaultValue="profil" className="w-full">
@@ -32,25 +28,23 @@ export default function ProfileEtablissementPage() {
           {/* <TabsTrigger value="password">Modifier mot de passe</TabsTrigger> */}
           <TabsTrigger value="sites">Gestion des sites</TabsTrigger>
         </TabsList>
+        <div className="bg-secondary-background rounded-3xl border m-1 p-6 h-full">
+          <TabsContent value="profil">
+            <ProfilTabContent me={me} />
+          </TabsContent>
 
-        <TabsContent value="profil">
-          <ProfilTabContent profil={profil} />
-        </TabsContent>
+          <TabsContent value="infos">
+            <InformationsTabContent me={me} />
+          </TabsContent>
 
-        <TabsContent value="infos">
-          <InformationsTabContent
-            profil={profil}
-            etablissementPrincipal={etablissementPrincipal}
-          />
-        </TabsContent>
-
-        {/* <TabsContent value="password">
+          {/* <TabsContent value="password">
           <PasswordTabContent />
         </TabsContent> */}
 
-        <TabsContent value="sites">
-          <SitesTabContent etablissements={etablissements} />
-        </TabsContent>
+          <TabsContent value="sites">
+            <SitesTabContent etablissements={etablissements} />
+          </TabsContent>
+        </div>
       </Tabs>
     </main>
   );

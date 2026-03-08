@@ -6,6 +6,7 @@ import userRouter from '../modules/utilisateur/utilisateur.route';
 import onboardingRouter from '../modules/onboarding/onboarding.route';
 import devRouter from '../modules/dev/dev.route';
 import profilRenfordRouter from '../modules/profil-renford/profil-renford.route';
+import profilEtablissementRouter from '../modules/profil-etablissement/profil-etablissement.route';
 
 const router = Router();
 
@@ -17,6 +18,7 @@ router.use('/upload', uploadsRouter);
 router.use('/onboarding', onboardingRouter);
 router.use('/dev', devRouter);
 router.use('/profil-renford', profilRenfordRouter);
+router.use('/profil-etablissement', profilEtablissementRouter);
 //----------------------------------------------------------
 
 export default router;
