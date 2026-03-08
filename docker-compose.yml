@@ -30,7 +30,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=network
-      - traefik.http.routers.renford-nginx.rule=Host(`api.renford.online`)
+      - traefik.http.routers.renford-nginx.rule=Host(`api.renford.store `)
       - traefik.http.routers.renford-nginx.entrypoints=websecure
       - traefik.http.routers.renford-nginx.tls.certresolver=letsencryptresolver
       - traefik.http.services.renford-nginx.loadbalancer.server.port=80
@@ -48,7 +48,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=network
-      - traefik.http.routers.renford-prisma.rule=Host(`prisma.renford.online`)
+      - traefik.http.routers.renford-prisma.rule=Host(`prisma.renford.store `)
       - traefik.http.routers.renford-prisma.entrypoints=websecure
       - traefik.http.routers.renford-prisma.tls.certresolver=letsencryptresolver
       - traefik.http.services.renford-prisma.loadbalancer.server.port=5000
@@ -66,7 +66,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=network
-      - traefik.http.routers.renford-dashboard.rule=Host(`renford.online`)
+      - traefik.http.routers.renford-dashboard.rule=Host(`renford.store `)
       - traefik.http.routers.renford-dashboard.entrypoints=websecure
       - traefik.http.routers.renford-dashboard.tls.certresolver=letsencryptresolver
       - traefik.http.services.renford-dashboard.loadbalancer.server.port=80
