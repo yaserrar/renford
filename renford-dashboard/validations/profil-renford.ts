@@ -18,17 +18,6 @@ export const NIVEAU_EXPERIENCE_LABELS: Record<
   expert: "Expert (plus de 10 ans)",
 };
 
-// Jours de la semaine
-export const JOUR_SEMAINE = [
-  "lundi",
-  "mardi",
-  "mercredi",
-  "jeudi",
-  "vendredi",
-  "samedi",
-  "dimanche",
-] as const;
-
 // Labels pour les jours
 export const JOUR_SEMAINE_LABELS: Record<
   (typeof JOUR_SEMAINE)[number],

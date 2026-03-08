@@ -1,0 +1,15 @@
+ALTER TABLE "profils_etablissement"
+ADD COLUMN "latitude" DOUBLE PRECISION,
+ADD COLUMN "longitude" DOUBLE PRECISION;
+
+ALTER TABLE "etablissements"
+ADD COLUMN "latitude" DOUBLE PRECISION,
+ADD COLUMN "longitude" DOUBLE PRECISION;
+
+ALTER TABLE "profils_renford"
+ADD COLUMN "latitude" DOUBLE PRECISION,
+ADD COLUMN "longitude" DOUBLE PRECISION;
+
+ALTER TABLE "informations_bancaires"
+ADD COLUMN "latitude" DOUBLE PRECISION,
+ADD COLUMN "longitude" DOUBLE PRECISION;

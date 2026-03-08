@@ -14,9 +14,6 @@ export type StatutCertification = (typeof STATUT_CERTIFICATION)[number];
 // Niveau d'expérience
 export type NiveauExperience = (typeof NIVEAU_EXPERIENCE)[number];
 
-// Jour de la semaine
-export type JourSemaine = (typeof JOUR_SEMAINE)[number];
-
 // Type de poste
 export type TypePoste = (typeof TYPE_POSTE)[number];
 export type DiplomeKey = (typeof DIPLOME_KEYS)[number];
@@ -43,6 +40,8 @@ export type ProfilRenford = {
   codePostal: string | null;
   ville: string | null;
   pays: string | null;
+  latitude: number | null;
+  longitude: number | null;
   zoneDeplacement: number | null;
   // Certification
   statutCertification: StatutCertification;

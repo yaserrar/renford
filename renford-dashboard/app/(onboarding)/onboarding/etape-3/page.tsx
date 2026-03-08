@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
+import GoogleAddressAutocomplete from "@/components/common/google-address-autocomplete";
 import ErrorMessage from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +42,8 @@ export default function Etape3Page() {
       adresse: user?.profilEtablissement?.adresse || "",
       codePostal: user?.profilEtablissement?.codePostal || "",
       ville: user?.profilEtablissement?.ville || "",
+      latitude: user?.profilEtablissement?.latitude ?? undefined,
+      longitude: user?.profilEtablissement?.longitude ?? undefined,
       typeEtablissement:
         user?.profilEtablissement?.typeEtablissement || undefined,
       adresseSiegeDifferente:
@@ -102,12 +105,52 @@ export default function Etape3Page() {
 
         <div>
           <Label htmlFor="adresse">Adresse de l&apos;établissement*</Label>
-          <Input
-            id="adresse"
-            placeholder="123 rue de la Paix"
-            {...register("adresse")}
+          <Controller
+            name="adresse"
+            control={control}
+            render={({ field }) => (
+              <GoogleAddressAutocomplete
+                value={field.value || ""}
+                onChange={field.onChange}
+                onSelectAddress={(selection) => {
+                  setValue("adresse", selection.address, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                    shouldValidate: true,
+                  });
+                  setValue("ville", selection.ville, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                    shouldValidate: true,
+                  });
+                  setValue("codePostal", selection.codePostal, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                    shouldValidate: true,
+                  });
+                  if (selection.latitude !== null) {
+                    setValue("latitude", selection.latitude, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                      shouldValidate: true,
+                    });
+                  }
+                  if (selection.longitude !== null) {
+                    setValue("longitude", selection.longitude, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                      shouldValidate: true,
+                    });
+                  }
+                }}
+                placeholder="Commencez à saisir une adresse"
+              />
+            )}
           />
           <ErrorMessage>{errors.adresse?.message}</ErrorMessage>
+          <ErrorMessage>
+            {errors.latitude?.message || errors.longitude?.message}
+          </ErrorMessage>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -117,13 +160,21 @@ export default function Etape3Page() {
               id="codePostal"
               placeholder="75001"
               maxLength={5}
+              readOnly
+              className="read-only:bg-muted"
               {...register("codePostal")}
             />
             <ErrorMessage>{errors.codePostal?.message}</ErrorMessage>
           </div>
           <div>
             <Label htmlFor="ville">Ville*</Label>
-            <Input id="ville" placeholder="Paris" {...register("ville")} />
+            <Input
+              id="ville"
+              placeholder="Paris"
+              readOnly
+              className="read-only:bg-muted"
+              {...register("ville")}
+            />
             <ErrorMessage>{errors.ville?.message}</ErrorMessage>
           </div>
         </div>

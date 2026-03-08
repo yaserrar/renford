@@ -61,11 +61,15 @@ export const useSignup = () => {
 
 export const useSendCode = () => {
   return useMutation({
-    mutationFn: (data: EmailSchema) => {
-      return axios.post(`${API_BASE_URL}/password-reset/send-code`, data);
+    mutationFn: async (data: EmailSchema) => {
+      return (
+        await axios.post(`${API_BASE_URL}/password-reset/send-code`, data)
+      ).data as { message: string };
     },
-    onSuccess: async () => {
-      toast.success("Code envoyé");
+    onSuccess: async (data) => {
+      toast.success(
+        data.message || "Code de réinitialisation envoyé par email"
+      );
     },
     onError: async (error: any) => {
       const message = getErrorMessage(error?.response?.data?.message);

@@ -16,6 +16,8 @@ export type ProfilEtablissement = {
   adresse: string;
   codePostal: string;
   ville: string;
+  latitude: number | null;
+  longitude: number | null;
   typeEtablissement: TypeEtablissement | null;
   adresseSiegeDifferente: boolean;
   adresseSiege: string | null;
@@ -39,6 +41,8 @@ export type Etablissement = {
   codePostal: string;
   ville: string;
   pays: string;
+  latitude: number | null;
+  longitude: number | null;
   emailPrincipal: string | null;
   telephonePrincipal: string | null;
   nomContactPrincipal: string | null;

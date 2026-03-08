@@ -57,6 +57,14 @@ export const onboardingEtablissementSchema = z
       .string()
       .min(2, "La ville doit contenir au moins 2 caractères")
       .max(100, "La ville ne peut pas dépasser 100 caractères"),
+    latitude: z
+      .number()
+      .min(-90, "Latitude invalide")
+      .max(90, "Latitude invalide"),
+    longitude: z
+      .number()
+      .min(-180, "Longitude invalide")
+      .max(180, "Longitude invalide"),
     typeEtablissement: z.enum(TYPE_ETABLISSEMENT, {
       required_error: "Veuillez sélectionner un type d'établissement",
     }),
@@ -76,7 +84,7 @@ export const onboardingEtablissementSchema = z
     {
       message: "L'adresse du siège doit contenir au moins 5 caractères",
       path: ["adresseSiege"],
-    },
+    }
   )
   .refine(
     (data) => {
@@ -88,7 +96,7 @@ export const onboardingEtablissementSchema = z
     {
       message: "Le code postal du siège doit contenir exactement 5 chiffres",
       path: ["codePostalSiege"],
-    },
+    }
   )
   .refine(
     (data) => {
@@ -100,7 +108,7 @@ export const onboardingEtablissementSchema = z
     {
       message: "La ville du siège doit contenir au moins 2 caractères",
       path: ["villeSiege"],
-    },
+    }
   );
 
 export type OnboardingEtablissementSchema = z.infer<
@@ -152,6 +160,14 @@ export const onboardingRenfordIdentiteSchema = z
       .string()
       .min(2, "La ville doit contenir au moins 2 caractères")
       .max(100, "La ville ne peut pas dépasser 100 caractères"),
+    latitude: z
+      .number()
+      .min(-90, "Latitude invalide")
+      .max(90, "Latitude invalide"),
+    longitude: z
+      .number()
+      .min(-180, "Longitude invalide")
+      .max(180, "Longitude invalide"),
     pays: z.string().min(2, "Le pays est obligatoire"),
     dateNaissance: z.date({
       required_error: "La date de naissance est obligatoire",
@@ -215,7 +231,7 @@ const tarifHoraireSchema = z.preprocess(
       invalid_type_error: "Le tarif horaire doit être un nombre valide",
     })
     .min(10, "Le tarif horaire minimum est de 10€")
-    .max(500, "Le tarif horaire maximum est de 500€"),
+    .max(500, "Le tarif horaire maximum est de 500€")
 );
 
 const tarifJourneeSchema = z.preprocess(
@@ -226,7 +242,7 @@ const tarifJourneeSchema = z.preprocess(
     })
     .min(100, "Le tarif journée minimum est de 100€")
     .max(5000, "Le tarif journée maximum est de 5000€")
-    .optional(),
+    .optional()
 );
 
 const tarifDemiJourneeSchema = z.preprocess(
@@ -237,7 +253,7 @@ const tarifDemiJourneeSchema = z.preprocess(
     })
     .min(50, "Le tarif demi-journée minimum est de 50€")
     .max(2000, "Le tarif demi-journée maximum est de 2000€")
-    .optional(),
+    .optional()
 );
 
 // Étape 5 Renford: Qualifications et expériences
@@ -253,7 +269,7 @@ export const onboardingRenfordQualificationsSchema = z
       })
       .min(1, "Veuillez sélectionner au moins un diplôme"),
     justificatifDiplomeChemins: z.array(
-      z.string().min(1, "Le justificatif diplôme est obligatoire"),
+      z.string().min(1, "Le justificatif diplôme est obligatoire")
     ),
     justificatifCarteProfessionnelleChemin: z
       .string({
@@ -271,7 +287,8 @@ export const onboardingRenfordQualificationsSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["justificatifDiplomeChemins"],
-        message: "Chaque diplôme sélectionné doit avoir un justificatif associé",
+        message:
+          "Chaque diplôme sélectionné doit avoir un justificatif associé",
       });
     }
 

@@ -64,6 +64,8 @@ export const updateEtablissementSchema = z
       .length(5, 'Le code postal doit contenir 5 chiffres')
       .regex(/^\d{5}$/, 'Le code postal ne doit contenir que des chiffres'),
     ville: z.string().min(2, '2 caractères minimum').max(100, '100 caractères maximum'),
+    latitude: z.number().min(-90, 'Latitude invalide').max(90, 'Latitude invalide'),
+    longitude: z.number().min(-180, 'Longitude invalide').max(180, 'Longitude invalide'),
     typeEtablissement: z.enum(TYPE_ETABLISSEMENT, {
       required_error: "Le type d'établissement est obligatoire",
     }),
@@ -147,6 +149,8 @@ export const updateRenfordIdentiteSchema = z
     adresse: z.string().min(5, '5 caractères minimum'),
     codePostal: z.string().length(5, 'Le code postal doit contenir 5 chiffres'),
     ville: z.string().min(2, '2 caractères minimum'),
+    latitude: z.number().min(-90, 'Latitude invalide').max(90, 'Latitude invalide'),
+    longitude: z.number().min(-180, 'Longitude invalide').max(180, 'Longitude invalide'),
     pays: z.string().min(2, '2 caractères minimum'),
     dateNaissance: z.string().or(z.date()),
     attestationVigilanceChemin: z.string().nullable().optional(),

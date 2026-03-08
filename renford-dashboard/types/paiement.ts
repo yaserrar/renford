@@ -37,6 +37,8 @@ export type InformationsBancaires = {
   villeFacturation: string | null;
   paysFacturation: string | null;
   siretFacturation: string | null;
+  latitude: number | null;
+  longitude: number | null;
   stripeCustomerId: string | null;
   stripePaymentMethodId: string | null;
   dateCreation: Date;

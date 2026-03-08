@@ -22,10 +22,9 @@ model Utilisateur {
     typeUtilisateur TypeUtilisateur
 
     // Informations personnelles
-    nom          String
-    prenom       String
-    telephone    String?
-    avatarChemin String?
+    nom       String
+    prenom    String
+    telephone String?
 
     // Statut du compte
     statut StatutCompte @default(en_attente_verification)
@@ -116,6 +115,7 @@ model ProfilEtablissement {
     id            String      @id @default(uuid())
     utilisateurId String      @unique
     utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+    avatarChemin  String?
 
     // Informations légales (obligatoires)
     raisonSociale String // Raison sociale *
@@ -125,6 +125,8 @@ model ProfilEtablissement {
     adresse    String // Adresse *
     codePostal String // Code postal *
     ville      String // Ville *
+    latitude   Float?
+    longitude  Float?
 
     // Type d'établissement
     typeEtablissement TypeEtablissement?
@@ -155,19 +157,20 @@ model Etablissement {
 
     profilEtablissementId String
     profilEtablissement   ProfilEtablissement @relation(fields: [profilEtablissementId], references: [id], onDelete: Cascade)
+    avatarChemin          String?
 
     // Informations
-    siret             String
     nom               String
+    siret             String
     typeEtablissement TypeEtablissement
     roleEtablissement RoleEtablissement @default(principal)
 
     // Adresse complète
-    adresse       String
-    adresseLigne2 String?
-    codePostal    String
-    ville         String
-    pays          String  @default("France")
+    adresse    String
+    codePostal String
+    ville      String
+    latitude   Float?
+    longitude  Float?
 
     // Contact
     emailPrincipal         String?
@@ -178,7 +181,6 @@ model Etablissement {
     // Adresse de facturation
     adresseFacturationDifferente Boolean @default(false)
     adresseFacturation           String
-    adresseFacturationLigne2     String?
     codePostalFacturation        String
     villeFacturation             String
 
@@ -244,6 +246,7 @@ model ProfilRenford {
     id            String      @id @default(uuid())
     utilisateurId String      @unique
     utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+    avatarChemin  String?
 
     // Profil public (étape 4)
     titreProfil       String?
@@ -266,6 +269,8 @@ model ProfilRenford {
     codePostal String?
     ville      String?
     pays       String? @default("France")
+    latitude   Float?
+    longitude  Float?
 
     // Zone de déplacement (en KM)
     zoneDeplacement Int?
@@ -471,16 +476,6 @@ enum Diplome {
     desjeps_escalade
 }
 
-enum JourSemaine {
-    lundi
-    mardi
-    mercredi
-    jeudi
-    vendredi
-    samedi
-    dimanche
-}
-
 enum CreneauDisponibilite {
     matin
     midi
@@ -639,13 +634,13 @@ model InformationsBancaires {
     bic                String?
 
     // Informations de facturation
-    nomFacturation        String?
-    adresseFacturation    String?
-    adresseFacturation2   String?
-    codePostalFacturation String?
-    villeFacturation      String?
-    paysFacturation       String? @default("France")
-    siretFacturation      String?
+    nomFacturation     String?
+    adresseFacturation String?
+    villeFacturation   String?
+    paysFacturation    String? @default("France")
+    siretFacturation   String?
+    latitude           Float?
+    longitude          Float?
 
     // Intégration Stripe
     stripeCustomerId      String?
