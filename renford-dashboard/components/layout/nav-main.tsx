@@ -41,7 +41,7 @@ const NavMain = ({ items }: Props) => {
                 className={cn(
                   "flex justify-start px-3 py-5 rounded-sm",
                   isActive(item.url) &&
-                    "bg-gray-100 hover:bg-gray-200 active:bg-gray-300",
+                    "bg-gray-100 hover:bg-gray-200 active:bg-gray-300"
                 )}
               >
                 <Link href={item.url}>
@@ -49,15 +49,15 @@ const NavMain = ({ items }: Props) => {
                     <item.icon
                       className={cn(
                         "text-gray-500 mr-1",
-                        isActive(item.url) && "text-black",
+                        isActive(item.url) && "text-black"
                       )}
                       strokeWidth={2}
                     />
                   )}
                   <p
                     className={cn(
-                      "text-gray-500 font-normal text-sm",
-                      isActive(item.url) && "text-black font-medium",
+                      "text-gray-500 font-normal text-base",
+                      isActive(item.url) && "text-black font-medium"
                     )}
                   >
                     {item.title}

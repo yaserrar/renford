@@ -190,8 +190,9 @@ model Etablissement {
     actif Boolean @default(true)
 
     // Métadonnées
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
+    dateCreation  DateTime  @default(now())
+    dateMiseAJour DateTime  @updatedAt
+    Mission       Mission[]
 
     @@index([profilEtablissementId])
     @@index([typeEtablissement])
@@ -517,153 +518,132 @@ enum Diplome {
     desjeps_escalade
 }
 
-// enum StatutDocument {
-//     brouillon
-//     en_attente_signature
-//     signe
-//     archive
-//     expire
-// }
+// ============================================================================
+// TABLE: Missions
+// ============================================================================
 
-// Enums utilisées par DocumentRenford
-// enum TypeDocument {
-//     devis
-//     contrat_prestation
-//     facture
-//     attestation_mission
-//     attestation_vigilance
-//     bordereau_paiement
-//     diplome
-//     carte_pro
-//     justificatif_assurance
-//     note_frais
-// }
-// // ============================================================================
-// // TABLE: Missions
-// // ============================================================================
+model Mission {
+    id        String @id @default(uuid())
+    reference String @unique @default(uuid())
 
-// model Mission {
-//     id        String @id @default(uuid())
-//     reference String @unique @default(uuid())
+    // Établissement demandeur
+    etablissementId String
+    etablissement   Etablissement @relation(fields: [etablissementId], references: [id])
 
-//     // Établissement demandeur
-//     etablissementId String
-//     etablissement   Etablissement @relation(fields: [etablissementId], references: [id])
+    // Mode de mission (FLEX ou COACH)
+    modeMission ModeMission   @default(flex)
+    statut      StatutMission @default(envoyee)
 
-//     // Mode de mission (FLEX ou COACH)
-//     modeMission ModeMission   @default(flex)
-//     statut      StatutMission @default(envoyee)
+    // Détails de la mission
+    titre                    String?
+    description              String?           @db.Text
+    // typePosteRecherche       TypePoste
+    specialisationRecherchee String?
+    niveauExperienceRequis   NiveauExperience?
 
-//     // Détails de la mission
-//     titre                    String?
-//     description              String?           @db.Text
-//     typePosteRecherche       TypePoste
-//     specialisationRecherchee String?
-//     niveauExperienceRequis   NiveauExperience?
+    // Dates et horaires
+    dateDebut         DateTime
+    dateFin           DateTime
+    nombreHeuresTotal Decimal? @db.Decimal(6, 2)
 
-//     // Dates et horaires
-//     dateDebut         DateTime
-//     dateFin           DateTime
-//     nombreHeuresTotal Decimal? @db.Decimal(6, 2)
+    // Tarification
+    methodeTarification MethodeTarification  @default(horaire)
+    trancheTarifHoraire TrancheTarifHoraire?
+    tarifHorairePrecis  Decimal?             @db.Decimal(8, 2)
+    montantForfaitaire  Decimal?             @db.Decimal(10, 2)
+    nombreParticipants  Int? // Pour tarif dégressif
 
-//     // Tarification
-//     methodeTarification MethodeTarification  @default(horaire)
-//     trancheTarifHoraire TrancheTarifHoraire?
-//     tarifHorairePrecis  Decimal?             @db.Decimal(8, 2)
-//     montantForfaitaire  Decimal?             @db.Decimal(10, 2)
-//     nombreParticipants  Int? // Pour tarif dégressif
+    // Montants calculés
+    montantEstimeHT   Decimal? @db.Decimal(10, 2)
+    montantCommission Decimal? @db.Decimal(10, 2)
+    montantTotalTTC   Decimal? @db.Decimal(10, 2)
 
-//     // Montants calculés
-//     montantEstimeHT   Decimal? @db.Decimal(10, 2)
-//     montantCommission Decimal? @db.Decimal(10, 2)
-//     montantTotalTTC   Decimal? @db.Decimal(10, 2)
+    // Équipement requis (liste stockée en JSON array)
+    materielRequis String[]
 
-//     // Équipement requis (liste stockée en JSON array)
-//     materielRequis String[]
+    // Notes de frais
+    notesFraisPrisesEnCharge Boolean @default(false)
 
-//     // Notes de frais
-//     notesFraisPrisesEnCharge Boolean @default(false)
+    // Diplôme spécifique requis (optionnel, mode COACH)
+    diplomeRequis String?
 
-//     // Diplôme spécifique requis (optionnel, mode COACH)
-//     diplomeRequis String?
+    // Niveau du cours (mode COACH)
+    niveauCours String?
 
-//     // Niveau du cours (mode COACH)
-//     niveauCours String?
+    // Métadonnées
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
 
-//     // Métadonnées
-//     dateCreation  DateTime @default(now())
-//     dateMiseAJour DateTime @updatedAt
+    // Relations
+    plagesHoraires PlageHoraireMission[]
+    // renfordsAssignes     MissionRenford[]
+    // documents            DocumentMission[]
+    // paiements            Paiement[]
+    // evaluations          Evaluation[]
+    // demandesModification DemandeModification[]
+    // annulation           AnnulationMission?
 
-//     // Relations
-//     plagesHoraires       PlageHoraireMission[]
-//     renfordsAssignes     MissionRenford[]
-//     documents            DocumentMission[]
-//     paiements            Paiement[]
-//     evaluations          Evaluation[]
-//     demandesModification DemandeModification[]
-//     annulation           AnnulationMission?
+    @@index([etablissementId])
+    @@index([statut])
+    @@index([modeMission])
+    // @@index([typePosteRecherche])
+    @@index([dateDebut])
+    @@index([dateFin])
+    @@map("missions")
+}
 
-//     @@index([etablissementId])
-//     @@index([statut])
-//     @@index([modeMission])
-//     @@index([typePosteRecherche])
-//     @@index([dateDebut])
-//     @@index([dateFin])
-//     @@map("missions")
-// }
+// Enums utilisées par Mission
+enum ModeMission {
+    flex // Missions express/ponctuelles
+    coach // Missions longue durée contractualisées
+}
 
-// // Enums utilisées par Mission
-// enum ModeMission {
-//     flex // Missions express/ponctuelles
-//     coach // Missions longue durée contractualisées
-// }
+enum StatutMission {
+    envoyee
+    en_cours_de_matching
+    proposee
+    acceptee
+    contrat_signe
+    payee
+    en_cours
+    a_valider
+    validee
+    terminee
+    archivee
+    annulee
+}
 
-// enum StatutMission {
-//     envoyee
-//     en_cours_de_matching
-//     proposee
-//     acceptee
-//     contrat_signe
-//     payee
-//     en_cours
-//     a_valider
-//     validee
-//     terminee
-//     archivee
-//     annulee
-// }
+enum MethodeTarification {
+    horaire
+    forfait
+    degressif
+}
 
-// enum MethodeTarification {
-//     horaire
-//     forfait
-//     degressif
-// }
+enum TrancheTarifHoraire {
+    moins_de_45
+    entre_45_et_59
+    plus_de_60
+}
 
-// enum TrancheTarifHoraire {
-//     moins_de_45
-//     entre_45_et_59
-//     plus_de_60
-// }
+// ============================================================================
+// TABLE: Plages horaires de mission (détail jour par jour)
+// ============================================================================
 
-// // ============================================================================
-// // TABLE: Plages horaires de mission (détail jour par jour)
-// // ============================================================================
+model PlageHoraireMission {
+    id        String  @id @default(uuid())
+    missionId String
+    mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
 
-// model PlageHoraireMission {
-//     id        String  @id @default(uuid())
-//     missionId String
-//     mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+    date       DateTime @db.Date
+    heureDebut String // Format "HH:MM"
+    heureFin   String // Format "HH:MM"
 
-//     date       DateTime @db.Date
-//     heureDebut String // Format "HH:MM"
-//     heureFin   String // Format "HH:MM"
+    dateCreation DateTime @default(now())
 
-//     dateCreation DateTime @default(now())
-
-//     @@index([missionId])
-//     @@index([date])
-//     @@map("plages_horaires_mission")
-// }
+    @@index([missionId])
+    @@index([date])
+    @@map("plages_horaires_mission")
+}
 
 // // ============================================================================
 // // TABLE: Association Mission-Renford (assignations, shortlist)

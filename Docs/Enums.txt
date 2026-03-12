@@ -1,131 +1,93 @@
-TymMission:
-
-ID_Spécialité	Spécialité
-1	Matwork
-2	Reformer
-3	Hot Pilates
-4	Cadillac
-5	Chair (Wunda Chair)
-6	Petits matériels
-7	Pilates prénatal / postnatal
-8	Lagree Fitness
-9	Hatha Yoga
-10	Vinyasa Yoga
-11	Ashtanga Yoga
-12	Yin Yoga
-13	Hot Yoga
-14	Kundalini Yoga
-15	Yoga prénatal / postnatal
-16	Yoga Nidra
-17	Yoga Flow
-18	Qi Gong / Tai Chi
-19	CAF (Cuisses Abdos Fessiers)
-20	LIA (Low Impact Aerobic)
-21	Step
-22	HIIT
-23	Circuit training
-24	Cross Training / CrossFit
-25	TRX
-26	Biking / Spinning
-27	Body barre
-28	Stretching / Mobilité
-29	Cardio Boxing
-30	Bootcamp
-31	Gym posturale / dos
-32	EMS (Électrostimulation)
-33	Préparation Physique Générale
-34	Body Pump
-35	Body Attack
-36	Body Combat
-37	Body Step
-38	Body Balance
-39	Body Jam
-40	RPM
-41	Zumba classique
-42	Zumba® Kids
-43	Strong Toning®
-44	Zumba® Step
-45	Zumba® Gold
-46	Zumba Sentoa
-47	Zumba In The Circuit
-48	Zumba Strong
-49	Aqua Zumba®
-50	Éducateur sportif multisport
-51	Animateur sportif (enfants / ados)
-52	Intervenant scolaire / EPS
-53	Animateur sport santé / seniors / APA
-54	Animateur aquatique
-55	Hôte / Hôtesse d’accueil sportif
-56	Encadrement en salle (bloc / voie)
-57	Encadrement en milieu naturel
-58	Ouvreur de voies / blocs
-59	Encadrement Escalade (performance)
-60	Cours enfants / ados
-61	Initiation / loisirs adultes
-62	Boxe anglaise
-63	Boxe française / Savate
-64	Kickboxing
-65	Karaté
-66	Judo
-67	MMA
-68	Muay Thaï
-69	Boxe éducative (enfants / ados)
-70	Cardio Boxe / Boxe fitness
-71	Coaching boxe (loisir ou compétiteur)
-72	Danse classique
-73	Danse contemporaine
-74	Jazz / Modern Jazz
-75	Hip Hop / Street Dance
-76	Ragga Dancehall
-77	Danses latines (salsa, bachata…)
-78	Danse africaine
-79	Danse enfants
-80	Barre au sol
-81	Massages bien-être / sportifs
-82	Kinésithérapie sportive (hors acte médical)
-83	Massage deep tissue / récupération
-84	Réflexologie
-85	Relaxation / cohérence cardiaque
-86	Sonothérapie / Bains sonores
-87	Sophrologie
-88	Méditation / pleine conscience
-89	Stretch & mobilité douce
-90	Cryothérapie / pressothérapie
-91	Nutrition / diététique
-92	Préparation mentale
-
-
-
-Diplomes:
-ID	Diplome
-1	BPJEPS AF - Mention Cours Collectifs
-2	BPJEPS AF - Mention Haltérophilie, Musculation
-3	BPJEPS MAPST
-4	BPJEPS APT
-5	BPJEPS LTP
-6	BPJEPS AGFF (ancienne appellation)
-7	DEJEPS - Option Force Athlétique / Musculation
-8	DEJEPS - Perfectionnement Sportif
-9	DEJEPS - Spécialité sportive
-10	DESJEPS - Performance Sportives
-11	Licence STAPS - Management du Sport
-12	Licence STAPS - Education et motricité
-13	Licence STAPS - Entraînement Sportif
-14	Licence STAPS APA
-15	Master Staps - APA
-16	Master STAPS - Entrainement Sportif
-17	Master STAPS - Préparation physique
-18	Master STAPS - Management du Sport
-19	CQP IF - Option Cours Collectifs
-20	CQP IF - Option Musculation & Personal Training
-21	CQP ALS - Option AGEE
-22	BEES Métiers de la Forme
-23	DU - Préparation Physique
-24	Certification Yoga
-25	Certification Pilates
-26	Certification Zumba
-27	BPJEPS Escalade
-28	DEJEPS Escalade
-29	CQP Escalade
-30	BEES Escalade
-31	DESJEPS Escalade
+ID_Spécialité	Spécialité	Catégorie principale	Discipline
+1	Matwork	1	Pilates
+2	Reformer	1	Pilates
+3	Hot Pilates	1	Pilates
+4	Cadillac	1	Pilates
+5	Chair (Wunda Chair)	1	Pilates
+6	Petits matériels	1	Pilates
+7	Pilates prénatal / postnatal	1	Pilates
+8	Lagree Fitness	1	Pilates
+9	Hatha Yoga	2	Yoga
+10	Vinyasa Yoga	2	Yoga
+11	Ashtanga Yoga	2	Yoga
+12	Yin Yoga	2	Yoga
+13	Hot Yoga	2	Yoga
+14	Kundalini Yoga	2	Yoga
+15	Yoga prénatal / postnatal	2	Yoga
+16	Yoga Nidra	2	Yoga
+17	Yoga Flow	2	Yoga
+18	Qi Gong / Tai Chi	2	Yoga
+19	CAF (Cuisses Abdos Fessiers)	3	Fitness & Musculation
+20	LIA (Low Impact Aerobic)	3	Fitness & Musculation
+21	Step	3	Fitness & Musculation
+22	HIIT	3	Fitness & Musculation
+23	Circuit training	3	Fitness & Musculation
+24	Cross Training / CrossFit	3	Fitness & Musculation
+25	TRX	3	Fitness & Musculation
+26	Biking / Spinning	3	Fitness & Musculation
+27	Body barre	3	Fitness & Musculation
+28	Stretching / Mobilité	3	Fitness & Musculation
+29	Cardio Boxing	3	Fitness & Musculation
+30	Bootcamp	3	Fitness & Musculation
+31	Gym posturale / dos	3	Fitness & Musculation
+32	EMS (Électrostimulation)	3	Fitness & Musculation
+33	Préparation Physique Générale	3	Fitness & Musculation
+34	Body Pump	3A	Programmes les mills
+35	Body Attack	3A	Programmes les mills
+36	Body Combat	3A	Programmes les mills
+37	Body Step	3A	Programmes les mills
+38	Body Balance	3A	Programmes les mills
+39	Body Jam	3A	Programmes les mills
+40	RPM	3A	Programmes les mills
+41	Zumba classique	3B	Zumba
+42	Zumba® Kids	3B	Zumba
+43	Strong Toning®	3B	Zumba
+44	Zumba® Step	3B	Zumba
+45	Zumba® Gold	3B	Zumba
+46	Zumba Sentoa	3B	Zumba
+47	Zumba In The Circuit	3B	Zumba
+48	Zumba Strong	3B	Zumba
+49	Aqua Zumba®	3B	Zumba
+50	Éducateur sportif multisport	4	Animation sportive & Multisport
+51	Animateur sportif (enfants / ados)	4	Animation sportive & Multisport
+52	Intervenant scolaire / EPS	4	Animation sportive & Multisport
+53	Animateur sport santé / seniors / APA	4	Animation sportive & Multisport
+54	Animateur aquatique	4	Animation sportive & Multisport
+55	Hôte / Hôtesse d’accueil sportif	4	Animation sportive & Multisport
+56	Encadrement en salle (bloc / voie)	5	Escalade
+57	Encadrement en milieu naturel	5	Escalade
+58	Ouvreur de voies / blocs	5	Escalade
+59	Encadrement Escalade (performance)	5	Escalade
+60	Cours enfants / ados	5	Escalade
+61	Initiation / loisirs adultes	5	Escalade
+62	Boxe anglaise	6	Boxe & Arts martiaux
+63	Boxe française / Savate	6	Boxe & Arts martiaux
+64	Kickboxing	6	Boxe & Arts martiaux
+65	Karaté	6	Boxe & Arts martiaux
+66	Judo	6	Boxe & Arts martiaux
+67	MMA	6	Boxe & Arts martiaux
+68	Muay Thaï	6	Boxe & Arts martiaux
+69	Boxe éducative (enfants / ados)	6	Boxe & Arts martiaux
+70	Cardio Boxe / Boxe fitness	6	Boxe & Arts martiaux
+71	Coaching boxe (loisir ou compétiteur)	6	Boxe & Arts martiaux
+72	Danse classique	7	Danse
+73	Danse contemporaine	7	Danse
+74	Jazz / Modern Jazz	7	Danse
+75	Hip Hop / Street Dance	7	Danse
+76	Ragga Dancehall	7	Danse
+77	Danses latines (salsa, bachata…)	7	Danse
+78	Danse africaine	7	Danse
+79	Danse enfants	7	Danse
+80	Barre au sol	7	Danse
+81	Massages bien-être / sportifs	8	Bien-être & Sport santé
+82	Kinésithérapie sportive (hors acte médical)	8	Bien-être & Sport santé
+83	Massage deep tissue / récupération	8	Bien-être & Sport santé
+84	Réflexologie	8	Bien-être & Sport santé
+85	Relaxation / cohérence cardiaque	8	Bien-être & Sport santé
+86	Sonothérapie / Bains sonores	8	Bien-être & Sport santé
+87	Sophrologie	8	Bien-être & Sport santé
+88	Méditation / pleine conscience	8	Bien-être & Sport santé
+89	Stretch & mobilité douce	8	Bien-être & Sport santé
+90	Cryothérapie / pressothérapie	8	Bien-être & Sport santé
+91	Nutrition / diététique	8	Bien-être & Sport santé
+92	Préparation mentale	8	Bien-être & Sport santé

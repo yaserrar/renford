@@ -6,6 +6,7 @@ import { useCurrentUser } from "@/hooks/utilisateur";
 import InformationsTabContent from "./informations-tab-content";
 import ProfilTabContent from "./profil-tab-content";
 import SitesTabContent from "./sites-tab-content";
+import { H2 } from "@/components/ui/typography";
 
 export default function ProfileEtablissementPage() {
   const { data: me, isLoading } = useCurrentUser();
@@ -19,7 +20,7 @@ export default function ProfileEtablissementPage() {
 
   return (
     <main className="mt-8 space-y-4">
-      <h1 className="text-3xl font-semibold">Mon compte</h1>
+      <H2>Mon compte</H2>
 
       <Tabs defaultValue="profil" className="w-full">
         <TabsList>

@@ -1,8 +1,10 @@
+import { H2 } from "@/components/ui/typography";
+
 export default function ConfidentialitePage() {
   return (
     <main className="container mx-auto max-w-4xl py-12 space-y-8">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold">Politique de confidentialité</h1>
+        <H2>Politique de confidentialité</H2>
         <p className="text-sm text-muted-foreground">
           Dernière mise à jour : 08/03/2026
         </p>

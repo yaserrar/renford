@@ -102,7 +102,7 @@ export function Combobox({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "bg-white border border-input h-12 py-1 w-full justify-between px-3 text-gray-400",
+            "bg-white border border-input h-12 py-1 w-full justify-between px-3 text-gray-400 font-normal",
             selectedOptions.length > 0 && "text-black",
             className
           )}

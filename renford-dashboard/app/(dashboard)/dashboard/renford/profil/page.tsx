@@ -7,6 +7,7 @@ import InformationsTabContent from "./informations-tab-content";
 import NotificationsTabContent from "./notifications-tab-content";
 import PasswordTabContent from "./password-tab-content";
 import ProfilTabContent from "./profil/profil-tab-content";
+import { H2 } from "@/components/ui/typography";
 
 export default function ProfileRenfordPage() {
   const { data: me, isLoading } = useCurrentUser();
@@ -17,7 +18,7 @@ export default function ProfileRenfordPage() {
 
   return (
     <main className="mt-8 space-y-4">
-      <h1 className="text-3xl font-semibold">Mon compte</h1>
+      <H2>Mon compte</H2>
 
       <Tabs defaultValue="profil" className="w-full">
         <TabsList>
