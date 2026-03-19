@@ -20,7 +20,7 @@ import {
 } from "@/validations/mission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lightbulb, Plus, Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { Controller, useForm } from "react-hook-form";
 
@@ -100,10 +100,42 @@ const materielsOptions = [
 
 export default function NouvelleMissionPage() {
   const [currentStep, setCurrentStep] = useState(0);
+  const previousStepRef = useRef(0);
+  const initializedHistoryRef = useRef(false);
   const [historySearch, setHistorySearch] = useState("");
-  const [historyFilter, setHistoryFilter] = useState<
-    "Tout" | "Yoga" | "Crossfit" | "Pilates"
-  >("Tout");
+  const [historyFilter, setHistoryFilter] = useState<string>("Tout");
+
+  useEffect(() => {
+    if (!initializedHistoryRef.current) {
+      window.history.replaceState({ missionStep: 0 }, "");
+      initializedHistoryRef.current = true;
+      previousStepRef.current = 0;
+      return;
+    }
+
+    const previousStep = previousStepRef.current;
+
+    if (currentStep > previousStep) {
+      window.history.pushState({ missionStep: currentStep }, "");
+    } else if (currentStep < previousStep) {
+      window.history.replaceState({ missionStep: currentStep }, "");
+    }
+
+    previousStepRef.current = currentStep;
+  }, [currentStep]);
+
+  useEffect(() => {
+    const onPopState = (event: PopStateEvent) => {
+      const stepFromHistory = event.state?.missionStep;
+
+      if (typeof stepFromHistory === "number") {
+        setCurrentStep(stepFromHistory);
+      }
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   const {
     control,
@@ -175,7 +207,7 @@ export default function NouvelleMissionPage() {
   };
 
   return (
-    <main className="mt-8 space-y-4">
+    <main className="mt-8 space-y-6">
       <H2>Demande de mission</H2>
 
       <div className="bg-secondary-background rounded-3xl border border-input p-6 space-y-4 min-h-screen">
@@ -189,23 +221,23 @@ export default function NouvelleMissionPage() {
             </div>
           </div>
 
-          {currentStep === 0 ? (
-            <div className="space-y-6 max-w-3xl">
+          {currentStep === 0 && (
+            <div className="space-y-6 max-w-3xl mx-auto">
               <button
                 type="button"
                 onClick={() => setCurrentStep(1)}
-                className="w-full rounded-3xl border border-input bg-white p-5 text-left hover:border-gray-400 transition"
+                className="w-full rounded-3xl cursor-pointer border border-input bg-white p-5 text-left hover:border-secondary transition"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-3xl font-semibold">
+                    <h3 className="text-xl font-semibold">
                       Créer une mission à partir de zéro
                     </h3>
                     <p className="text-lg text-muted-foreground mt-1">
                       Partir d&apos;un formulaire vide
                     </p>
                   </div>
-                  <span className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-blue-500 text-white">
+                  <span className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-secondary text-white">
                     <Plus className="h-5 w-5" />
                   </span>
                 </div>
@@ -220,7 +252,7 @@ export default function NouvelleMissionPage() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-3xl font-semibold">Historique</h3>
+                <h3 className="text-xl font-semibold">Historique</h3>
 
                 <div className="relative">
                   <Search className="h-4 w-4 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -233,19 +265,19 @@ export default function NouvelleMissionPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {(["Tout", "Yoga", "Crossfit", "Pilates"] as const).map(
+                  {[...disciplineOptions, { value: "Tout", label: "Tout" }].map(
                     (filter) => {
-                      const active = historyFilter === filter;
+                      const active = historyFilter === filter.value;
                       return (
                         <Button
-                          key={filter}
+                          key={filter.value}
                           type="button"
                           variant={active ? "default" : "outline"}
                           size="sm"
-                          onClick={() => setHistoryFilter(filter)}
+                          onClick={() => setHistoryFilter(filter.value)}
                           className="h-10 px-4"
                         >
-                          {filter}
+                          {filter.label}
                         </Button>
                       );
                     }
@@ -259,7 +291,9 @@ export default function NouvelleMissionPage() {
                 </div>
               </div>
             </div>
-          ) : currentStep === 1 ? (
+          )}
+
+          {currentStep === 1 && (
             <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
               <div className="xl:col-span-2 space-y-6">
                 <div>
@@ -308,8 +342,8 @@ export default function NouvelleMissionPage() {
                             className={cn(
                               "flex cursor-pointer gap-4 rounded-3xl border p-6 transition items-center",
                               isSelected
-                                ? "border-gray-900 bg-gray-50"
-                                : "border-input hover:border-gray-400"
+                                ? "border-secondary bg-secondary/5"
+                                : "border-input hover:border-gray-300"
                             )}
                           >
                             <RadioGroupItem
@@ -322,7 +356,7 @@ export default function NouvelleMissionPage() {
                               <p className="text-xl font-semibold">
                                 {mode.title}
                               </p>
-                              <p className="text-base leading-relaxed text-gray-700">
+                              <p className="text-base leading-relaxed text-gray-600">
                                 {mode.description}
                               </p>
                             </div>
@@ -338,7 +372,8 @@ export default function NouvelleMissionPage() {
                 </ErrorMessage>
               </div>
             </div>
-          ) : currentStep === 2 ? (
+          )}
+          {currentStep === 2 && (
             <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
               <div className="xl:col-span-2 space-y-4">
                 <H3>Définissez votre besoin</H3>
@@ -540,7 +575,9 @@ export default function NouvelleMissionPage() {
                 </div>
               </div>
             </div>
-          ) : (
+          )}
+
+          {currentStep > 2 && (
             <div className="rounded-2xl border border-dashed p-8 text-center space-y-3">
               <h3 className="text-2xl font-semibold">Étape {currentStep}</h3>
               <p className="text-muted-foreground">

@@ -338,6 +338,7 @@ enum NiveauExperience {
     debutant // Moins de 2 ans
     confirme // Entre 5 et 10 ans
     expert // Plus de 10 ans
+    peut_importe // Je n'ai pas d'expérience mais je suis motivé et prêt à apprendre
 }
 
 enum TypeMission {
@@ -523,65 +524,67 @@ enum Diplome {
 // ============================================================================
 
 model Mission {
-    id        String @id @default(uuid())
-    reference String @unique @default(uuid())
+    id String @id @default(uuid())
 
-    // Établissement demandeur
-    etablissementId String
-    etablissement   Etablissement @relation(fields: [etablissementId], references: [id])
+    statut StatutMission @default(envoyee)
 
     // Mode de mission (FLEX ou COACH)
-    modeMission ModeMission   @default(flex)
-    statut      StatutMission @default(envoyee)
+    modeMission ModeMission @default(flex)
 
-    // Détails de la mission
-    titre                    String?
-    description              String?           @db.Text
-    // typePosteRecherche       TypePoste
-    specialisationRecherchee String?
-    niveauExperienceRequis   NiveauExperience?
+    //-----------------------------------
+
+    discipline             Discipline    @default(pilates)
+    specialitePrincipale   TypeMission   @default(matwork)
+    specialitesSecondaires TypeMission[] @default([])
+
+    niveauExperienceRequis NiveauExperience? @default(debutant)
+
+    assuranceObligatoire Boolean  @default(false)
+    materielsRequis      String[] @default([])
+
+    description String? @db.Text
+
+    //-----------------------------------
+
+    // Établissement / site
+    etablissementId String
+    etablissement   Etablissement @relation(fields: [etablissementId], references: [id])
 
     // Dates et horaires
     dateDebut         DateTime
     dateFin           DateTime
     nombreHeuresTotal Decimal? @db.Decimal(6, 2)
 
-    // Tarification
-    methodeTarification MethodeTarification  @default(horaire)
-    trancheTarifHoraire TrancheTarifHoraire?
-    tarifHorairePrecis  Decimal?             @db.Decimal(8, 2)
-    montantForfaitaire  Decimal?             @db.Decimal(10, 2)
-    nombreParticipants  Int? // Pour tarif dégressif
+    methodeTarification MethodeTarification @default(horaire)
+    tarif               Decimal?            @db.Decimal(10, 2) // Tarif horaire, journalier ou demi-journalier selon la méthode de tarification
 
-    // Montants calculés
-    montantEstimeHT   Decimal? @db.Decimal(10, 2)
-    montantCommission Decimal? @db.Decimal(10, 2)
-    montantTotalTTC   Decimal? @db.Decimal(10, 2)
+    pourcentageVariationTarif Decimal? @db.Decimal(5, 2) // Pourcentage de variation du tarif en fonction de l'expérience du Renford (ex: +20% pour un expert)
 
-    // Équipement requis (liste stockée en JSON array)
-    materielRequis String[]
+    //-----------------------------------
 
-    // Notes de frais
-    notesFraisPrisesEnCharge Boolean @default(false)
+    typePaiement TypePaiement @default(carte_bancaire)
 
-    // Diplôme spécifique requis (optionnel, mode COACH)
-    diplomeRequis String?
+    //---------
 
-    // Niveau du cours (mode COACH)
-    niveauCours String?
+    titulaireCarteBancaire String? // Nom du titulaire de la carte bancaire (pour paiement par carte)
+    numeroCarteBancaire    String? // Numéro de la carte bancaire (pour paiement par carte)
+    dateExpirationCarte    String? // Date d'expiration de la carte bancaire (MM/AA) (pour paiement par carte)
+    cvvCarte               String? // CVV de la carte bancaire (pour paiement par carte)
 
-    // Métadonnées
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
+    autorisationDebit     Boolean   @default(false) // Autorisation de débiter la carte bancaire (pour paiement par carte)
+    dateAutorisationDebit DateTime? // Date à laquelle la carte bancaire a été autorisée pour le débit (pour paiement par carte)
 
-    // Relations
-    plagesHoraires PlageHoraireMission[]
-    // renfordsAssignes     MissionRenford[]
-    // documents            DocumentMission[]
-    // paiements            Paiement[]
-    // evaluations          Evaluation[]
-    // demandesModification DemandeModification[]
-    // annulation           AnnulationMission?
+    //---------
+
+    titulaireCompteBancaire String? // Nom du titulaire du compte bancaire (pour paiement par prélèvement SEPA)
+    IBANCompteBancaire      String? // IBAN du compte bancaire (pour paiement par prélèvement SEPA)
+    BICCompteBancaire       String? // BIC du compte bancaire (pour paiement par prélèvement SEPA)
+
+    autorisationPrelevement     Boolean   @default(false) // Autorisation de prélèvement SEPA (pour paiement par prélèvement SEPA)
+    dateAutorisationPrelevement DateTime? // Date à laquelle le prélèvement SEPA a été autorisé (pour paiement par prélèvement SEPA)
+
+    // -------------------------------------------------------------------------
+    PlageHoraireMission PlageHoraireMission[]
 
     @@index([etablissementId])
     @@index([statut])
@@ -597,6 +600,30 @@ enum ModeMission {
     flex // Missions express/ponctuelles
     coach // Missions longue durée contractualisées
 }
+
+enum Discipline {
+    pilates
+    yoga
+    fitness_musculation
+    programmes_les_mills
+    zumba
+    animation_sportive_multisport
+    escalade
+    boxe_arts_martiaux
+    danse
+    bien_etre_sport_sante
+}
+
+// enum Material {
+//     tapis
+//     halteres
+//     kettlebell
+//     elastiques
+//     medicine_ball
+//     velo_indoor
+//     barre
+//     autre
+// }
 
 enum StatutMission {
     envoyee
@@ -615,14 +642,13 @@ enum StatutMission {
 
 enum MethodeTarification {
     horaire
-    forfait
-    degressif
+    journee
+    demi_journee
 }
 
-enum TrancheTarifHoraire {
-    moins_de_45
-    entre_45_et_59
-    plus_de_60
+enum TypePaiement {
+    carte_bancaire
+    prelevement_sepa
 }
 
 // ============================================================================

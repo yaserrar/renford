@@ -17,7 +17,7 @@ export default function ProfileRenfordPage() {
   }
 
   return (
-    <main className="mt-8 space-y-4">
+    <main className="mt-8 space-y-6">
       <H2>Mon compte</H2>
 
       <Tabs defaultValue="profil" className="w-full">
