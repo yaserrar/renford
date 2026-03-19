@@ -21,16 +21,10 @@ const requiredContactString = (fieldLabel: string) =>
       .max(120, `${fieldLabel} ne peut pas dépasser 120 caractères`)
   );
 
-const requiredContactEmail = z.preprocess(
-  (value) => {
-    if (value === null || value === undefined) return "";
-    return typeof value === "string" ? value.trim() : value;
-  },
-  z
-    .string({ required_error: "L'email principal est obligatoire" })
-    .min(1, "L'email principal est obligatoire")
-    .email("Email invalide")
-);
+const requiredContactEmail = z.preprocess((value) => {
+  if (value === null || value === undefined) return "";
+  return typeof value === "string" ? value.trim() : value;
+}, z.string({ required_error: "L'email principal est obligatoire" }).min(1, "L'email principal est obligatoire").email("Email invalide"));
 
 export const upsertEtablissementSiteSchema = z
   .object({
