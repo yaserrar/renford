@@ -256,3 +256,48 @@ export const getNewVerificationCodeEmail = (code: string) =>
     code,
     subject: 'RENFORD: Nouveau code de vérification',
   });
+
+type MissionDemandeConfirmeeEmailInput = {
+  nomComplet?: string;
+  specialiteLabel: string;
+  dashboardUrl: string;
+};
+
+export const getMissionDemandeConfirmeeEmail = ({
+  nomComplet,
+  specialiteLabel,
+  dashboardUrl,
+}: MissionDemandeConfirmeeEmailInput) => {
+  const recipient = nomComplet?.trim() ? `Bonjour ${nomComplet.trim()},` : 'Bonjour,';
+
+  const html = renderBaseEmailTemplate({
+    preheader: 'Confirmation de votre demande de mission sur Renford',
+    title: 'Votre demande de mission est confirmée ✅',
+    intro: `${recipient} Merci d'avoir fait confiance à Renford. Nous avons bien reçu votre demande pour ${specialiteLabel}.`,
+    bulletPoints: [
+      'Notre équipe analyse votre besoin pour vous proposer les profils les plus pertinents.',
+      'Vous recevrez prochainement une sélection personnalisée par email.',
+      'Vous pouvez ajuster votre demande à tout moment depuis votre espace établissement.',
+    ],
+    ctaLabel: 'Suivre ma demande',
+    ctaUrl: dashboardUrl,
+    closing:
+      "Si vous avez la moindre question, vous pouvez nous contacter à tout moment. À très vite, l'équipe Renford.",
+  });
+
+  const text = `${recipient}
+
+Merci d'avoir fait confiance à Renford.
+Nous avons bien reçu votre demande de mission pour ${specialiteLabel}.
+
+Notre équipe est en train d'analyser votre besoin pour vous proposer les meilleurs profils.
+Vous pouvez suivre l'évolution de votre demande ici : ${dashboardUrl}
+
+L'équipe Renford`;
+
+  return {
+    subject: 'Confirmation de votre demande de mission sur Renford',
+    html,
+    text,
+  };
+};

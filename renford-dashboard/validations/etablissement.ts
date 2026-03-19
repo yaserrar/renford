@@ -9,10 +9,28 @@ const optionalNullableString = z.preprocess((value) => {
   return value;
 }, z.string().nullable());
 
-const optionalNullableEmail = z.preprocess((value) => {
-  if (value === "" || value === null || value === undefined) return null;
-  return value;
-}, z.string().email("Email invalide").nullable());
+const requiredContactString = (fieldLabel: string) =>
+  z.preprocess(
+    (value) => {
+      if (value === null || value === undefined) return "";
+      return typeof value === "string" ? value.trim() : value;
+    },
+    z
+      .string({ required_error: `${fieldLabel} est obligatoire` })
+      .min(2, `${fieldLabel} doit contenir au moins 2 caractères`)
+      .max(120, `${fieldLabel} ne peut pas dépasser 120 caractères`)
+  );
+
+const requiredContactEmail = z.preprocess(
+  (value) => {
+    if (value === null || value === undefined) return "";
+    return typeof value === "string" ? value.trim() : value;
+  },
+  z
+    .string({ required_error: "L'email principal est obligatoire" })
+    .min(1, "L'email principal est obligatoire")
+    .email("Email invalide")
+);
 
 export const upsertEtablissementSiteSchema = z
   .object({
@@ -46,10 +64,12 @@ export const upsertEtablissementSiteSchema = z
       .regex(/^\d{14}$/, "Le numéro SIRET ne doit contenir que des chiffres")
       .optional(),
     typeEtablissement: z.enum(TYPE_ETABLISSEMENT).optional(),
-    emailPrincipal: optionalNullableEmail.optional(),
+    emailPrincipal: requiredContactEmail,
     telephonePrincipal: optionalNullableString.optional(),
-    nomContactPrincipal: optionalNullableString.optional(),
-    prenomContactPrincipal: optionalNullableString.optional(),
+    nomContactPrincipal: requiredContactString("Le nom du contact principal"),
+    prenomContactPrincipal: requiredContactString(
+      "Le prénom du contact principal"
+    ),
     adresseFacturationDifferente: z.boolean().default(false),
     adresseFacturation: z.string().optional(),
     codePostalFacturation: z.string().optional(),

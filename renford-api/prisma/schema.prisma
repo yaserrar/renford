@@ -551,9 +551,10 @@ model Mission {
     etablissement   Etablissement @relation(fields: [etablissementId], references: [id])
 
     // Dates et horaires
-    dateDebut         DateTime
-    dateFin           DateTime
-    nombreHeuresTotal Decimal? @db.Decimal(6, 2)
+    dateDebut DateTime
+    dateFin   DateTime
+
+    PlageHoraireMission PlageHoraireMission[]
 
     methodeTarification MethodeTarification @default(horaire)
     tarif               Decimal?            @db.Decimal(10, 2) // Tarif horaire, journalier ou demi-journalier selon la méthode de tarification
@@ -583,13 +584,9 @@ model Mission {
     autorisationPrelevement     Boolean   @default(false) // Autorisation de prélèvement SEPA (pour paiement par prélèvement SEPA)
     dateAutorisationPrelevement DateTime? // Date à laquelle le prélèvement SEPA a été autorisé (pour paiement par prélèvement SEPA)
 
-    // -------------------------------------------------------------------------
-    PlageHoraireMission PlageHoraireMission[]
-
     @@index([etablissementId])
     @@index([statut])
     @@index([modeMission])
-    // @@index([typePosteRecherche])
     @@index([dateDebut])
     @@index([dateFin])
     @@map("missions")
@@ -626,6 +623,8 @@ enum Discipline {
 // }
 
 enum StatutMission {
+    brouillon
+    en_attente_paiement
     envoyee
     en_cours_de_matching
     proposee

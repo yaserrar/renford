@@ -111,10 +111,28 @@ const optionalNullableStringFromInput = z.preprocess((value) => {
   return value;
 }, z.string().nullable());
 
-const optionalNullableEmailFromInput = z.preprocess((value) => {
-  if (value === '' || value === undefined || value === null) return null;
-  return value;
-}, z.string().email('Email invalide').nullable());
+const requiredContactStringFromInput = (fieldLabel: string) =>
+  z.preprocess(
+    (value) => {
+      if (value === null || value === undefined) return '';
+      return typeof value === 'string' ? value.trim() : value;
+    },
+    z
+      .string({ required_error: `${fieldLabel} est obligatoire` })
+      .min(2, `${fieldLabel} doit contenir au moins 2 caractères`)
+      .max(120, `${fieldLabel} ne peut pas dépasser 120 caractères`),
+  );
+
+const requiredContactEmailFromInput = z.preprocess(
+  (value) => {
+    if (value === null || value === undefined) return '';
+    return typeof value === 'string' ? value.trim() : value;
+  },
+  z
+    .string({ required_error: "L'email principal est obligatoire" })
+    .min(1, "L'email principal est obligatoire")
+    .email('Email invalide'),
+);
 
 export const createEtablissementSiteSchema = z
   .object({
@@ -139,10 +157,10 @@ export const createEtablissementSiteSchema = z
       .regex(/^\d{14}$/, 'Le numéro SIRET ne doit contenir que des chiffres')
       .optional(),
     typeEtablissement: z.enum(TYPE_ETABLISSEMENT).optional(),
-    emailPrincipal: optionalNullableEmailFromInput.optional(),
+    emailPrincipal: requiredContactEmailFromInput,
     telephonePrincipal: optionalNullableStringFromInput.optional(),
-    nomContactPrincipal: optionalNullableStringFromInput.optional(),
-    prenomContactPrincipal: optionalNullableStringFromInput.optional(),
+    nomContactPrincipal: requiredContactStringFromInput('Le nom du contact principal'),
+    prenomContactPrincipal: requiredContactStringFromInput('Le prénom du contact principal'),
     adresseFacturationDifferente: z.boolean().default(false),
     adresseFacturation: z.string().optional(),
     codePostalFacturation: z.string().optional(),

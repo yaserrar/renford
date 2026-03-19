@@ -34,8 +34,8 @@ type Props = {
 
 export default function RootLayout({ children }: Props) {
   return (
-    <html lang="fr">
-      <body className={`${poppins.className}`}>
+    <html lang="fr" suppressHydrationWarning>
+      <body className={`${poppins.className}`} suppressHydrationWarning>
         <Toaster closeButton richColors />
         <TanstackQueryProvider>
           <SessionProvider>

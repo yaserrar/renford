@@ -213,6 +213,7 @@ export default function SiteFormDialog({
                 <Input
                   id="codePostal"
                   readOnly
+                  placeholder="75001"
                   className="read-only:bg-muted"
                   {...register("codePostal")}
                 />
@@ -223,6 +224,7 @@ export default function SiteFormDialog({
                 <Input
                   id="ville"
                   readOnly
+                  placeholder="Paris"
                   className="read-only:bg-muted"
                   {...register("ville")}
                 />
@@ -233,10 +235,11 @@ export default function SiteFormDialog({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="prenomContactPrincipal">
-                  Prénom du contact principal
+                  Prénom du contact principal*
                 </Label>
                 <Input
                   id="prenomContactPrincipal"
+                  placeholder="Prénom"
                   {...register("prenomContactPrincipal")}
                 />
                 <ErrorMessage>
@@ -246,10 +249,11 @@ export default function SiteFormDialog({
 
               <div>
                 <Label htmlFor="nomContactPrincipal">
-                  Nom du contact principal
+                  Nom du contact principal*
                 </Label>
                 <Input
                   id="nomContactPrincipal"
+                  placeholder="Nom"
                   {...register("nomContactPrincipal")}
                 />
                 <ErrorMessage>
@@ -258,11 +262,11 @@ export default function SiteFormDialog({
               </div>
 
               <div>
-                <Label htmlFor="emailPrincipal">Email principal</Label>
+                <Label htmlFor="emailPrincipal">Email principal*</Label>
                 <Input
                   id="emailPrincipal"
                   type="email"
-                  placeholder="contact@etablissement.fr"
+                  placeholder="contact.principal@etablissement.fr"
                   {...register("emailPrincipal")}
                 />
                 <ErrorMessage>{errors.emailPrincipal?.message}</ErrorMessage>
@@ -272,6 +276,7 @@ export default function SiteFormDialog({
                 <Label htmlFor="telephonePrincipal">Téléphone principal</Label>
                 <Input
                   id="telephonePrincipal"
+                  placeholder="06 12 34 56 78"
                   {...register("telephonePrincipal")}
                 />
                 <ErrorMessage>
@@ -367,6 +372,7 @@ export default function SiteFormDialog({
                     <Input
                       id="codePostalFacturation"
                       readOnly
+                      placeholder="75001"
                       className="read-only:bg-muted"
                       {...register("codePostalFacturation")}
                     />
@@ -379,6 +385,7 @@ export default function SiteFormDialog({
                     <Input
                       id="villeFacturation"
                       readOnly
+                      placeholder="Paris"
                       className="read-only:bg-muted"
                       {...register("villeFacturation")}
                     />
