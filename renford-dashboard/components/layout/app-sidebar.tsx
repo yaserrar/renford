@@ -43,7 +43,7 @@ const ETABLISSEMENT_MAIN_LINKS = [
   { title: "Accueil", url: "/dashboard/etablissement/accueil", icon: Home },
   {
     title: "Missions",
-    url: "#",
+    url: "/dashboard/etablissement/missions",
     icon: Handshake,
   },
   {
@@ -95,14 +95,14 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
   const mainLinks = isEtablissement
     ? ETABLISSEMENT_MAIN_LINKS
     : isRenford
-    ? RENFORD_MAIN_LINKS
-    : RENFORD_MAIN_LINKS;
+      ? RENFORD_MAIN_LINKS
+      : RENFORD_MAIN_LINKS;
 
   const footerLinks = isEtablissement
     ? ETABLISSEMENT_FOOTER_LINKS
     : isRenford
-    ? RENFORD_FOOTER_LINKS
-    : RENFORD_FOOTER_LINKS;
+      ? RENFORD_FOOTER_LINKS
+      : RENFORD_FOOTER_LINKS;
 
   const homeHref = isEtablissement
     ? "/dashboard/etablissement/accueil"
