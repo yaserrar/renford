@@ -45,11 +45,49 @@ export const getUrl = (path: string | undefined | null) => {
 export const numberRegex = /^-?\d*\.?\d*$/;
 
 export const formatAmount = (
-  value: number | null | undefined,
+  value: number | string | null | undefined,
   suffix = "€"
 ) => {
   if (value === null || value === undefined) return "-";
-  return `${value}${suffix}`;
+
+  const parsed = typeof value === "string" ? Number(value) : value;
+  if (!Number.isFinite(parsed)) return "-";
+
+  const formatted = new Intl.NumberFormat("fr-FR", {
+    minimumFractionDigits: Number.isInteger(parsed) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(parsed);
+
+  return `${formatted}${suffix}`;
+};
+
+export const formatFrenchDate = (
+  value: Date | string | null | undefined,
+  fallback = "-",
+) => {
+  if (!value) return fallback;
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  }).format(date);
+};
+
+export const formatDurationHours = (
+  value: number | null | undefined,
+  fallback = "-",
+) => {
+  if (!Number.isFinite(value) || !value || value <= 0) return fallback;
+
+  const hours = value as number;
+  return `${hours.toLocaleString("fr-FR", {
+    minimumFractionDigits: Number.isInteger(hours) ? 0 : 1,
+    maximumFractionDigits: 1,
+  })}h`;
 };
 
 export const getInitials = (name?: string | null) => {

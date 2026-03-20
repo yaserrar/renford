@@ -8,6 +8,7 @@ import {
   TYPE_PAIEMENT,
 } from "@/validations/mission";
 import { TYPE_MISSION } from "@/validations/profil-renford";
+import { Etablissement } from "@/types/etablissement";
 
 export type ModeMission = (typeof MODE_MISSION)[number];
 export type StatutMission = (typeof STATUT_MISSION)[number];
@@ -25,7 +26,7 @@ export type PlageHoraireMission = {
   date: Date;
   heureDebut: string;
   heureFin: string;
-  dateCreation: Date;
+  dateCreation?: Date;
 };
 
 export type Mission = {
@@ -42,10 +43,9 @@ export type Mission = {
   etablissementId: string;
   dateDebut: Date;
   dateFin: Date;
-  plageHorairesMission?: PlageHoraireMission[];
   methodeTarification: MethodeTarificationMission;
-  tarif: number | null;
-  pourcentageVariationTarif: number | null;
+  tarif: number | string | null;
+  pourcentageVariationTarif: number | string | null;
   typePaiement: TypePaiementMission;
   titulaireCarteBancaire: string | null;
   numeroCarteBancaire: string | null;
@@ -58,15 +58,18 @@ export type Mission = {
   BICCompteBancaire: string | null;
   autorisationPrelevement: boolean;
   dateAutorisationPrelevement: Date | null;
+  dateCreation?: Date;
+  dateMiseAJour?: Date;
 };
 
-export type MissionSimple = Pick<
-  Mission,
-  | "id"
-  | "statut"
-  | "modeMission"
-  | "discipline"
-  | "dateDebut"
-  | "dateFin"
-  | "typePaiement"
->;
+export type MissionEtablissement = Mission & {
+  PlageHoraireMission?: PlageHoraireMission[];
+  etablissement?: Etablissement;
+
+  totalHours?: number;
+};
+
+export type EtablissementMissionsTab =
+  | "en-recherche"
+  | "confirmees"
+  | "terminees";

@@ -38,6 +38,8 @@ export const METHODE_TARIFICATION = ['horaire', 'journee', 'demi_journee'] as co
 
 export const TYPE_PAIEMENT = ['carte_bancaire', 'prelevement_sepa'] as const;
 
+export const ETABLISSEMENT_MISSIONS_TAB = ['en-recherche', 'confirmees', 'terminees'] as const;
+
 export const POURCENTAGE_VARIATION_TARIF_OPTIONS = [10, 20, 50] as const;
 
 const parseDateField = (value: unknown) => {
@@ -217,6 +219,15 @@ export const missionIdParamsSchema = z.object({
   missionId: z.string().uuid("L'identifiant de mission est invalide"),
 });
 
+export const getEtablissementMissionsQuerySchema = z.object({
+  tab: z.enum(ETABLISSEMENT_MISSIONS_TAB, {
+    required_error: 'Veuillez préciser un onglet de mission valide',
+  }),
+});
+
 export type CreateMissionSchema = z.infer<typeof createMissionSchema>;
 export type FinalizeMissionPaymentSchema = z.infer<typeof finalizeMissionPaymentSchema>;
 export type MissionIdParamsSchema = z.infer<typeof missionIdParamsSchema>;
+export type GetEtablissementMissionsQuerySchema = z.infer<
+  typeof getEtablissementMissionsQuerySchema
+>;

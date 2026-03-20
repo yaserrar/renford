@@ -584,6 +584,11 @@ model Mission {
     autorisationPrelevement     Boolean   @default(false) // Autorisation de prélèvement SEPA (pour paiement par prélèvement SEPA)
     dateAutorisationPrelevement DateTime? // Date à laquelle le prélèvement SEPA a été autorisé (pour paiement par prélèvement SEPA)
 
+
+   // Métadonnées
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt 
+
     @@index([etablissementId])
     @@index([statut])
     @@index([modeMission])

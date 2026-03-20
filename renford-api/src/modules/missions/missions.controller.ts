@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
+import type { StatutMission } from '@prisma/client';
 import prisma from '../../config/prisma';
 import { mail } from '../../config/mail';
 import { env } from '../../config/env';
@@ -6,8 +7,103 @@ import { getMissionDemandeConfirmeeEmail } from '../../config/email-templates';
 import type {
   CreateMissionSchema,
   FinalizeMissionPaymentSchema,
+  GetEtablissementMissionsQuerySchema,
   MissionIdParamsSchema,
-} from './mission.schema';
+} from './missions.schema';
+
+const ETABLISSEMENT_TAB_STATUS_MAP: Record<
+  GetEtablissementMissionsQuerySchema['tab'],
+  StatutMission[]
+> = {
+  'en-recherche': [
+    'en_attente_paiement',
+    'envoyee',
+    'en_cours_de_matching',
+    'proposee',
+    'acceptee',
+  ],
+  confirmees: ['contrat_signe', 'payee', 'en_cours', 'a_valider', 'validee'],
+  terminees: ['terminee', 'archivee'],
+};
+
+export const getEtablissementMissions = async (
+  req: Request<unknown, unknown, unknown, GetEtablissementMissionsQuerySchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    if (req.utilisateur?.typeUtilisateur !== 'etablissement') {
+      return res
+        .status(403)
+        .json({ message: 'Seuls les établissements peuvent consulter ces missions' });
+    }
+
+    const tab = req.query.tab;
+    const statuts = ETABLISSEMENT_TAB_STATUS_MAP[tab];
+
+    const missions = await prisma.mission.findMany({
+      where: {
+        statut: { in: statuts },
+        etablissement: {
+          profilEtablissement: {
+            utilisateurId: userId,
+          },
+        },
+      },
+      include: {
+        etablissement: true,
+        PlageHoraireMission: {
+          orderBy: [{ date: 'asc' }, { heureDebut: 'asc' }],
+        },
+      },
+      orderBy: [{ dateDebut: 'desc' }, { dateCreation: 'desc' }],
+    });
+
+    const missionsWithTotalHours = missions.map((mission) => {
+      const totalHours = mission.PlageHoraireMission.reduce((acc, slot) => {
+        const startParts = slot.heureDebut.split(':').map(Number);
+        const endParts = slot.heureFin.split(':').map(Number);
+        const startHour = startParts[0];
+        const startMinute = startParts[1];
+        const endHour = endParts[0];
+        const endMinute = endParts[1];
+
+        if (
+          startHour === undefined ||
+          startMinute === undefined ||
+          endHour === undefined ||
+          endMinute === undefined
+        ) {
+          return acc;
+        }
+
+        const start = startHour * 60 + startMinute;
+        const end = endHour * 60 + endMinute;
+
+        if (Number.isNaN(start) || Number.isNaN(end) || end <= start) {
+          return acc;
+        }
+
+        return acc + (end - start) / 60;
+      }, 0);
+
+      return {
+        ...mission,
+        totalHours,
+      };
+    });
+
+    return res.json(missionsWithTotalHours);
+  } catch (err) {
+    return next(err);
+  }
+};
 
 export const createMission = async (
   req: Request<unknown, unknown, CreateMissionSchema>,

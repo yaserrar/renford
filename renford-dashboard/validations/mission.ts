@@ -63,6 +63,15 @@ export const METHODE_TARIFICATION_LABELS: Record<
   demi_journee: "Tarification à la demi-journée",
 };
 
+export const METHODE_TARIFICATION_SUFFIXES: Record<
+  (typeof METHODE_TARIFICATION)[number],
+  string
+> = {
+  horaire: "/h",
+  journee: "/jour",
+  demi_journee: "/demi-jour",
+};
+
 export const TYPE_PAIEMENT = ["carte_bancaire", "prelevement_sepa"] as const;
 
 export const TYPE_PAIEMENT_LABELS: Record<
@@ -302,7 +311,7 @@ export const NIVEAU_EXPERIENCE_MISSION_OPTIONS = NIVEAU_EXPERIENCE_MISSION.map(
   (value) => ({
     value,
     label: NIVEAU_EXPERIENCE_MISSION_LABELS[value],
-  })
+  }),
 );
 
 export const MATERIELS_MISSION_OPTIONS = MATERIELS_MISSION.map((value) => ({
@@ -314,7 +323,7 @@ export const METHODE_TARIFICATION_OPTIONS = METHODE_TARIFICATION.map(
   (value) => ({
     value,
     label: METHODE_TARIFICATION_LABELS[value],
-  })
+  }),
 );
 
 const parseDateField = (value: unknown) => {
@@ -367,7 +376,7 @@ export const createMissionStep2Schema = z
       .string()
       .max(
         1000,
-        "Le détail supplémentaire ne peut pas dépasser 1000 caractères"
+        "Le détail supplémentaire ne peut pas dépasser 1000 caractères",
       )
       .optional()
       .or(z.literal("")),
@@ -423,14 +432,14 @@ export const createMissionStep3Schema = z
       z.date({
         required_error: "Veuillez sélectionner une date de début",
         invalid_type_error: "Veuillez sélectionner une date de début valide",
-      })
+      }),
     ),
     dateFin: z.preprocess(
       parseDateField,
       z.date({
         required_error: "Veuillez sélectionner une date de fin",
         invalid_type_error: "Veuillez sélectionner une date de fin valide",
-      })
+      }),
     ),
     plagesHoraires: z
       .array(
@@ -440,7 +449,7 @@ export const createMissionStep3Schema = z
             z.date({
               required_error: "Date de plage horaire requise",
               invalid_type_error: "Veuillez sélectionner une date valide",
-            })
+            }),
           ),
           heureDebut: z
             .string()
@@ -448,7 +457,7 @@ export const createMissionStep3Schema = z
           heureFin: z
             .string()
             .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Format d'heure invalide"),
-        })
+        }),
       )
       .min(1, "Veuillez ajouter au moins une plage horaire"),
     methodeTarification: z.enum(METHODE_TARIFICATION, {
@@ -462,7 +471,7 @@ export const createMissionStep3Schema = z
           invalid_type_error: "Veuillez saisir un tarif valide",
         })
         .positive("Le tarif doit être supérieur à 0")
-        .max(99_999_999.99, "Le tarif ne peut pas dépasser 99 999 999,99")
+        .max(99_999_999.99, "Le tarif ne peut pas dépasser 99 999 999,99"),
     ),
     pourcentageVariationTarif: z.coerce
       .number({
@@ -473,7 +482,7 @@ export const createMissionStep3Schema = z
           POURCENTAGE_VARIATION_TARIF_OPTIONS.includes(value as 10 | 20 | 50),
         {
           message: "Veuillez sélectionner un pourcentage de variation valide",
-        }
+        },
       ),
   })
   .superRefine((values, ctx) => {
@@ -514,7 +523,7 @@ export const createMissionPayloadSchema = createMissionFormSchema.transform(
   (values) => ({
     ...values,
     description: values.detailMission?.trim() ? values.detailMission : null,
-  })
+  }),
 );
 
 const cardPaymentSchema = z.object({
@@ -526,7 +535,7 @@ const cardPaymentSchema = z.object({
     .string({ required_error: "Le numéro de carte est requis" })
     .regex(
       /^\d{13,19}$/,
-      "Le numéro de carte doit contenir entre 13 et 19 chiffres"
+      "Le numéro de carte doit contenir entre 13 et 19 chiffres",
     ),
   dateExpirationCarte: z
     .string({ required_error: "La date d'expiration est requise" })
@@ -559,11 +568,11 @@ const sepaPaymentSchema = z.object({
 
 export const finalizeMissionPaymentSchema = z.discriminatedUnion(
   "typePaiement",
-  [cardPaymentSchema, sepaPaymentSchema]
+  [cardPaymentSchema, sepaPaymentSchema],
 );
 
 export const getSpecialitesOptionsByDiscipline = (
-  discipline: (typeof DISCIPLINE_MISSION)[number] | undefined
+  discipline: (typeof DISCIPLINE_MISSION)[number] | undefined,
 ) => {
   if (!discipline) return [];
 
