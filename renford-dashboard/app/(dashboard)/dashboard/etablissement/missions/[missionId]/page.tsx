@@ -17,26 +17,16 @@ import { H2 } from "@/components/ui/typography";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEtablissementMissionsByTab } from "@/hooks/mission";
 import {
-  cn,
   formatAmount,
   formatDurationHours,
   formatFrenchDate,
 } from "@/lib/utils";
-import { StatutMission } from "@/types/mission";
 import {
   DISCIPLINE_MISSION_LABELS,
   MATERIELS_MISSION_LABELS,
   METHODE_TARIFICATION_SUFFIXES,
   NIVEAU_EXPERIENCE_MISSION_LABELS,
 } from "@/validations/mission";
-
-const EN_RECHERCHE_STATUSES: StatutMission[] = [
-  "en_attente_paiement",
-  "envoyee",
-  "en_cours_de_matching",
-  "proposee",
-  "acceptee",
-];
 
 function CenterState({
   title,
@@ -162,8 +152,6 @@ export default function EtablissementMissionDetailsPage() {
   const serviceFees = totalHt * 0.03;
   const totalTtc = totalHt + serviceFees;
 
-  const isEnRecherche = EN_RECHERCHE_STATUSES.includes(mission.statut);
-
   const horaires = (mission.PlageHoraireMission ?? []).map((slot) => {
     const weekdayDate = new Intl.DateTimeFormat("fr-FR", {
       weekday: "long",
@@ -274,13 +262,7 @@ export default function EtablissementMissionDetailsPage() {
 
               <section className="rounded-3xl border border-border bg-white px-4 py-4 md:px-5 md:py-5">
                 <div className="mb-5 space-y-2">
-                  <MissionStatusBadge
-                    status={mission.statut}
-                    className={cn(
-                      "px-3 py-1 text-sm",
-                      isEnRecherche && "bg-primary/30 text-primary-dark",
-                    )}
-                  />
+                  <MissionStatusBadge status={mission.statut} />
                   <h3 className="text-2xl font-semibold text-foreground">
                     {missionTitle}
                   </h3>
