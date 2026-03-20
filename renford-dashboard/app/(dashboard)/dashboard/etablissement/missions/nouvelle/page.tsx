@@ -49,6 +49,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -170,6 +171,7 @@ function normalizeDate(value: unknown): Date | undefined {
 }
 
 export default function NouvelleMissionPage() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [historySearch, setHistorySearch] = useState("");
   const [historyFilter, setHistoryFilter] = useState<string>("Tout");
@@ -300,17 +302,17 @@ export default function NouvelleMissionPage() {
 
   const selectedEtablissementLabel =
     etablissementOptions.find(
-      (option) => option.value === selectedEtablissementId
+      (option) => option.value === selectedEtablissementId,
     )?.label || "—";
 
   const selectedNiveauExperienceLabel =
     NIVEAU_EXPERIENCE_MISSION_OPTIONS.find(
-      (option) => option.value === selectedNiveauExperience
+      (option) => option.value === selectedNiveauExperience,
     )?.label || "—";
 
   const selectedSpecialitePrincipaleLabel =
     specialitesOptions.find(
-      (option) => option.value === selectedSpecialitePrincipale
+      (option) => option.value === selectedSpecialitePrincipale,
     )?.label || "—";
 
   const selectedMaterielsLabels =
@@ -318,15 +320,15 @@ export default function NouvelleMissionPage() {
       ? selectedMaterielsRequis.map(
           (materiel) =>
             MATERIELS_MISSION_OPTIONS.find(
-              (option) => option.value === materiel
-            )?.label || materiel
+              (option) => option.value === materiel,
+            )?.label || materiel,
         )
       : ["—"];
 
   const dateRangeLabel =
     selectedDateDebut && selectedDateFin
       ? `Du ${formatFrenchDate(selectedDateDebut)} au ${formatFrenchDate(
-          selectedDateFin
+          selectedDateFin,
         )}`
       : "—";
 
@@ -341,15 +343,15 @@ export default function NouvelleMissionPage() {
     selectedMethodeTarification === "journee"
       ? "jour"
       : selectedMethodeTarification === "demi_journee"
-      ? "demi-journée"
-      : "heure";
+        ? "demi-journée"
+        : "heure";
 
   const variationTarifLabelLastWord =
     selectedMethodeTarification === "journee"
       ? "journalier"
       : selectedMethodeTarification === "demi_journee"
-      ? "demi-journée"
-      : "horaire";
+        ? "demi-journée"
+        : "horaire";
 
   const hourlyUnits = (selectedPlagesHoraires || []).reduce((total, plage) => {
     const startMinutes = parseTimeToMinutes(plage.heureDebut);
@@ -361,7 +363,7 @@ export default function NouvelleMissionPage() {
   const uniquePlageDatesCount = new Set(
     (selectedPlagesHoraires || [])
       .map((plage) => normalizeDate(plage.date)?.toDateString())
-      .filter((value): value is string => Boolean(value))
+      .filter((value): value is string => Boolean(value)),
   ).size;
 
   const fallbackDayCount =
@@ -370,8 +372,8 @@ export default function NouvelleMissionPage() {
           1,
           Math.floor(
             (selectedDateFin.getTime() - selectedDateDebut.getTime()) /
-              (1000 * 60 * 60 * 24)
-          ) + 1
+              (1000 * 60 * 60 * 24),
+          ) + 1,
         )
       : 1;
 
@@ -379,8 +381,8 @@ export default function NouvelleMissionPage() {
     selectedMethodeTarification === "horaire"
       ? Math.max(hourlyUnits, 1)
       : selectedMethodeTarification === "journee"
-      ? Math.max(uniquePlageDatesCount, fallbackDayCount)
-      : Math.max((selectedPlagesHoraires || []).length, 1);
+        ? Math.max(uniquePlageDatesCount, fallbackDayCount)
+        : Math.max((selectedPlagesHoraires || []).length, 1);
 
   const missionSubtotalHT = hasValidTarif ? selectedTarif * pricingUnits : 0;
   const serviceFeesHT = missionSubtotalHT > 0 ? 100 : 0;
@@ -421,7 +423,7 @@ export default function NouvelleMissionPage() {
 
   const handleCreateMission = async () => {
     const payload = createMissionPayloadSchema.parse(
-      getValues()
+      getValues(),
     ) as CreateMissionPayloadSchema;
 
     const createdMission = await createMissionMutation.mutateAsync(payload);
@@ -497,7 +499,7 @@ export default function NouvelleMissionPage() {
       data,
     });
 
-    setCurrentStep(LAST_STEP);
+    router.push("/dashboard/etablissement/missions");
   };
 
   const handlePaymentConfirm = async () => {
@@ -657,7 +659,7 @@ export default function NouvelleMissionPage() {
                               "flex cursor-pointer gap-4 rounded-3xl border p-6 transition items-center",
                               isSelected
                                 ? "border-secondary bg-secondary/5"
-                                : "border-input hover:border-gray-300"
+                                : "border-input hover:border-gray-300",
                             )}
                           >
                             <RadioGroupItem
@@ -707,7 +709,7 @@ export default function NouvelleMissionPage() {
                           field.onChange(value);
                           const nextSpecialites =
                             getSpecialitesOptionsByDiscipline(
-                              value as CreateMissionFormInput["discipline"]
+                              value as CreateMissionFormInput["discipline"],
                             );
                           setValue("specialitesSecondaires", [], {
                             shouldDirty: true,
@@ -721,7 +723,7 @@ export default function NouvelleMissionPage() {
                               {
                                 shouldDirty: true,
                                 shouldValidate: true,
-                              }
+                              },
                             );
                           }
                         }}
@@ -778,7 +780,7 @@ export default function NouvelleMissionPage() {
                         {specialitesOptions.map((option) => {
                           const active =
                             selectedSpecialitesSecondaires.includes(
-                              option.value
+                              option.value,
                             );
 
                           return (
@@ -788,7 +790,7 @@ export default function NouvelleMissionPage() {
                               onClick={() => {
                                 const nextValues = active
                                   ? selectedSpecialitesSecondaires.filter(
-                                      (value) => value !== option.value
+                                      (value) => value !== option.value,
                                     )
                                   : [
                                       ...selectedSpecialitesSecondaires,
@@ -1154,7 +1156,7 @@ export default function NouvelleMissionPage() {
                         onChange={(event) => {
                           const rawValue = event.target.value;
                           field.onChange(
-                            rawValue === "" ? undefined : Number(rawValue)
+                            rawValue === "" ? undefined : Number(rawValue),
                           );
                         }}
                         placeholder="Ex: 45"
@@ -1165,7 +1167,7 @@ export default function NouvelleMissionPage() {
                 </div>
 
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center justify-between gap-2 mb-2">
                     <Label htmlFor="pourcentageVariationTarif" className="mb-0">
                       {`Pourcentage de variation possible sur le tarif ${variationTarifLabelLastWord}`}
                     </Label>
@@ -1222,13 +1224,13 @@ export default function NouvelleMissionPage() {
                                 {hasValidTarif && (
                                   <span className="text-base text-green-600 leading-tight">
                                     {formatEuroAmount(
-                                      selectedTarif * (1 + percentage / 100)
+                                      selectedTarif * (1 + percentage / 100),
                                     )}
                                   </span>
                                 )}
                               </Button>
                             );
-                          }
+                          },
                         )}
                       </div>
                     )}
@@ -1303,7 +1305,7 @@ export default function NouvelleMissionPage() {
                     {selectedDiscipline
                       ? `${
                           DISCIPLINE_MISSION_OPTIONS.find(
-                            (option) => option.value === selectedDiscipline
+                            (option) => option.value === selectedDiscipline,
                           )?.label || ""
                         } • ${selectedSpecialitePrincipaleLabel}`
                       : "—"}
@@ -1373,7 +1375,7 @@ export default function NouvelleMissionPage() {
                     <p>
                       {hasValidTarif
                         ? `${formatEuroAmount(
-                            selectedTarif
+                            selectedTarif,
                           )}/${tariffUnitLabel} HT`
                         : "—"}
                     </p>
@@ -1464,7 +1466,7 @@ export default function NouvelleMissionPage() {
                                   "flex cursor-pointer gap-4 rounded-3xl border p-5 transition items-center",
                                   isSelected
                                     ? "border-secondary bg-secondary/5"
-                                    : "border-input hover:border-gray-300"
+                                    : "border-input hover:border-gray-300",
                                 )}
                               >
                                 <RadioGroupItem
@@ -1491,7 +1493,7 @@ export default function NouvelleMissionPage() {
                                 </div>
                               </Label>
                             );
-                          }
+                          },
                         )}
                       </RadioGroup>
                     )}
@@ -1541,7 +1543,7 @@ export default function NouvelleMissionPage() {
                             value={field.value || ""}
                             onChange={(event) =>
                               field.onChange(
-                                event.target.value.replace(/\s+/g, "")
+                                event.target.value.replace(/\s+/g, ""),
                               )
                             }
                             placeholder="FR76 0000 0000 0000 0000 000"
@@ -1662,7 +1664,7 @@ export default function NouvelleMissionPage() {
                               field.onChange(
                                 event.target.value
                                   .toUpperCase()
-                                  .replace(/\s+/g, "")
+                                  .replace(/\s+/g, ""),
                               )
                             }
                             placeholder="FR7630006000011234567890189"
@@ -1687,7 +1689,7 @@ export default function NouvelleMissionPage() {
                               field.onChange(
                                 event.target.value
                                   .toUpperCase()
-                                  .replace(/\s+/g, "")
+                                  .replace(/\s+/g, ""),
                               )
                             }
                             placeholder="AGRIFRPP"

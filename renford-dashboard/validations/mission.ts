@@ -473,17 +473,22 @@ export const createMissionStep3Schema = z
         .positive("Le tarif doit être supérieur à 0")
         .max(99_999_999.99, "Le tarif ne peut pas dépasser 99 999 999,99"),
     ),
-    pourcentageVariationTarif: z.coerce
-      .number({
-        required_error: "Veuillez sélectionner un pourcentage de variation",
-      })
-      .refine(
-        (value) =>
-          POURCENTAGE_VARIATION_TARIF_OPTIONS.includes(value as 10 | 20 | 50),
-        {
-          message: "Veuillez sélectionner un pourcentage de variation valide",
-        },
-      ),
+    pourcentageVariationTarif: z.preprocess(
+      parseNumberField,
+      z
+        .number({
+          required_error: "Veuillez sélectionner un pourcentage de variation",
+          invalid_type_error:
+            "Veuillez sélectionner un pourcentage de variation valide",
+        })
+        .refine(
+          (value) =>
+            POURCENTAGE_VARIATION_TARIF_OPTIONS.includes(value as 10 | 20 | 50),
+          {
+            message: "Veuillez sélectionner un pourcentage de variation valide",
+          },
+        ),
+    ),
   })
   .superRefine((values, ctx) => {
     if (values.dateFin < values.dateDebut) {

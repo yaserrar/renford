@@ -42,6 +42,117 @@ export const ETABLISSEMENT_MISSIONS_TAB = ['en-recherche', 'confirmees', 'termin
 
 export const POURCENTAGE_VARIATION_TARIF_OPTIONS = [10, 20, 50] as const;
 
+type TypeMission = (typeof TYPE_MISSION)[number];
+
+export const TYPE_MISSION_LABELS: Record<TypeMission, string> = {
+  matwork: 'Matwork',
+  reformer: 'Reformer',
+  hot_pilates: 'Hot Pilates',
+  cadillac: 'Cadillac',
+  chair_wunda_chair: 'Chair (Wunda Chair)',
+  petits_materiels: 'Petits materiels',
+  pilates_prenatal_postnatal: 'Pilates prenatal / postnatal',
+  lagree_fitness: 'Lagree Fitness',
+  hatha_yoga: 'Hatha Yoga',
+  vinyasa_yoga: 'Vinyasa Yoga',
+  ashtanga_yoga: 'Ashtanga Yoga',
+  yin_yoga: 'Yin Yoga',
+  hot_yoga: 'Hot Yoga',
+  kundalini_yoga: 'Kundalini Yoga',
+  yoga_prenatal_postnatal: 'Yoga prenatal / postnatal',
+  yoga_nidra: 'Yoga Nidra',
+  yoga_flow: 'Yoga Flow',
+  qi_gong_tai_chi: 'Qi Gong / Tai Chi',
+  caf_cuisses_abdos_fessiers: 'CAF (Cuisses Abdos Fessiers)',
+  lia_low_impact_aerobic: 'LIA (Low Impact Aerobic)',
+  step: 'Step',
+  hiit: 'HIIT',
+  circuit_training: 'Circuit training',
+  cross_training_crossfit: 'Cross Training / CrossFit',
+  trx: 'TRX',
+  biking_spinning: 'Biking / Spinning',
+  body_barre: 'Body barre',
+  stretching_mobilite: 'Stretching / Mobilite',
+  cardio_boxing: 'Cardio Boxing',
+  bootcamp: 'Bootcamp',
+  gym_posturale_dos: 'Gym posturale / dos',
+  ems_electrostimulation: 'EMS (Electrostimulation)',
+  preparation_physique_generale: 'Preparation Physique Generale',
+  body_pump: 'Body Pump',
+  body_attack: 'Body Attack',
+  body_combat: 'Body Combat',
+  body_step: 'Body Step',
+  body_balance: 'Body Balance',
+  body_jam: 'Body Jam',
+  rpm: 'RPM',
+  zumba_classique: 'Zumba classique',
+  zumba_kids: 'Zumba Kids',
+  strong_toning: 'Strong Toning',
+  zumba_step: 'Zumba Step',
+  zumba_gold: 'Zumba Gold',
+  zumba_sentoa: 'Zumba Sentoa',
+  zumba_in_the_circuit: 'Zumba In The Circuit',
+  zumba_strong: 'Zumba Strong',
+  aqua_zumba: 'Aqua Zumba',
+  educateur_sportif_multisport: 'Educateur sportif multisport',
+  animateur_sportif_enfants_ados: 'Animateur sportif (enfants / ados)',
+  intervenant_scolaire_eps: 'Intervenant scolaire / EPS',
+  animateur_sport_sante_seniors_apa: 'Animateur sport sante / seniors / APA',
+  animateur_aquatique: 'Animateur aquatique',
+  hote_hotesse_d_accueil_sportif: "Hote / Hotesse d'accueil sportif",
+  encadrement_en_salle_bloc_voie: 'Encadrement en salle (bloc / voie)',
+  encadrement_en_milieu_naturel: 'Encadrement en milieu naturel',
+  ouvreur_de_voies_blocs: 'Ouvreur de voies / blocs',
+  encadrement_escalade_performance: 'Encadrement Escalade (performance)',
+  cours_enfants_ados: 'Cours enfants / ados',
+  initiation_loisirs_adultes: 'Initiation / loisirs adultes',
+  boxe_anglaise: 'Boxe anglaise',
+  boxe_francaise_savate: 'Boxe francaise / Savate',
+  kickboxing: 'Kickboxing',
+  karate: 'Karate',
+  judo: 'Judo',
+  mma: 'MMA',
+  muay_thai: 'Muay Thai',
+  boxe_educative_enfants_ados: 'Boxe educative (enfants / ados)',
+  cardio_boxe_boxe_fitness: 'Cardio Boxe / Boxe fitness',
+  coaching_boxe_loisir_ou_competiteur: 'Coaching boxe (loisir ou competiteur)',
+  danse_classique: 'Danse classique',
+  danse_contemporaine: 'Danse contemporaine',
+  jazz_modern_jazz: 'Jazz / Modern Jazz',
+  hip_hop_street_dance: 'Hip Hop / Street Dance',
+  ragga_dancehall: 'Ragga Dancehall',
+  danses_latines_salsa_bachata: 'Danses latines (salsa, bachata...)',
+  danse_africaine: 'Danse africaine',
+  danse_enfants: 'Danse enfants',
+  barre_au_sol: 'Barre au sol',
+  massages_bien_etre_sportifs: 'Massages bien-etre / sportifs',
+  kinesitherapie_sportive_hors_acte_medical: 'Kinesitherapie sportive (hors acte medical)',
+  massage_deep_tissue_recuperation: 'Massage deep tissue / recuperation',
+  reflexologie: 'Reflexologie',
+  relaxation_coherence_cardiaque: 'Relaxation / coherence cardiaque',
+  sonotherapie_bains_sonores: 'Sonotherapie / Bains sonores',
+  sophrologie: 'Sophrologie',
+  meditation_pleine_conscience: 'Meditation / pleine conscience',
+  stretch_and_mobilite_douce: 'Stretch & mobilite douce',
+  cryotherapie_pressotherapie: 'Cryotherapie / pressotherapie',
+  nutrition_dietetique: 'Nutrition / dietetique',
+  preparation_mentale: 'Preparation mentale',
+};
+
+export const getTypeMissionLabel = (specialite: string): string => {
+  const label = TYPE_MISSION_LABELS[specialite as TypeMission];
+
+  if (label) {
+    return label;
+  }
+
+  return specialite
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part[0]?.toUpperCase() + part.slice(1))
+    .join(' ');
+};
+
 const parseDateField = (value: unknown) => {
   if (value === '' || value === null || value === undefined) return undefined;
 
@@ -141,11 +252,17 @@ export const createMissionSchema = z
         .positive('Le tarif doit être supérieur à 0')
         .max(99_999_999.99, 'Le tarif ne peut pas dépasser 99 999 999,99'),
     ),
-    pourcentageVariationTarif: z.coerce
-      .number({ required_error: 'Veuillez sélectionner un pourcentage de variation' })
-      .refine((value) => POURCENTAGE_VARIATION_TARIF_OPTIONS.includes(value as 10 | 20 | 50), {
-        message: 'Le pourcentage de variation est invalide',
-      }),
+    pourcentageVariationTarif: z.preprocess(
+      parseNumberField,
+      z
+        .number({
+          required_error: 'Veuillez sélectionner un pourcentage de variation',
+          invalid_type_error: 'Le pourcentage de variation est invalide',
+        })
+        .refine((value) => POURCENTAGE_VARIATION_TARIF_OPTIONS.includes(value as 10 | 20 | 50), {
+          message: 'Le pourcentage de variation est invalide',
+        }),
+    ),
   })
   .superRefine((values, ctx) => {
     if (values.dateFin < values.dateDebut) {

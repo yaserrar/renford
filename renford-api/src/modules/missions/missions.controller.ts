@@ -4,6 +4,7 @@ import prisma from '../../config/prisma';
 import { mail } from '../../config/mail';
 import { env } from '../../config/env';
 import { getMissionDemandeConfirmeeEmail } from '../../config/email-templates';
+import { getTypeMissionLabel } from './missions.schema';
 import type {
   CreateMissionSchema,
   FinalizeMissionPaymentSchema,
@@ -298,7 +299,7 @@ export const finalizeMissionPayment = async (
 
       const emailPayload = getMissionDemandeConfirmeeEmail({
         nomComplet: `${user.prenom} ${user.nom}`.trim(),
-        specialiteLabel: mission.specialitePrincipale,
+        specialiteLabel: getTypeMissionLabel(mission.specialitePrincipale),
         dashboardUrl,
       });
 
