@@ -77,7 +77,7 @@ export default function Etape1Page() {
 
         <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-4">
           <Button type="button" variant="outline" onClick={() => router.back()}>
-            Annuler
+            Retour
           </Button>
           <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}

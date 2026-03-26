@@ -15,6 +15,11 @@ import {
   OnboardingRenfordProfilSchema,
 } from "@/validations/onboarding";
 import {
+  DISCIPLINE_MISSION,
+  DISCIPLINE_MISSION_LABELS,
+  SPECIALITES_BY_DISCIPLINE,
+} from "@/validations/mission";
+import {
   TYPE_MISSION,
   TYPE_MISSION_LABELS,
 } from "@/validations/profil-renford";
@@ -22,7 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Image as ImageIcon, Loader2, Trash } from "lucide-react";
 import ImageUploadDialog from "@/components/common/image-upload-dialog";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { OnboardingCard } from "../-components";
 import { getUrl } from "@/lib/utils";
@@ -33,7 +38,7 @@ export default function Etape4RenfordPage() {
   const { mutate, isPending } = useUpdateRenfordProfil();
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
   const [avatarChemin, setAvatarChemin] = useState<string | null>(
-    user?.profilRenford?.avatarChemin || null
+    user?.profilRenford?.avatarChemin || null,
   );
 
   const {
@@ -70,6 +75,33 @@ export default function Etape4RenfordPage() {
       },
     });
   };
+
+  const typeMissionOptions = useMemo(() => {
+    const disciplineBySpecialite = new Map<string, string>();
+
+    DISCIPLINE_MISSION.forEach((discipline) => {
+      SPECIALITES_BY_DISCIPLINE[discipline].forEach((specialite) => {
+        disciplineBySpecialite.set(
+          specialite,
+          DISCIPLINE_MISSION_LABELS[discipline],
+        );
+      });
+    });
+
+    return TYPE_MISSION.map((type) => {
+      const disciplineLabel = disciplineBySpecialite.get(type);
+      const typeLabel = TYPE_MISSION_LABELS[type];
+
+      return {
+        value: type,
+        label: disciplineLabel
+          ? `${disciplineLabel} - ${typeLabel}`
+          : typeLabel,
+      };
+    });
+  }, []);
+
+  console.log(avatarChemin);
 
   return (
     <OnboardingCard
@@ -160,10 +192,7 @@ export default function Etape4RenfordPage() {
                 multiple
                 value={field.value || []}
                 onValueChange={(value) => field.onChange(value as string[])}
-                options={TYPE_MISSION.map((type) => ({
-                  value: type,
-                  label: TYPE_MISSION_LABELS[type],
-                }))}
+                options={typeMissionOptions}
                 placeholder="Sélectionner un ou plusieurs types"
                 searchPlaceholder="Rechercher un type de mission"
                 emptyMessage="Aucun type trouvé"

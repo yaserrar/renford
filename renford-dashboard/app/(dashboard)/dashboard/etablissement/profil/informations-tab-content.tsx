@@ -68,7 +68,7 @@ export default function InformationsTabContent({
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="bg-white rounded-2xl border border-input p-6 space-y-4">
         <div className="space-y-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <h3 className="text-lg font-semibold">Informations personnelles</h3>
+          <h3 className="text-lg font-semibold">Informations établissement</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
             <div>
@@ -86,7 +86,6 @@ export default function InformationsTabContent({
               <Input
                 id="siret"
                 placeholder="12345678901234"
-                maxLength={14}
                 {...register("siret")}
               />
               <ErrorMessage>{errors.siret?.message}</ErrorMessage>

@@ -14,10 +14,8 @@ import {
   OnboardingRenfordBancaireSchema,
 } from "@/validations/onboarding";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileText, Loader2, X } from "lucide-react";
-import DocumentUploadDialog from "@/components/common/document-upload-dialog";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { OnboardingCard } from "../-components";
 
@@ -26,46 +24,17 @@ export default function Etape6RenfordPage() {
   const { data: user } = useCurrentUser();
   const { mutate, isPending } = useUpdateRenfordBancaire();
   const { mutate: skipStep, isPending: isSkipping } = useSkipRenfordStep();
-  const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
 
   const {
     register,
     handleSubmit,
-    watch,
-    setValue,
     formState: { errors, isDirty },
   } = useForm<OnboardingRenfordBancaireSchema>({
     resolver: zodResolver(onboardingRenfordBancaireSchema),
     defaultValues: {
       iban: user?.profilRenford?.iban || "",
-      carteIdentiteChemin: user?.profilRenford?.carteIdentiteChemin || "",
     },
   });
-
-  const carteIdentite = watch("carteIdentiteChemin");
-  const carteIdentiteFileName = useMemo(
-    () => (carteIdentite ? carteIdentite.split("/").pop() : null),
-    [carteIdentite]
-  );
-
-  const handleDocumentUploaded = useCallback(
-    (path: string) => {
-      setValue("carteIdentiteChemin", path, {
-        shouldDirty: true,
-        shouldTouch: true,
-        shouldValidate: true,
-      });
-    },
-    [setValue]
-  );
-
-  const removeFile = useCallback(() => {
-    setValue("carteIdentiteChemin", "", {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true,
-    });
-  }, [setValue]);
 
   const onSubmit = (data: OnboardingRenfordBancaireSchema) => {
     mutate(data, {
@@ -91,11 +60,11 @@ export default function Etape6RenfordPage() {
         title="Informations bancaires"
         subtitle="Pour recevoir vos paiements"
         description="Renford s’appuie sur Stripe pour la gestion, la sécurisation et la
-          vérification de vos informations bancaires. Vos données (IBAN et
-          justificatifs d’identité) sont transmises de manière chiffrée à
-          Stripe, qui les traite conformément aux obligations légales (KYC) et
+          vérification de vos informations bancaires. Vos données (IBAN)
+          sont transmises de manière chiffrée à Stripe, qui les traite
+          conformément aux obligations légales (KYC) et
           aux normes de sécurité internationales. Renford n’accède jamais à vos
-          documents ou données bancaires. En continuant, vous acceptez le
+          données bancaires. En continuant, vous acceptez le
           traitement de ces informations par Stripe conformément à sa politique
           de confidentialité."
       >
@@ -108,44 +77,6 @@ export default function Etape6RenfordPage() {
               {...register("iban")}
             />
             <ErrorMessage>{errors.iban?.message}</ErrorMessage>
-          </div>
-
-          <div>
-            <Label>Carte d&apos;identité*</Label>
-
-            {Boolean(carteIdentite) ? (
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <FileText className="h-6 w-6 text-gray-400" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Document téléchargé</p>
-                  <p className="text-xs text-gray-500">
-                    {carteIdentiteFileName || "Cliquez pour modifier"}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={removeFile}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="w-full p-6 flex flex-col justify-center items-center gap-2 border-2 border-dashed bg-gray-50 rounded-xl">
-                <p className="text-sm text-gray-500 text-center">
-                  Ajoutez votre carte d&apos;identité (PDF, JPG, PNG)
-                </p>
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={() => setDocumentDialogOpen(true)}
-                >
-                  Télécharger un document
-                </Button>
-              </div>
-            )}
-            <ErrorMessage>{errors.carteIdentiteChemin?.message}</ErrorMessage>
           </div>
 
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 pt-4">
@@ -176,16 +107,6 @@ export default function Etape6RenfordPage() {
             </div>
           </div>
         </form>
-
-        <DocumentUploadDialog
-          open={documentDialogOpen}
-          setOpen={setDocumentDialogOpen}
-          setFileValue={handleDocumentUploaded}
-          path="documents/identite"
-          accept=".pdf,.jpg,.jpeg,.png"
-          maxSizeMB={5}
-          name="carte-identite"
-        />
       </OnboardingCard>
     </>
   );

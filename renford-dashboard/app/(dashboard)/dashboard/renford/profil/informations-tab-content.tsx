@@ -67,7 +67,7 @@ export default function InformationsTabContent({
   const attestationVigilance = watch("attestationVigilanceChemin");
   const attestationFileName = useMemo(
     () => (attestationVigilance ? attestationVigilance.split("/").pop() : null),
-    [attestationVigilance]
+    [attestationVigilance],
   );
 
   const handleDocumentUploaded = useCallback(
@@ -78,7 +78,7 @@ export default function InformationsTabContent({
         shouldValidate: true,
       });
     },
-    [setValue]
+    [setValue],
   );
 
   const onSubmit = (data: UpdateProfilRenfordIdentiteSchema) => {
@@ -98,7 +98,6 @@ export default function InformationsTabContent({
                 <Input
                   id="siret"
                   placeholder="12345678901234"
-                  maxLength={14}
                   disabled={siretEnCoursObtention}
                   {...register("siret")}
                 />

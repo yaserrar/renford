@@ -97,8 +97,8 @@ export default function Etape4Page() {
   return (
     <OnboardingCard
       currentStep={4}
-      title="Invitez vos Renfords préférés"
-      subtitle="Vos coachs favoris seront notifiés en premier - à tarif préférentiel - dès qu'une mission correspond à leur profil."
+      title="Invitez votre équipe actuelle"
+      subtitle="Ajoutez vos coachs habituels : ils seront notifiés en priorité lorsqu’une mission correspond à leur profil. Nous complétons si besoin avec notre communauté."
     >
       <div className="space-y-6">
         {/* Liste des favoris ajoutés */}
@@ -236,7 +236,7 @@ export default function Etape4Page() {
               variant="outline"
               onClick={() => router.push("/onboarding/etape-3")}
             >
-              Annuler
+              Retour
             </Button>
             <Button onClick={onSubmit} disabled={isPending}>
               {isPending && <Loader2 className="animate-spin" />}

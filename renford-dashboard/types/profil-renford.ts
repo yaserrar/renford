@@ -48,7 +48,6 @@ export type ProfilRenford = {
   statutCertification: StatutCertification;
   dateCertification: Date | null;
   // Documents (étape 5 et 6)
-  carteIdentiteChemin: string | null;
   justificatifCarteProfessionnelleChemin: string | null;
   // Expérience (étape 5)
   niveauExperience: NiveauExperience | null;

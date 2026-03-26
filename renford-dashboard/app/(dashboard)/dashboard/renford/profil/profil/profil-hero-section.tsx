@@ -65,7 +65,7 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
       />
 
       <div className="bg-white rounded-3xl border border-input overflow-hidden">
-        <div className="relative h-72 w-full bg-gray-100 overflow-hidden">
+        <div className="relative h-72 w-full bg-gray-100 overflow-hidden group/cover">
           {profil?.imageCouvertureChemin ? (
             <Image
               src={getUrl(profil.imageCouvertureChemin)}
@@ -82,7 +82,7 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
               type="button"
               variant="outline"
               size="icon"
-              className="opacity-70 hover:opacity-100 transition-opacity"
+              className="opacity-0 pointer-events-none transition-opacity duration-200 group-hover/cover:opacity-100 group-hover/cover:pointer-events-auto group-focus-within/cover:opacity-100 group-focus-within/cover:pointer-events-auto"
               onClick={() => setCoverDialogOpen(true)}
             >
               <ImageUpIcon className="h-4 w-4" />
@@ -92,7 +92,7 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
 
         <div className="p-6 border-b border-input flex items-center gap-4 justify-between -mt-10">
           <div className="flex items-end gap-4">
-            <div className="relative">
+            <div className="relative group/avatar">
               <Avatar className="h-26 w-26 border">
                 <AvatarImage
                   src={
@@ -109,7 +109,7 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
                 type="button"
                 variant="outline"
                 size="icon"
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-70 hover:opacity-100 transition-opacity h-8 w-8 [&_svg]:size-3"
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-8 w-8 [&_svg]:size-3 opacity-0 pointer-events-none transition-opacity duration-200 group-hover/avatar:opacity-100 group-hover/avatar:pointer-events-auto group-focus-within/avatar:opacity-100 group-focus-within/avatar:pointer-events-auto"
                 onClick={() => setAvatarDialogOpen(true)}
               >
                 <ImageUpIcon />

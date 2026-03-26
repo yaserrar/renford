@@ -690,13 +690,12 @@ export const updateRenfordBancaire = async (
       return res.status(401).json({ message: 'Utilisateur non authentifié' });
     }
 
-    const { iban, carteIdentiteChemin } = req.body;
+    const { iban } = req.body;
 
     const profilRenford = await prisma.profilRenford.update({
       where: { utilisateurId: userId },
       data: {
         iban,
-        carteIdentiteChemin,
       },
     });
 

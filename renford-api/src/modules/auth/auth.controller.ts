@@ -18,6 +18,8 @@ import {
   getSignupVerificationCodeEmail,
 } from '../../config/email-templates';
 
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+
 // ============================================================================
 // POST /auth/signup - Inscription simple (sans type utilisateur)
 // ============================================================================
@@ -27,7 +29,8 @@ export const signup = async (
   next: NextFunction,
 ) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     // Vérifier si l'email existe déjà
     const existingUser = await prisma.utilisateur.findUnique({
@@ -103,7 +106,8 @@ export const login = async (
   next: NextFunction,
 ) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     // Trouver l'utilisateur avec ses profils
     const utilisateur = await prisma.utilisateur.findUnique({
@@ -184,7 +188,7 @@ export const sendPasswordResetCode = async (
   next: NextFunction,
 ) => {
   try {
-    const { email } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     const utilisateur = await prisma.utilisateur.findUnique({
       where: { email },
@@ -235,7 +239,8 @@ export const validatePasswordResetCode = async (
   next: NextFunction,
 ) => {
   try {
-    const { email, code } = req.body;
+    const { code } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     const utilisateur = await prisma.utilisateur.findUnique({
       where: { email },
@@ -270,7 +275,8 @@ export const updatePasswordWithCode = async (
   next: NextFunction,
 ) => {
   try {
-    const { email, code, password } = req.body;
+    const { code, password } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     const utilisateur = await prisma.utilisateur.findUnique({
       where: { email },

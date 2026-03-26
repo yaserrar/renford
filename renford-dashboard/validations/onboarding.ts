@@ -81,7 +81,7 @@ export const onboardingEtablissementSchema = z
     {
       message: "L'adresse du siège doit contenir au moins 5 caractères",
       path: ["adresseSiege"],
-    }
+    },
   )
   .refine(
     (data) => {
@@ -93,7 +93,7 @@ export const onboardingEtablissementSchema = z
     {
       message: "Le code postal du siège est obligatoire",
       path: ["codePostalSiege"],
-    }
+    },
   )
   .refine(
     (data) => {
@@ -105,7 +105,7 @@ export const onboardingEtablissementSchema = z
     {
       message: "La ville du siège doit contenir au moins 2 caractères",
       path: ["villeSiege"],
-    }
+    },
   );
 
 export type OnboardingEtablissementSchema = z.infer<
@@ -225,7 +225,7 @@ const tarifHoraireSchema = z.preprocess(
       invalid_type_error: "Le tarif horaire doit être un nombre valide",
     })
     .min(10, "Le tarif horaire minimum est de 10€")
-    .max(500, "Le tarif horaire maximum est de 500€")
+    .max(500, "Le tarif horaire maximum est de 500€"),
 );
 
 const tarifJourneeSchema = z.preprocess(
@@ -236,7 +236,7 @@ const tarifJourneeSchema = z.preprocess(
     })
     .min(100, "Le tarif journée minimum est de 100€")
     .max(5000, "Le tarif journée maximum est de 5000€")
-    .optional()
+    .optional(),
 );
 
 const tarifDemiJourneeSchema = z.preprocess(
@@ -247,7 +247,7 @@ const tarifDemiJourneeSchema = z.preprocess(
     })
     .min(50, "Le tarif demi-journée minimum est de 50€")
     .max(2000, "Le tarif demi-journée maximum est de 2000€")
-    .optional()
+    .optional(),
 );
 
 // Étape 5 Renford: Qualifications et expériences
@@ -263,7 +263,7 @@ export const onboardingRenfordQualificationsSchema = z
       })
       .min(1, "Veuillez sélectionner au moins un diplôme"),
     justificatifDiplomeChemins: z.array(
-      z.string().min(1, "Le justificatif diplôme est obligatoire")
+      z.string().min(1, "Le justificatif diplôme est obligatoire"),
     ),
     justificatifCarteProfessionnelleChemin: z
       .string({
@@ -312,7 +312,6 @@ export type OnboardingRenfordQualificationsSchema = z.infer<
 // Étape 6 Renford: Informations bancaires
 export const onboardingRenfordBancaireSchema = z.object({
   iban: z.string().min(14, "L'IBAN doit contenir au moins 14 caractères"),
-  carteIdentiteChemin: z.string().min(1, "La carte d'identité est obligatoire"),
 });
 
 export type OnboardingRenfordBancaireSchema = z.infer<

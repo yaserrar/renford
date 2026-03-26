@@ -18,6 +18,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useUpdateProfilRenfordInfos } from "@/hooks/profil-renford";
 import { CurrentUser } from "@/types/utilisateur";
 import {
+  DISCIPLINE_MISSION,
+  DISCIPLINE_MISSION_LABELS,
+  SPECIALITES_BY_DISCIPLINE,
+} from "@/validations/mission";
+import {
   TYPE_MISSION,
   TYPE_MISSION_LABELS,
   updateProfilRenfordInfosSchema,
@@ -25,7 +30,7 @@ import {
 } from "@/validations/profil-renford";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
 type ProfilInfosEditDialogProps = {
@@ -76,6 +81,31 @@ export default function ProfilInfosEditDialog({
     });
   };
 
+  const typeMissionOptions = useMemo(() => {
+    const disciplineBySpecialite = new Map<string, string>();
+
+    DISCIPLINE_MISSION.forEach((discipline) => {
+      SPECIALITES_BY_DISCIPLINE[discipline].forEach((specialite) => {
+        disciplineBySpecialite.set(
+          specialite,
+          DISCIPLINE_MISSION_LABELS[discipline],
+        );
+      });
+    });
+
+    return TYPE_MISSION.map((type) => {
+      const disciplineLabel = disciplineBySpecialite.get(type);
+      const typeLabel = TYPE_MISSION_LABELS[type];
+
+      return {
+        value: type,
+        label: disciplineLabel
+          ? `${disciplineLabel} - ${typeLabel}`
+          : typeLabel,
+      };
+    });
+  }, []);
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -118,10 +148,7 @@ export default function ProfilInfosEditDialog({
                     multiple
                     value={field.value || []}
                     onValueChange={(value) => field.onChange(value as string[])}
-                    options={TYPE_MISSION.map((type) => ({
-                      value: type,
-                      label: TYPE_MISSION_LABELS[type],
-                    }))}
+                    options={typeMissionOptions}
                     placeholder="Sélectionner un ou plusieurs types"
                     searchPlaceholder="Rechercher un type de mission"
                     emptyMessage="Aucun type trouvé"

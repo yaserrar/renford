@@ -25,9 +25,9 @@ export const NIVEAU_EXPERIENCE_LABELS: Record<
   (typeof NIVEAU_EXPERIENCE)[number],
   string
 > = {
-  debutant: "Débutant (moins de 2 ans)",
-  confirme: "Confirmé (5 à 10 ans)",
-  expert: "Expert (plus de 10 ans)",
+  debutant: "Débutant(e) (moins de 2 ans)",
+  confirme: "Confirmé(e) (5 à 10 ans)",
+  expert: "Expert(e) (plus de 10 ans)",
 };
 
 // Labels pour les jours
@@ -446,7 +446,7 @@ const updateProfilRenfordExperienceItemSchema = z.object({
     .min(5, "La description des missions doit contenir au moins 5 caractères")
     .max(
       1000,
-      "La description des missions ne peut pas dépasser 1000 caractères"
+      "La description des missions ne peut pas dépasser 1000 caractères",
     ),
   dateDebut: z.date({ required_error: "La date de début est obligatoire" }),
   dateFin: z.date().nullable().optional(),
@@ -498,7 +498,7 @@ const tarifHoraireSchema = z.preprocess(
       invalid_type_error: "Le tarif horaire doit être un nombre valide",
     })
     .min(10, "Le tarif horaire minimum est de 10€")
-    .max(500, "Le tarif horaire maximum est de 500€")
+    .max(500, "Le tarif horaire maximum est de 500€"),
 );
 
 const tarifJourneeSchema = z.preprocess(
@@ -509,7 +509,7 @@ const tarifJourneeSchema = z.preprocess(
     })
     .min(100, "Le tarif journée minimum est de 100€")
     .max(5000, "Le tarif journée maximum est de 5000€")
-    .optional()
+    .optional(),
 );
 
 const tarifDemiJourneeSchema = z.preprocess(
@@ -520,7 +520,7 @@ const tarifDemiJourneeSchema = z.preprocess(
     })
     .min(50, "Le tarif demi-journée minimum est de 50€")
     .max(2000, "Le tarif demi-journée maximum est de 2000€")
-    .optional()
+    .optional(),
 );
 
 export const updateProfilRenfordQualificationsSchema = z

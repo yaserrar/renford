@@ -25,9 +25,9 @@ export default function ProfileEtablissementPage() {
       <Tabs defaultValue="profil" className="w-full">
         <TabsList>
           <TabsTrigger value="profil">Profil</TabsTrigger>
-          <TabsTrigger value="infos">Informations personnelles</TabsTrigger>
+          <TabsTrigger value="infos">Etablissement</TabsTrigger>
           {/* <TabsTrigger value="password">Modifier mot de passe</TabsTrigger> */}
-          <TabsTrigger value="sites">Gestion des sites</TabsTrigger>
+          <TabsTrigger value="sites">Sites</TabsTrigger>
         </TabsList>
         <div className="bg-secondary-background rounded-3xl border m-1 p-6 h-full">
           <TabsContent value="profil">

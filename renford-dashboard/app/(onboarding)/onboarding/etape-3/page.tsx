@@ -99,7 +99,6 @@ export default function Etape3Page() {
           <Input
             id="siret"
             placeholder="12345678901234"
-            maxLength={14}
             {...register("siret")}
           />
           <ErrorMessage>{errors.siret?.message}</ErrorMessage>
@@ -275,7 +274,7 @@ export default function Etape3Page() {
             variant="outline"
             onClick={() => router.push("/onboarding/etape-2")}
           >
-            Annuler
+            Retour
           </Button>
           <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}

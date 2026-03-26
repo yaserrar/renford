@@ -152,9 +152,9 @@ export const NIVEAU_EXPERIENCE_MISSION_LABELS: Record<
   string
 > = {
   peut_importe: "Peu importe",
-  debutant: "Débutant < 2 ans",
-  confirme: "Confirmé 2-5 ans",
-  expert: "Expert > 5 ans",
+  debutant: "Débutant(e) < 2 ans",
+  confirme: "Confirmé(e) 2-5 ans",
+  expert: "Expert(e) > 5 ans",
 };
 
 export const SPECIALITES_BY_DISCIPLINE: Record<

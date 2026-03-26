@@ -281,7 +281,6 @@ model ProfilRenford {
 
     // Documents (étape 5 et 6)
     justificatifCarteProfessionnelleChemin String? // Justificatif de carte professionnelle
-    carteIdentiteChemin                    String?
 
     // Expérience (étape 5)
     niveauExperience NiveauExperience?

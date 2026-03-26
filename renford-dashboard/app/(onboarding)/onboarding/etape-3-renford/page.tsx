@@ -37,6 +37,8 @@ export default function Etape3RenfordPage() {
     handleSubmit,
     control,
     setValue,
+    setError,
+    clearErrors,
     watch,
     formState: { errors, isDirty },
   } = useForm<OnboardingRenfordIdentiteSchema>({
@@ -62,10 +64,11 @@ export default function Etape3RenfordPage() {
   });
 
   const siretEnCoursObtention = watch("siretEnCoursObtention");
+  const attestationAutoEntrepreneur = watch("attestationAutoEntrepreneur");
   const attestationVigilance = watch("attestationVigilanceChemin");
   const attestationFileName = useMemo(
     () => (attestationVigilance ? attestationVigilance.split("/").pop() : null),
-    [attestationVigilance]
+    [attestationVigilance],
   );
 
   const handleDocumentUploaded = useCallback(
@@ -76,7 +79,7 @@ export default function Etape3RenfordPage() {
         shouldValidate: true,
       });
     },
-    [setValue]
+    [setValue],
   );
 
   const removeFile = useCallback(() => {
@@ -88,6 +91,14 @@ export default function Etape3RenfordPage() {
   }, [setValue]);
 
   const onSubmit = (data: OnboardingRenfordIdentiteSchema) => {
+    if (!data.attestationAutoEntrepreneur) {
+      setError("attestationAutoEntrepreneur", {
+        type: "manual",
+        message: "Vous devez attester votre statut pour continuer.",
+      });
+      return;
+    }
+
     mutate(data, {
       onSuccess: () => {
         router.push("/onboarding/etape-4-renford");
@@ -99,7 +110,7 @@ export default function Etape3RenfordPage() {
     <OnboardingCard
       currentStep={3}
       totalSteps={8}
-      title="Génial, confirmons votre activité et identité légales"
+      title="Parfait, confirmons votre activité et votre identité"
       subtitle="Ces informations restent confidentielles"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -108,10 +119,12 @@ export default function Etape3RenfordPage() {
           <Input
             id="siret"
             placeholder="12345678901234"
-            maxLength={14}
             disabled={siretEnCoursObtention}
             {...register("siret")}
           />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Saisissez les 14 chiffres sans espaces ni caractères spéciaux.
+          </p>
           <ErrorMessage>{errors.siret?.message}</ErrorMessage>
 
           <div className="flex items-center gap-2 mt-3">
@@ -148,7 +161,12 @@ export default function Etape3RenfordPage() {
               <Checkbox
                 id="attestationAutoEntrepreneur"
                 checked={field.value}
-                onCheckedChange={field.onChange}
+                onCheckedChange={(checked) => {
+                  field.onChange(checked);
+                  if (checked) {
+                    clearErrors("attestationAutoEntrepreneur");
+                  }
+                }}
               />
             )}
           />
@@ -159,6 +177,9 @@ export default function Etape3RenfordPage() {
             J'atteste être auto-entrepreneur/ EI/ EIRL/ SASU/ EURL *
           </Label>
         </div>
+        <ErrorMessage>
+          {errors.attestationAutoEntrepreneur?.message}
+        </ErrorMessage>
 
         <div>
           <Label htmlFor="adresse">Adresse*</Label>

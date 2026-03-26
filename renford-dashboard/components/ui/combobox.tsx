@@ -51,15 +51,15 @@ export function Combobox({
 
   const selectedValues = React.useMemo(
     () => (Array.isArray(value) ? value : value ? [value] : []),
-    [value]
+    [value],
   );
 
   const selectedOptions = options.filter((option) =>
-    selectedValues.includes(option.value)
+    selectedValues.includes(option.value),
   );
 
   const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(searchValue.toLowerCase())
+    option.label.toLowerCase().includes(searchValue.toLowerCase()),
   );
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -104,14 +104,18 @@ export function Combobox({
           className={cn(
             "bg-white border border-input h-12 py-1 w-full justify-between px-3 text-gray-400 font-normal",
             selectedOptions.length > 0 && "text-black",
-            className
+            className,
           )}
         >
           <span className="truncate">{triggerLabel}</span>
           <ChevronsUpDown className="h-4 w-4 shrink-0" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="start">
+      <PopoverContent
+        portalled={false}
+        className="w-[400px] max-w-[var(--radix-popover-content-available-width)] p-0"
+        align="start"
+      >
         <Command className="w-full" shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}
@@ -119,7 +123,7 @@ export function Combobox({
             onValueChange={setSearchValue}
             className="h-9"
           />
-          <CommandList>
+          <CommandList className="max-h-64 overflow-y-auto overscroll-contain">
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
               {filteredOptions.map((option) => (
@@ -134,7 +138,7 @@ export function Combobox({
                       "ml-auto h-4 w-4",
                       selectedValues.includes(option.value)
                         ? "opacity-100"
-                        : "opacity-0"
+                        : "opacity-0",
                     )}
                   />
                 </CommandItem>

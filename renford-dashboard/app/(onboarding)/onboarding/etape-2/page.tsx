@@ -113,7 +113,7 @@ export default function Etape2Page() {
             variant="outline"
             onClick={() => router.push("/onboarding/etape-1")}
           >
-            Annuler
+            Retour
           </Button>
           <Button type="submit" disabled={isPending || !selectedType}>
             {isPending && <Loader2 className="animate-spin" />}

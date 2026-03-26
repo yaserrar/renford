@@ -406,7 +406,6 @@ export type UpdateRenfordQualificationsSchema = z.infer<typeof updateRenfordQual
 // Schéma pour les infos bancaires Renford (étape 6)
 export const updateRenfordBancaireSchema = z.object({
   iban: z.string().min(14, 'IBAN invalide').max(34, 'IBAN invalide'),
-  carteIdentiteChemin: z.string().min(1, "La carte d'identité est obligatoire"),
 });
 
 export type UpdateRenfordBancaireSchema = z.infer<typeof updateRenfordBancaireSchema>;
