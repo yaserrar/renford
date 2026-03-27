@@ -66,7 +66,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=network
-      - traefik.http.routers.renford-dashboard.rule=Host(`renford.store`)
+      - traefik.http.routers.renford-dashboard.rule=Host(`test.renford.store`)
       - traefik.http.routers.renford-dashboard.entrypoints=websecure
       - traefik.http.routers.renford-dashboard.tls.certresolver=letsencryptresolver
       - traefik.http.services.renford-dashboard.loadbalancer.server.port=80

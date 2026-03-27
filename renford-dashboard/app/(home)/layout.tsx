@@ -12,6 +12,10 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
   keywords: ["renford", "sport", "établissement", "freelance", "mission"],
   title: {
     default: "Renford",
