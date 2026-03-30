@@ -13,17 +13,14 @@ export const MODE_MISSION_LABELS: Record<
 
 export const STATUT_MISSION = [
   "brouillon",
-  "en_attente_paiement",
-  "envoyee",
-  "en_cours_de_matching",
-  "proposee",
-  "acceptee",
-  "contrat_signe",
-  "payee",
-  "en_cours",
-  "a_valider",
-  "validee",
-  "terminee",
+  "ajouter_mode_paiement",
+  "en_recherche",
+  "candidatures_disponibles",
+  "attente_de_signature",
+  "mission_en_cours",
+  "remplacement_en_cours",
+  "en_litige",
+  "mission_terminee",
   "archivee",
   "annulee",
 ] as const;
@@ -33,20 +30,33 @@ export const STATUT_MISSION_LABELS: Record<
   string
 > = {
   brouillon: "Brouillon",
-  en_attente_paiement: "En attente de paiement",
-  envoyee: "Envoyée",
-  en_cours_de_matching: "En cours de matching",
-  proposee: "Proposée",
-  acceptee: "Acceptée",
-  contrat_signe: "Contrat signé",
-  payee: "Payée",
-  en_cours: "En cours",
-  a_valider: "À valider",
-  validee: "Validée",
-  terminee: "Terminée",
+  ajouter_mode_paiement: "Ajouter un mode de paiement",
+  en_recherche: "En recherche",
+  candidatures_disponibles: "Candidatures disponibles",
+  attente_de_signature: "Attente de signature",
+  mission_en_cours: "Mission en cours",
+  remplacement_en_cours: "Remplacement en cours",
+  en_litige: "En litige",
+  mission_terminee: "Mission terminée",
   archivee: "Archivée",
   annulee: "Annulée",
 };
+
+export const ETABLISSEMENT_MISSIONS_STATUS_GROUPS = {
+  "en-recherche": [
+    "brouillon",
+    "ajouter_mode_paiement",
+    "en_recherche",
+    "candidatures_disponibles",
+  ],
+  confirmees: [
+    "attente_de_signature",
+    "mission_en_cours",
+    "remplacement_en_cours",
+    "en_litige",
+  ],
+  terminees: ["mission_terminee", "archivee", "annulee"],
+} as const satisfies Record<string, readonly (typeof STATUT_MISSION)[number][]>;
 
 export const METHODE_TARIFICATION = [
   "horaire",

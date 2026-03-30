@@ -4,7 +4,11 @@ import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H2 } from "@/components/ui/typography";
 import { useEtablissementMissionsByTab } from "@/hooks/mission";
-import { EtablissementMissionsTab, MissionEtablissement } from "@/types/mission";
+import {
+  EtablissementMissionsTab,
+  MissionEtablissement,
+} from "@/types/mission";
+import { ETABLISSEMENT_MISSIONS_STATUS_GROUPS } from "@/validations/mission";
 import EtablissementMissionsPanel from "./etablissement-missions-panel";
 import MissionFiltersDialog, { MissionFilters } from "./mission-filters-dialog";
 
@@ -50,25 +54,10 @@ const isMissionMatchingFilters = (
 };
 
 export default function EtablissementMissionsPage() {
-  const enRecherche = useEtablissementMissionsByTab("en-recherche");
-  const confirmees = useEtablissementMissionsByTab("confirmees");
-  const terminees = useEtablissementMissionsByTab("terminees");
+  const missionsQuery = useEtablissementMissionsByTab();
   const [filters, setFilters] = useState<MissionFilters>(DEFAULT_FILTERS);
 
-  const tabsData: Record<EtablissementMissionsTab, typeof enRecherche> = {
-    "en-recherche": enRecherche,
-    confirmees,
-    terminees,
-  };
-
-  const allMissions = useMemo(
-    () => [
-      ...(tabsData["en-recherche"].data ?? []),
-      ...(tabsData.confirmees.data ?? []),
-      ...(tabsData.terminees.data ?? []),
-    ],
-    [tabsData],
-  );
+  const allMissions = missionsQuery.data ?? [];
 
   const siteOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -85,18 +74,30 @@ export default function EtablissementMissionsPage() {
   }, [allMissions]);
 
   const filteredMissionsByTab = useMemo(
-    () => ({
-      "en-recherche": (tabsData["en-recherche"].data ?? []).filter((mission) =>
-        isMissionMatchingFilters(mission, filters),
+    () =>
+      (
+        Object.keys(
+          ETABLISSEMENT_MISSIONS_STATUS_GROUPS,
+        ) as EtablissementMissionsTab[]
+      ).reduce(
+        (acc, tab) => {
+          const statuses = ETABLISSEMENT_MISSIONS_STATUS_GROUPS[tab];
+
+          acc[tab] = allMissions.filter(
+            (mission) =>
+              statuses.includes(mission.statut) &&
+              isMissionMatchingFilters(mission, filters),
+          );
+
+          return acc;
+        },
+        {
+          "en-recherche": [],
+          confirmees: [],
+          terminees: [],
+        } as Record<EtablissementMissionsTab, MissionEtablissement[]>,
       ),
-      confirmees: (tabsData.confirmees.data ?? []).filter((mission) =>
-        isMissionMatchingFilters(mission, filters),
-      ),
-      terminees: (tabsData.terminees.data ?? []).filter((mission) =>
-        isMissionMatchingFilters(mission, filters),
-      ),
-    }),
-    [tabsData, filters],
+    [allMissions, filters],
   );
 
   return (
@@ -130,8 +131,8 @@ export default function EtablissementMissionsPage() {
             <TabsContent value="en-recherche">
               <EtablissementMissionsPanel
                 missions={filteredMissionsByTab["en-recherche"]}
-                isLoading={tabsData["en-recherche"].isLoading}
-                isError={tabsData["en-recherche"].isError}
+                isLoading={missionsQuery.isLoading}
+                isError={missionsQuery.isError}
                 tab="en-recherche"
               />
             </TabsContent>
@@ -139,8 +140,8 @@ export default function EtablissementMissionsPage() {
             <TabsContent value="confirmees">
               <EtablissementMissionsPanel
                 missions={filteredMissionsByTab.confirmees}
-                isLoading={tabsData.confirmees.isLoading}
-                isError={tabsData.confirmees.isError}
+                isLoading={missionsQuery.isLoading}
+                isError={missionsQuery.isError}
                 tab="confirmees"
               />
             </TabsContent>
@@ -148,8 +149,8 @@ export default function EtablissementMissionsPage() {
             <TabsContent value="terminees">
               <EtablissementMissionsPanel
                 missions={filteredMissionsByTab.terminees}
-                isLoading={tabsData.terminees.isLoading}
-                isError={tabsData.terminees.isError}
+                isLoading={missionsQuery.isLoading}
+                isError={missionsQuery.isError}
                 tab="terminees"
               />
             </TabsContent>

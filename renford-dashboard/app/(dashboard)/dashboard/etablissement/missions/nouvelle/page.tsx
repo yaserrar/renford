@@ -8,6 +8,7 @@ import ErrorMessage from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import SiteFormDialog from "@/app/(dashboard)/dashboard/etablissement/profil/site-form-dialog";
+import MissionHistoryCard from "./mission-history-card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +18,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { H2, H3 } from "@/components/ui/typography";
-import { useCreateMission, useFinalizeMissionPayment } from "@/hooks/mission";
+import {
+  useCreateMission,
+  useEtablissementMissionsByTab,
+} from "@/hooks/mission";
+import { MissionEtablissement } from "@/types/mission";
 import { useCurrentUser } from "@/hooks/utilisateur";
 import { cn } from "@/lib/utils";
 import {
@@ -32,17 +37,12 @@ import {
   MODE_MISSION,
   NIVEAU_EXPERIENCE_MISSION_OPTIONS,
   POURCENTAGE_VARIATION_TARIF_OPTIONS,
-  TYPE_PAIEMENT_LABELS,
-  finalizeMissionPaymentSchema,
-  FinalizeMissionPaymentSchema,
 } from "@/validations/mission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Calendar,
   CircleHelp,
   Clock3,
-  CreditCard,
-  Landmark,
   Lightbulb,
   MapPin,
   Plus,
@@ -54,15 +54,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
-const LAST_STEP = 5;
-
-const PAYMENT_TYPE_SUBTITLES = {
-  carte_bancaire: "Sécurisation via Stripe • Pas de débit total immédiat",
-  prelevement_sepa: "Prélèvement B2B automatisé",
-} as const;
-
-const PAYMENT_MANDATE_TEXT =
-  "En signant ce mandat formulaire, vous autorisez (A) RENFORD à envoyer des instructions à votre banque pour débiter votre compte, et (B) votre banque à débiter votre compte conformément aux instructions de RENFORD.";
+const LAST_STEP = 4;
 
 type MissionFormField =
   | "modeMission"
@@ -83,20 +75,6 @@ type MissionFormField =
 
 type CreateMissionFormInput = z.input<typeof createMissionFormSchema>;
 type CreateMissionFormOutput = z.output<typeof createMissionFormSchema>;
-type PaymentFormInput = z.input<typeof finalizeMissionPaymentSchema>;
-
-type PaymentFormState = {
-  typePaiement: "carte_bancaire" | "prelevement_sepa";
-  titulaireCarteBancaire: string;
-  numeroCarteBancaire: string;
-  dateExpirationCarte: string;
-  cvvCarte: string;
-  autorisationDebit: boolean;
-  titulaireCompteBancaire: string;
-  IBANCompteBancaire: string;
-  BICCompteBancaire: string;
-  autorisationPrelevement: boolean;
-};
 
 const missionModes: Array<{
   value: (typeof MODE_MISSION)[number];
@@ -175,7 +153,6 @@ export default function NouvelleMissionPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [historySearch, setHistorySearch] = useState("");
   const [historyFilter, setHistoryFilter] = useState<string>("Tout");
-  const [createdMissionId, setCreatedMissionId] = useState<string | null>(null);
   const [isCreateSiteDialogOpen, setIsCreateSiteDialogOpen] = useState(false);
 
   const previousStepRef = useRef(0);
@@ -183,7 +160,7 @@ export default function NouvelleMissionPage() {
 
   const { data: user } = useCurrentUser();
   const createMissionMutation = useCreateMission();
-  const finalizeMissionPaymentMutation = useFinalizeMissionPayment();
+  const missionsHistoryQuery = useEtablissementMissionsByTab();
 
   const {
     control,
@@ -229,29 +206,6 @@ export default function NouvelleMissionPage() {
     name: "plagesHoraires",
   });
 
-  const {
-    control: paymentControl,
-    watch: watchPayment,
-    getValues: getPaymentValues,
-    setError: setPaymentError,
-    clearErrors: clearPaymentErrors,
-    formState: { errors: paymentErrors },
-  } = useForm<PaymentFormState>({
-    mode: "onTouched",
-    defaultValues: {
-      typePaiement: "carte_bancaire",
-      titulaireCarteBancaire: "",
-      numeroCarteBancaire: "",
-      dateExpirationCarte: "",
-      cvvCarte: "",
-      autorisationDebit: false,
-      titulaireCompteBancaire: "",
-      IBANCompteBancaire: "",
-      BICCompteBancaire: "",
-      autorisationPrelevement: false,
-    },
-  });
-
   const selectedMode = watch("modeMission");
   const selectedDiscipline = watch("discipline");
   const selectedSpecialitePrincipale = watch("specialitePrincipale") || "";
@@ -279,8 +233,6 @@ export default function NouvelleMissionPage() {
     | CreateMissionFormOutput["plagesHoraires"]
     | undefined;
 
-  const paymentType = watchPayment("typePaiement");
-
   const etablissementOptions = useMemo(() => {
     const etablissements = user?.profilEtablissement?.etablissements || [];
 
@@ -291,6 +243,63 @@ export default function NouvelleMissionPage() {
         label: `${etablissement.nom} • ${etablissement.ville}`,
       }));
   }, [user?.profilEtablissement?.etablissements]);
+
+  const allHistoryMissions = useMemo(() => {
+    return [...(missionsHistoryQuery.data ?? [])].sort((a, b) => {
+      const aTimestamp =
+        normalizeDate(a.dateCreation)?.getTime() ??
+        normalizeDate(a.dateDebut)?.getTime() ??
+        0;
+      const bTimestamp =
+        normalizeDate(b.dateCreation)?.getTime() ??
+        normalizeDate(b.dateDebut)?.getTime() ??
+        0;
+      return bTimestamp - aTimestamp;
+    });
+  }, [missionsHistoryQuery.data]);
+
+  const filteredHistoryMissions = useMemo(() => {
+    const normalizedSearch = historySearch.trim().toLowerCase();
+
+    return allHistoryMissions.filter((mission) => {
+      if (historyFilter !== "Tout" && mission.discipline !== historyFilter) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      const disciplineLabel =
+        DISCIPLINE_MISSION_OPTIONS.find(
+          (option) => option.value === mission.discipline,
+        )?.label ?? mission.discipline;
+
+      const specialiteLabel =
+        getSpecialitesOptionsByDiscipline(mission.discipline).find(
+          (option) => option.value === mission.specialitePrincipale,
+        )?.label ?? mission.specialitePrincipale;
+
+      const startDateLabel = formatFrenchDate(normalizeDate(mission.dateDebut));
+      const searchText = [
+        disciplineLabel,
+        specialiteLabel,
+        mission.etablissement?.nom,
+        mission.etablissement?.adresse,
+        mission.etablissement?.ville,
+        startDateLabel,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchText.includes(normalizedSearch);
+    });
+  }, [allHistoryMissions, historyFilter, historySearch]);
+
+  const isHistoryLoading = missionsHistoryQuery.isLoading;
+
+  const isHistoryError = missionsHistoryQuery.isError;
 
   const specialitesOptions =
     getSpecialitesOptionsByDiscipline(selectedDiscipline);
@@ -426,10 +435,9 @@ export default function NouvelleMissionPage() {
       getValues(),
     ) as CreateMissionPayloadSchema;
 
-    const createdMission = await createMissionMutation.mutateAsync(payload);
-
-    setCreatedMissionId(createdMission.id);
-    setCurrentStep(5);
+    await createMissionMutation.mutateAsync(payload);
+    await missionsHistoryQuery.refetch();
+    router.push("/dashboard/etablissement/missions");
   };
 
   const handleNext = async () => {
@@ -483,45 +491,114 @@ export default function NouvelleMissionPage() {
   };
 
   const handleBack = () => {
-    if (currentStep === 5 && !createdMissionId) {
-      setCurrentStep(4);
-      return;
-    }
-
     setCurrentStep((previous) => Math.max(previous - 1, 0));
   };
 
-  const onSubmitPayment = async (data: FinalizeMissionPaymentSchema) => {
-    if (!createdMissionId) return;
+  const handleDuplicateMission = (mission: MissionEtablissement) => {
+    const normalizedTarif =
+      typeof mission.tarif === "number"
+        ? mission.tarif
+        : typeof mission.tarif === "string"
+          ? Number(mission.tarif)
+          : undefined;
 
-    await finalizeMissionPaymentMutation.mutateAsync({
-      missionId: createdMissionId,
-      data,
+    const normalizedVariation =
+      typeof mission.pourcentageVariationTarif === "number"
+        ? mission.pourcentageVariationTarif
+        : typeof mission.pourcentageVariationTarif === "string"
+          ? Number(mission.pourcentageVariationTarif)
+          : undefined;
+
+    const normalizedPlages =
+      mission.PlageHoraireMission && mission.PlageHoraireMission.length > 0
+        ? mission.PlageHoraireMission.map((plage) => ({
+            date: normalizeDate(plage.date),
+            heureDebut: plage.heureDebut,
+            heureFin: plage.heureFin,
+          }))
+        : [
+            {
+              date: normalizeDate(mission.dateDebut),
+              heureDebut: "09:00",
+              heureFin: "10:00",
+            },
+          ];
+
+    setValue("modeMission", mission.modeMission, {
+      shouldDirty: true,
+      shouldValidate: true,
     });
+    setValue("discipline", mission.discipline, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("specialitePrincipale", mission.specialitePrincipale, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("specialitesSecondaires", mission.specialitesSecondaires ?? [], {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue(
+      "niveauExperienceRequis",
+      mission.niveauExperienceRequis ?? "peut_importe",
+      {
+        shouldDirty: true,
+        shouldValidate: true,
+      },
+    );
+    setValue("assuranceObligatoire", mission.assuranceObligatoire, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("materielsRequis", mission.materielsRequis ?? [], {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("detailMission", mission.description ?? "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("etablissementId", mission.etablissementId, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("dateDebut", normalizeDate(mission.dateDebut), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("dateFin", normalizeDate(mission.dateFin), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("plagesHoraires", normalizedPlages, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("methodeTarification", mission.methodeTarification, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue(
+      "tarif",
+      Number.isFinite(normalizedTarif) ? normalizedTarif : undefined,
+      {
+        shouldDirty: true,
+        shouldValidate: true,
+      },
+    );
+    setValue(
+      "pourcentageVariationTarif",
+      Number.isFinite(normalizedVariation) ? normalizedVariation : undefined,
+      {
+        shouldDirty: true,
+        shouldValidate: true,
+      },
+    );
 
-    router.push("/dashboard/etablissement/missions");
-  };
-
-  const handlePaymentConfirm = async () => {
-    clearPaymentErrors();
-
-    const parsed = finalizeMissionPaymentSchema.safeParse(getPaymentValues());
-
-    if (!parsed.success) {
-      parsed.error.issues.forEach((issue) => {
-        const fieldName = issue.path[0] as keyof PaymentFormState | undefined;
-        if (!fieldName) return;
-
-        setPaymentError(fieldName, {
-          type: "manual",
-          message: issue.message,
-        });
-      });
-
-      return;
-    }
-
-    await onSubmitPayment(parsed.data);
+    setCurrentStep(4);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -548,10 +625,10 @@ export default function NouvelleMissionPage() {
               >
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-xl font-semibold">
+                    <h3 className="text-lg font-semibold">
                       Créer une mission à partir de zéro
                     </h3>
-                    <p className="text-lg text-muted-foreground mt-1">
+                    <p className="text-base text-muted-foreground mt-1">
                       Partir d&apos;un formulaire vide
                     </p>
                   </div>
@@ -604,11 +681,35 @@ export default function NouvelleMissionPage() {
                   })}
                 </div>
 
-                <div className="rounded-3xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
-                  <p className="text-base text-muted-foreground">
-                    Aucune mission disponible pour le moment.
-                  </p>
-                </div>
+                {isHistoryLoading ? (
+                  <div className="rounded-3xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+                    <p className="text-base text-muted-foreground">
+                      Chargement de vos missions...
+                    </p>
+                  </div>
+                ) : isHistoryError ? (
+                  <div className="rounded-3xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+                    <p className="text-base text-muted-foreground">
+                      Impossible de charger l&apos;historique des missions.
+                    </p>
+                  </div>
+                ) : filteredHistoryMissions.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+                    <p className="text-base text-muted-foreground">
+                      Aucune mission trouvée avec ces filtres.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredHistoryMissions.map((mission) => (
+                      <MissionHistoryCard
+                        key={mission.id}
+                        mission={mission}
+                        onDuplicate={handleDuplicateMission}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1424,314 +1525,6 @@ export default function NouvelleMissionPage() {
             </div>
           )}
 
-          {currentStep === 5 && (
-            <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
-              <div className="xl:col-span-2 space-y-4">
-                <H3>Provisionnement de la mission</H3>
-
-                <div className="rounded-2xl border border-amber-400 bg-amber-50 p-5 text-black">
-                  <p className="text-LG leading-tight font-semibold">
-                    Garantie RENFORD
-                    <span className="font-normal">
-                      {" "}
-                      : Les fonds ne sont pas débités immédiatement. Nous
-                      prenons une empreinte bancaire ou un mandat pour garantir
-                      la solvabilité. Le paiement effectif se fera selon
-                      l&apos;avancement validé.
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="xl:col-span-3 space-y-5">
-                <div>
-                  <Controller
-                    name="typePaiement"
-                    control={paymentControl}
-                    render={({ field }) => (
-                      <RadioGroup
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        className="space-y-3"
-                      >
-                        {(["carte_bancaire", "prelevement_sepa"] as const).map(
-                          (type) => {
-                            const isSelected = field.value === type;
-
-                            return (
-                              <Label
-                                key={type}
-                                htmlFor={`typePaiement-${type}`}
-                                className={cn(
-                                  "flex cursor-pointer gap-4 rounded-3xl border p-5 transition items-center",
-                                  isSelected
-                                    ? "border-secondary bg-secondary/5"
-                                    : "border-input hover:border-gray-300",
-                                )}
-                              >
-                                <RadioGroupItem
-                                  id={`typePaiement-${type}`}
-                                  value={type}
-                                  className="mt-1"
-                                />
-
-                                <div className="h-9 w-9 rounded-lg border border-input bg-gray-50 flex items-center justify-center">
-                                  {type === "carte_bancaire" ? (
-                                    <CreditCard className="h-4 w-4 text-gray-700" />
-                                  ) : (
-                                    <Landmark className="h-4 w-4 text-gray-700" />
-                                  )}
-                                </div>
-
-                                <div className="space-y-0.5">
-                                  <p className="text-base font-semibold leading-tight">
-                                    {TYPE_PAIEMENT_LABELS[type]}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground leading-tight">
-                                    {PAYMENT_TYPE_SUBTITLES[type]}
-                                  </p>
-                                </div>
-                              </Label>
-                            );
-                          },
-                        )}
-                      </RadioGroup>
-                    )}
-                  />
-                  <ErrorMessage>
-                    {paymentErrors.typePaiement?.message as string}
-                  </ErrorMessage>
-                </div>
-
-                {paymentType === "carte_bancaire" && (
-                  <>
-                    <div>
-                      <Label htmlFor="titulaireCarteBancaire">
-                        Titulaire de la carte
-                      </Label>
-                      <Controller
-                        name="titulaireCarteBancaire"
-                        control={paymentControl}
-                        render={({ field }) => (
-                          <Input
-                            id="titulaireCarteBancaire"
-                            value={field.value || ""}
-                            onChange={field.onChange}
-                            placeholder="SAS Entreprise"
-                          />
-                        )}
-                      />
-                      <ErrorMessage>
-                        {
-                          paymentErrors.titulaireCarteBancaire
-                            ?.message as string
-                        }
-                      </ErrorMessage>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="numeroCarteBancaire">
-                        Numéro de carte
-                      </Label>
-                      <Controller
-                        name="numeroCarteBancaire"
-                        control={paymentControl}
-                        render={({ field }) => (
-                          <Input
-                            id="numeroCarteBancaire"
-                            inputMode="numeric"
-                            value={field.value || ""}
-                            onChange={(event) =>
-                              field.onChange(
-                                event.target.value.replace(/\s+/g, ""),
-                              )
-                            }
-                            placeholder="FR76 0000 0000 0000 0000 000"
-                          />
-                        )}
-                      />
-                      <ErrorMessage>
-                        {paymentErrors.numeroCarteBancaire?.message as string}
-                      </ErrorMessage>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="dateExpirationCarte">
-                          Expiration (MM/AA)
-                        </Label>
-                        <Controller
-                          name="dateExpirationCarte"
-                          control={paymentControl}
-                          render={({ field }) => (
-                            <Input
-                              id="dateExpirationCarte"
-                              value={field.value || ""}
-                              onChange={field.onChange}
-                              placeholder="12/27"
-                            />
-                          )}
-                        />
-                        <ErrorMessage>
-                          {paymentErrors.dateExpirationCarte?.message as string}
-                        </ErrorMessage>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="cvvCarte">CVC</Label>
-                        <Controller
-                          name="cvvCarte"
-                          control={paymentControl}
-                          render={({ field }) => (
-                            <Input
-                              id="cvvCarte"
-                              value={field.value || ""}
-                              onChange={field.onChange}
-                              placeholder="123"
-                            />
-                          )}
-                        />
-                        <ErrorMessage>
-                          {paymentErrors.cvvCarte?.message as string}
-                        </ErrorMessage>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                      <Controller
-                        name="autorisationDebit"
-                        control={paymentControl}
-                        render={({ field }) => (
-                          <Checkbox
-                            id="autorisationDebit"
-                            className="mt-1"
-                            checked={field.value === true}
-                            onCheckedChange={(checked) =>
-                              field.onChange(checked === true)
-                            }
-                          />
-                        )}
-                      />
-                      <Label
-                        htmlFor="autorisationDebit"
-                        className="mb-0 text-sm font-normal leading-relaxed"
-                      >
-                        {PAYMENT_MANDATE_TEXT}
-                      </Label>
-                    </div>
-                    <ErrorMessage>
-                      {paymentErrors.autorisationDebit?.message as string}
-                    </ErrorMessage>
-                  </>
-                )}
-
-                {paymentType === "prelevement_sepa" && (
-                  <>
-                    <div>
-                      <Label htmlFor="titulaireCompteBancaire">
-                        Titulaire du compte (Entreprise)
-                      </Label>
-                      <Controller
-                        name="titulaireCompteBancaire"
-                        control={paymentControl}
-                        render={({ field }) => (
-                          <Input
-                            id="titulaireCompteBancaire"
-                            value={field.value || ""}
-                            onChange={field.onChange}
-                            placeholder="SAS Entreprise"
-                          />
-                        )}
-                      />
-                      <ErrorMessage>
-                        {
-                          paymentErrors.titulaireCompteBancaire
-                            ?.message as string
-                        }
-                      </ErrorMessage>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="IBANCompteBancaire">IBAN</Label>
-                      <Controller
-                        name="IBANCompteBancaire"
-                        control={paymentControl}
-                        render={({ field }) => (
-                          <Input
-                            id="IBANCompteBancaire"
-                            value={field.value || ""}
-                            onChange={(event) =>
-                              field.onChange(
-                                event.target.value
-                                  .toUpperCase()
-                                  .replace(/\s+/g, ""),
-                              )
-                            }
-                            placeholder="FR7630006000011234567890189"
-                          />
-                        )}
-                      />
-                      <ErrorMessage>
-                        {paymentErrors.IBANCompteBancaire?.message as string}
-                      </ErrorMessage>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="BICCompteBancaire">BIC / SWIFT</Label>
-                      <Controller
-                        name="BICCompteBancaire"
-                        control={paymentControl}
-                        render={({ field }) => (
-                          <Input
-                            id="BICCompteBancaire"
-                            value={field.value || ""}
-                            onChange={(event) =>
-                              field.onChange(
-                                event.target.value
-                                  .toUpperCase()
-                                  .replace(/\s+/g, ""),
-                              )
-                            }
-                            placeholder="AGRIFRPP"
-                          />
-                        )}
-                      />
-                      <ErrorMessage>
-                        {paymentErrors.BICCompteBancaire?.message as string}
-                      </ErrorMessage>
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                      <Controller
-                        name="autorisationPrelevement"
-                        control={paymentControl}
-                        render={({ field }) => (
-                          <Checkbox
-                            id="autorisationPrelevement"
-                            className="mt-1"
-                            checked={field.value === true}
-                            onCheckedChange={(checked) =>
-                              field.onChange(checked === true)
-                            }
-                          />
-                        )}
-                      />
-                      <Label
-                        htmlFor="autorisationPrelevement"
-                        className="mb-0 text-sm font-normal leading-relaxed"
-                      >
-                        {PAYMENT_MANDATE_TEXT}
-                      </Label>
-                    </div>
-                    <ErrorMessage>
-                      {paymentErrors.autorisationPrelevement?.message as string}
-                    </ErrorMessage>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
           <div className="flex flex-col md:flex-row md:justify-end gap-3 pt-2">
             <Button
               type="button"
@@ -1739,8 +1532,7 @@ export default function NouvelleMissionPage() {
               onClick={handleBack}
               disabled={
                 currentStep === 0 ||
-                (currentStep === 4 && createMissionMutation.isPending) ||
-                (currentStep === 5 && finalizeMissionPaymentMutation.isPending)
+                (currentStep === 4 && createMissionMutation.isPending)
               }
               className="w-full md:w-auto"
             >
@@ -1765,20 +1557,7 @@ export default function NouvelleMissionPage() {
                 disabled={createMissionMutation.isPending}
                 className="w-full md:w-auto"
               >
-                Envoyer la demande
-              </Button>
-            )}
-
-            {currentStep === 5 && (
-              <Button
-                type="button"
-                onClick={handlePaymentConfirm}
-                disabled={finalizeMissionPaymentMutation.isPending}
-                className="w-full md:w-auto"
-              >
-                {paymentType === "prelevement_sepa"
-                  ? "Signer le mandat"
-                  : "Valider l'empreinte bancaire"}
+                Créer la mission
               </Button>
             )}
           </div>

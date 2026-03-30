@@ -73,7 +73,8 @@ export const useCreateMission = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
-      toast.success("Mission créée. Finalisez maintenant le paiement");
+      queryClient.invalidateQueries({ queryKey: ["etablissement-missions"] });
+      toast.success("Mission créée et mise en recherche");
     },
     onError: (error: any) => {
       const message = getErrorMessage(error?.response?.data?.message);
@@ -100,7 +101,8 @@ export const useFinalizeMissionPayment = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
-      toast.success("Paiement validé et demande envoyée");
+      queryClient.invalidateQueries({ queryKey: ["etablissement-missions"] });
+      toast.success("Mode de paiement enregistré et mission mise en recherche");
     },
     onError: (error: any) => {
       const message = getErrorMessage(error?.response?.data?.message);
@@ -110,15 +112,17 @@ export const useFinalizeMissionPayment = () => {
 };
 
 export const useEtablissementMissionsByTab = (
-  tab: EtablissementMissionsTab,
+  tab?: EtablissementMissionsTab,
 ) => {
   const axios = useAxios();
 
   return useQuery({
-    queryKey: ["etablissement-missions", tab],
+    queryKey: ["etablissement-missions", tab ?? "all"],
     queryFn: async () => {
       const data = (
-        await axios.get("/etablissement/missions", { params: { tab } })
+        await axios.get("/etablissement/missions", {
+          params: tab ? { tab } : undefined,
+        })
       ).data as MissionEtablissement[];
 
       return data.map(normalizeMissionDates);

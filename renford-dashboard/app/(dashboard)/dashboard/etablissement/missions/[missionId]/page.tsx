@@ -57,28 +57,17 @@ function formatTimeRange(value: string, fallback = "-") {
 export default function EtablissementMissionDetailsPage() {
   const { missionId } = useParams<{ missionId: string }>();
 
-  const enRecherche = useEtablissementMissionsByTab("en-recherche");
-  const confirmees = useEtablissementMissionsByTab("confirmees");
-  const terminees = useEtablissementMissionsByTab("terminees");
+  const missionsQuery = useEtablissementMissionsByTab();
 
-  const missions = useMemo(
-    () => [
-      ...(enRecherche.data ?? []),
-      ...(confirmees.data ?? []),
-      ...(terminees.data ?? []),
-    ],
-    [confirmees.data, enRecherche.data, terminees.data],
-  );
+  const missions = useMemo(() => missionsQuery.data ?? [], [missionsQuery.data]);
 
   const mission = useMemo(
     () => missions.find((item) => item.id === missionId),
     [missionId, missions],
   );
 
-  const isLoading =
-    enRecherche.isLoading || confirmees.isLoading || terminees.isLoading;
-  const isError =
-    enRecherche.isError || confirmees.isError || terminees.isError;
+  const isLoading = missionsQuery.isLoading;
+  const isError = missionsQuery.isError;
 
   if (isLoading) {
     return (

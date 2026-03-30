@@ -7,6 +7,7 @@ import MissionStatusBadge from "@/components/common/mission-status-badge";
 import { MissionEtablissement, StatutMission } from "@/types/mission";
 import {
   DISCIPLINE_MISSION_LABELS,
+  ETABLISSEMENT_MISSIONS_STATUS_GROUPS,
   METHODE_TARIFICATION_SUFFIXES,
 } from "@/validations/mission";
 import {
@@ -21,11 +22,7 @@ type EtablissementMissionCardProps = {
 };
 
 const EN_RECHERCHE_STATUSES: StatutMission[] = [
-  "en_attente_paiement",
-  "envoyee",
-  "en_cours_de_matching",
-  "proposee",
-  "acceptee",
+  ...ETABLISSEMENT_MISSIONS_STATUS_GROUPS["en-recherche"],
 ];
 
 export default function EtablissementMissionCard({

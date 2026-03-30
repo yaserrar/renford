@@ -3,29 +3,31 @@ import type { StatutMission } from '@prisma/client';
 import prisma from '../../config/prisma';
 import { mail } from '../../config/mail';
 import { env } from '../../config/env';
+import { logger } from '../../config/logger';
 import { getMissionDemandeConfirmeeEmail } from '../../config/email-templates';
 import { getTypeMissionLabel } from './missions.schema';
 import type {
   CreateMissionSchema,
+  EtablissementMissionsTab,
   FinalizeMissionPaymentSchema,
   GetEtablissementMissionsQuerySchema,
   MissionIdParamsSchema,
 } from './missions.schema';
 
-const ETABLISSEMENT_TAB_STATUS_MAP: Record<
-  GetEtablissementMissionsQuerySchema['tab'],
-  StatutMission[]
-> = {
+const ETABLISSEMENT_TAB_STATUS_MAP: Record<EtablissementMissionsTab, StatutMission[]> = {
   'en-recherche': [
-    'en_attente_paiement',
-    'envoyee',
-    'en_cours_de_matching',
-    'proposee',
-    'acceptee',
+    'brouillon',
+    'ajouter_mode_paiement',
+    'en_recherche',
+    'candidatures_disponibles',
   ],
-  confirmees: ['contrat_signe', 'payee', 'en_cours', 'a_valider', 'validee'],
-  terminees: ['terminee', 'archivee'],
+  confirmees: ['attente_de_signature', 'mission_en_cours', 'remplacement_en_cours', 'en_litige'],
+  terminees: ['mission_terminee', 'archivee', 'annulee'],
 };
+
+const ETABLISSEMENT_ALL_STATUSES = Array.from(
+  new Set(Object.values(ETABLISSEMENT_TAB_STATUS_MAP).flat()),
+);
 
 export const getEtablissementMissions = async (
   req: Request<unknown, unknown, unknown, GetEtablissementMissionsQuerySchema>,
@@ -46,7 +48,7 @@ export const getEtablissementMissions = async (
     }
 
     const tab = req.query.tab;
-    const statuts = ETABLISSEMENT_TAB_STATUS_MAP[tab];
+    const statuts = tab ? ETABLISSEMENT_TAB_STATUS_MAP[tab] : ETABLISSEMENT_ALL_STATUSES;
 
     const missions = await prisma.mission.findMany({
       where: {
@@ -157,7 +159,7 @@ export const createMission = async (
 
     const mission = await prisma.mission.create({
       data: {
-        statut: 'en_attente_paiement',
+        statut: 'en_recherche',
         modeMission: req.body.modeMission,
         discipline: req.body.discipline,
         specialitePrincipale: req.body.specialitePrincipale,
@@ -181,8 +183,42 @@ export const createMission = async (
       select: {
         id: true,
         statut: true,
+        specialitePrincipale: true,
       },
     });
+
+    const user = await prisma.utilisateur.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        prenom: true,
+        nom: true,
+      },
+    });
+
+    if (user?.email) {
+      const dashboardUrl = `${env.PLATFORM_URL.replace(/\/$/, '')}/dashboard/etablissement/accueil`;
+
+      const emailPayload = getMissionDemandeConfirmeeEmail({
+        nomComplet: `${user.prenom} ${user.nom}`.trim(),
+        specialiteLabel: getTypeMissionLabel(mission.specialitePrincipale),
+        dashboardUrl,
+      });
+
+      try {
+        await mail.sendMail({
+          to: user.email,
+          subject: emailPayload.subject,
+          html: emailPayload.html,
+          text: emailPayload.text,
+        });
+      } catch (emailError) {
+        logger.error(
+          { err: emailError, userId, missionId: mission.id },
+          "Échec d'envoi de l'email de confirmation de mission",
+        );
+      }
+    }
 
     return res.status(201).json(mission);
   } catch (err) {
@@ -214,18 +250,6 @@ export const finalizeMissionPayment = async (
         etablissement: {
           profilEtablissement: {
             utilisateurId: userId,
-          },
-        },
-      },
-      include: {
-        etablissement: {
-          select: {
-            nom: true,
-            profilEtablissement: {
-              select: {
-                raisonSociale: true,
-              },
-            },
           },
         },
       },
@@ -276,7 +300,7 @@ export const finalizeMissionPayment = async (
       where: { id: mission.id },
       data: {
         ...paymentData,
-        statut: 'envoyee',
+        statut: 'en_recherche',
       },
       select: {
         id: true,
@@ -284,32 +308,6 @@ export const finalizeMissionPayment = async (
         typePaiement: true,
       },
     });
-
-    const user = await prisma.utilisateur.findUnique({
-      where: { id: userId },
-      select: {
-        email: true,
-        prenom: true,
-        nom: true,
-      },
-    });
-
-    if (user?.email) {
-      const dashboardUrl = `${env.PLATFORM_URL.replace(/\/$/, '')}/dashboard/etablissement/accueil`;
-
-      const emailPayload = getMissionDemandeConfirmeeEmail({
-        nomComplet: `${user.prenom} ${user.nom}`.trim(),
-        specialiteLabel: getTypeMissionLabel(mission.specialitePrincipale),
-        dashboardUrl,
-      });
-
-      await mail.sendMail({
-        to: user.email,
-        subject: emailPayload.subject,
-        html: emailPayload.html,
-        text: emailPayload.text,
-      });
-    }
 
     return res.json(updatedMission);
   } catch (err) {

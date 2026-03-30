@@ -320,6 +320,7 @@ model ProfilRenford {
     // Relations
     renfordDiplomes             RenfordDiplome[]
     experiencesProfessionnelles ExperienceProfessionnelleRenford[]
+    missionsRenford              MissionRenford[]
 
     @@index([statutCertification])
     @@index([niveauExperience])
@@ -525,7 +526,7 @@ enum Diplome {
 model Mission {
     id String @id @default(uuid())
 
-    statut StatutMission @default(envoyee)
+    statut StatutMission @default(en_recherche)
 
     // Mode de mission (FLEX ou COACH)
     modeMission ModeMission @default(flex)
@@ -588,6 +589,8 @@ model Mission {
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt 
 
+    missionsRenford MissionRenford[]
+
     @@index([etablissementId])
     @@index([statut])
     @@index([modeMission])
@@ -627,20 +630,17 @@ enum Discipline {
 // }
 
 enum StatutMission {
-    brouillon
-    en_attente_paiement
-    envoyee
-    en_cours_de_matching
-    proposee
-    acceptee
-    contrat_signe
-    payee
-    en_cours
-    a_valider
-    validee
-    terminee
-    archivee
-    annulee
+    brouillon                  // Mission en préparation, pas encore soumise
+    ajouter_mode_paiement      // Aucun moyen de paiement valide, publication bloquée
+    en_recherche               // Mission publiée, en recherche de candidatures
+    candidatures_disponibles   // Un ou plusieurs Renfords ont candidaté
+    attente_de_signature       // Candidature retenue, contrat en attente de signature
+    mission_en_cours           // Contrat signé, mission démarrée
+    remplacement_en_cours      // Remplacement temporaire suite à une absence
+    en_litige                  // Incident ou désaccord nécessitant arbitrage
+    mission_terminee           // Mission terminée opérationnellement
+    archivee                   // Mission clôturée et archivée
+    annulee                    // Mission annulée avant sa clôture normale
 }
 
 enum MethodeTarification {
@@ -674,61 +674,61 @@ model PlageHoraireMission {
     @@map("plages_horaires_mission")
 }
 
-// // ============================================================================
-// // TABLE: Association Mission-Renford (assignations, shortlist)
-// // ============================================================================
+// ============================================================================
+// TABLE: Association Mission-Renford (assignations, shortlist)
+// ============================================================================
 
-// model MissionRenford {
-//     id        String  @id @default(uuid())
-//     missionId String
-//     mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+model MissionRenford {
+    id        String  @id @default(uuid())
+    missionId String
+    mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
 
-//     profilRenfordId String
-//     profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id])
+    profilRenfordId String
+    profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id])
 
-//     // Statut de cette assignation
-//     statut StatutMissionRenford @default(propose)
+    // Statut de cette assignation
+    statut StatutMissionRenford @default(propose)
 
-//     // Shortlist (pour mode COACH - 1 à 3 profils)
-//     estShortliste  Boolean @default(false)
-//     ordreShortlist Int?
+    // Shortlist (pour mode COACH - 1 à 3 profils)
+    estShortliste  Boolean @default(false)
+    ordreShortlist Int?
 
-//     // Dates clés
-//     dateProposition  DateTime  @default(now())
-//     dateReponse      DateTime?
-//     dateContratSigne DateTime?
+    // Dates clés
+    dateProposition  DateTime  @default(now())
+    dateReponse      DateTime?
+    dateContratSigne DateTime?
 
-//     // Visio pré-mission (mode COACH)
-//     lienVisio      String?
-//     dateVisio      DateTime?
-//     visioEffectuee Boolean   @default(false)
+    // Visio pré-mission (mode COACH)
+    lienVisio      String?
+    dateVisio      DateTime?
+    visioEffectuee Boolean   @default(false)
 
-//     // Tarif négocié final
-//     tarifNegocie Decimal? @db.Decimal(8, 2)
+    // Tarif négocié final
+    tarifNegocie Decimal? @db.Decimal(8, 2)
 
-//     dateCreation  DateTime @default(now())
-//     dateMiseAJour DateTime @updatedAt
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
 
-//     @@unique([missionId, profilRenfordId])
-//     @@index([missionId])
-//     @@index([profilRenfordId])
-//     @@index([statut])
-//     @@map("missions_renfords")
-// }
+    @@unique([missionId, profilRenfordId])
+    @@index([missionId])
+    @@index([profilRenfordId])
+    @@index([statut])
+    @@map("missions_renfords")
+}
 
-// // Enum utilisée par MissionRenford
-// enum StatutMissionRenford {
-//     propose
-//     accepte
-//     refuse
-//     shortliste
-//     selectionne
-//     contrat_envoye
-//     contrat_signe
-//     en_cours
-//     termine
-//     annule
-// }
+// Enum utilisée par MissionRenford
+enum StatutMissionRenford {
+    propose
+    accepte
+    refuse
+    shortliste
+    selectionne
+    contrat_envoye
+    contrat_signe
+    en_cours
+    termine
+    annule
+}
 
 // // ============================================================================
 // // TABLE: Documents de mission (devis, contrat, facture, attestations)

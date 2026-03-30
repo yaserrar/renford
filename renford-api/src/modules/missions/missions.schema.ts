@@ -39,6 +39,7 @@ export const METHODE_TARIFICATION = ['horaire', 'journee', 'demi_journee'] as co
 export const TYPE_PAIEMENT = ['carte_bancaire', 'prelevement_sepa'] as const;
 
 export const ETABLISSEMENT_MISSIONS_TAB = ['en-recherche', 'confirmees', 'terminees'] as const;
+export type EtablissementMissionsTab = (typeof ETABLISSEMENT_MISSIONS_TAB)[number];
 
 export const POURCENTAGE_VARIATION_TARIF_OPTIONS = [10, 20, 50] as const;
 
@@ -337,9 +338,11 @@ export const missionIdParamsSchema = z.object({
 });
 
 export const getEtablissementMissionsQuerySchema = z.object({
-  tab: z.enum(ETABLISSEMENT_MISSIONS_TAB, {
-    required_error: 'Veuillez préciser un onglet de mission valide',
-  }),
+  tab: z
+    .enum(ETABLISSEMENT_MISSIONS_TAB, {
+      required_error: 'Veuillez préciser un onglet de mission valide',
+    })
+    .optional(),
 });
 
 export type CreateMissionSchema = z.infer<typeof createMissionSchema>;
