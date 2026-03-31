@@ -1,7 +1,6 @@
 import { ProfilRenfordMissionSimple } from "@/types/profil-renford";
 
 export type StatutMissionRenford =
-  | "shortliste"
   | "nouveau"
   | "vu"
   | "refuse_par_renford"
@@ -18,7 +17,6 @@ export type MissionRenford = {
   missionId: string;
   profilRenfordId: string;
   statut: StatutMissionRenford;
-  estShortliste: boolean;
   ordreShortlist: number | null;
   dateProposition: Date | string;
   dateReponse: Date | string | null;

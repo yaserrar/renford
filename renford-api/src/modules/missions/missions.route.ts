@@ -7,13 +7,16 @@ import {
   getEtablissementMissionDetails,
   getEtablissementMissions,
   respondToMissionProposal,
+  respondToMissionRenfordByEtablissement,
 } from './missions.controller';
 import {
   createMissionSchema,
   finalizeMissionPaymentSchema,
   getEtablissementMissionsQuerySchema,
   missionIdParamsSchema,
+  missionRenfordIdParamsSchema,
   respondToMissionProposalSchema,
+  respondToMissionRenfordByEtablissementSchema,
 } from './missions.schema';
 
 const router = Router();
@@ -51,6 +54,16 @@ router.post(
   authenticateToken(),
   validateResource({ params: missionIdParamsSchema, body: respondToMissionProposalSchema }),
   respondToMissionProposal,
+);
+
+router.post(
+  '/etablissement/missions/:missionId/renfords/:missionRenfordId/reponse',
+  authenticateToken(),
+  validateResource({
+    params: missionRenfordIdParamsSchema,
+    body: respondToMissionRenfordByEtablissementSchema,
+  }),
+  respondToMissionRenfordByEtablissement,
 );
 
 export default router;

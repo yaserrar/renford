@@ -7,8 +7,8 @@ import { syncMissionMatchesForOpenMissions } from './missions.matching';
  */
 export function initScheduler(): void {
   logger.info('Initializing scheduler...');
-  cron.schedule('0 * * * *', async () => {
-    logger.info('Starting hourly mission matching job');
+  cron.schedule('*/5 * * * *', async () => {
+    logger.info('Starting each 5 minutes mission matching job');
 
     const result = await syncMissionMatchesForOpenMissions();
 
@@ -18,10 +18,10 @@ export function initScheduler(): void {
         matchedMissions: result.matchedMissions,
         failedMissionIds: result.failedMissionIds,
       },
-      'Hourly mission matching job completed',
+      '5 minutes mission matching job completed',
     );
   });
 
   logger.info('Scheduler initialized with the following jobs:');
-  logger.info('- mission-matching: every hour');
+  logger.info('- mission-matching: every 5 minutes');
 }

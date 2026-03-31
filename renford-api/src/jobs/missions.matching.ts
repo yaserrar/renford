@@ -9,11 +9,6 @@ import { logger } from '../config/logger';
 
 const MATCH_QUEUE_LIMIT = 10;
 
-const ACTIVE_PROPOSALS_BY_MODE = {
-  flex: 1,
-  coach: 3,
-} as const;
-
 const EXPERIENCE_RANK: Record<NiveauExperience, number> = {
   debutant: 1,
   confirme: 2,
@@ -21,13 +16,17 @@ const EXPERIENCE_RANK: Record<NiveauExperience, number> = {
   peut_importe: 0,
 };
 
-const REMATCH_BLOCKING_STATUSES = new Set<StatutMissionRenford>(['refuse', 'annule', 'termine']);
+const REMATCH_BLOCKING_STATUSES = new Set<StatutMissionRenford>([
+  'refuse_par_renford',
+  'annule',
+  'mission_terminee',
+]);
 const LOCKED_ASSIGNMENT_STATUSES = new Set<StatutMissionRenford>([
-  'accepte',
-  'selectionne',
-  'contrat_envoye',
+  'selection_en_cours',
+  'attente_de_signature',
+  'refuse_par_etablissement',
   'contrat_signe',
-  'en_cours',
+  'mission_en_cours',
 ]);
 
 type MatchMission = Prisma.MissionGetPayload<{
@@ -397,25 +396,25 @@ const getEligibleRenfordProfiles = async (
   });
 };
 
-const normalizeAssignmentOrdering = async (missionId: string): Promise<void> => {
-  const shortlists = await prisma.missionRenford.findMany({
+const normalizeSelectionOrdering = async (missionId: string): Promise<void> => {
+  const selections = await prisma.missionRenford.findMany({
     where: {
       missionId,
-      statut: 'shortliste',
+      statut: 'selection_en_cours',
     },
     orderBy: [{ ordreShortlist: 'asc' }, { dateCreation: 'asc' }],
     select: { id: true },
   });
 
-  if (shortlists.length === 0) {
+  if (selections.length === 0) {
     return;
   }
 
   await prisma.$transaction(
-    shortlists.map((assignment, index) =>
+    selections.map((assignment, index) =>
       prisma.missionRenford.update({
         where: { id: assignment.id },
-        data: { ordreShortlist: index + 1, estShortliste: true },
+        data: { ordreShortlist: index + 1 },
       }),
     ),
   );
@@ -474,14 +473,7 @@ export const syncMissionMatches = async (
     .sort((left, right) => right.score - left.score)
     .slice(0, MATCH_QUEUE_LIMIT);
 
-  const maxActiveProposals = ACTIVE_PROPOSALS_BY_MODE[mission.modeMission];
-  const desiredProposalIds = new Set(
-    rankedMatches.slice(0, maxActiveProposals).map((match) => match.profilRenfordId),
-  );
-  const desiredShortlists = rankedMatches.slice(maxActiveProposals);
-  const desiredShortlistOrder = new Map(
-    desiredShortlists.map((match, index) => [match.profilRenfordId, index + 1]),
-  );
+  const desiredMatchIds = new Set(rankedMatches.map((match) => match.profilRenfordId));
 
   const writes: Prisma.PrismaPromise<unknown>[] = [];
 
@@ -493,18 +485,13 @@ export const syncMissionMatches = async (
       return;
     }
 
-    if (desiredProposalIds.has(assignment.profilRenfordId)) {
-      if (
-        assignment.statut !== 'propose' ||
-        assignment.estShortliste ||
-        assignment.ordreShortlist !== null
-      ) {
+    if (desiredMatchIds.has(assignment.profilRenfordId)) {
+      if (assignment.statut !== 'nouveau') {
         writes.push(
           prisma.missionRenford.update({
             where: { id: assignment.id },
             data: {
-              statut: 'propose',
-              estShortliste: false,
+              statut: 'nouveau',
               ordreShortlist: null,
             },
           }),
@@ -513,54 +500,26 @@ export const syncMissionMatches = async (
       return;
     }
 
-    const shortlistOrder = desiredShortlistOrder.get(assignment.profilRenfordId);
-    if (shortlistOrder !== undefined) {
-      if (
-        assignment.statut !== 'shortliste' ||
-        !assignment.estShortliste ||
-        assignment.ordreShortlist !== shortlistOrder
-      ) {
-        writes.push(
-          prisma.missionRenford.update({
-            where: { id: assignment.id },
-            data: {
-              statut: 'shortliste',
-              estShortliste: true,
-              ordreShortlist: shortlistOrder,
-            },
-          }),
-        );
-      }
-      return;
-    }
-
-    if (assignment.statut === 'propose') {
+    if (assignment.statut === 'nouveau') {
       writes.push(
-        prisma.missionRenford.update({
+        prisma.missionRenford.delete({
           where: { id: assignment.id },
-          data: {
-            statut: 'shortliste',
-            estShortliste: true,
-          },
         }),
       );
     }
   });
 
-  rankedMatches.forEach((match, index) => {
+  rankedMatches.forEach((match) => {
     if (existingAssignments.has(match.profilRenfordId)) {
       return;
     }
 
-    const isProposed = index < maxActiveProposals;
     writes.push(
       prisma.missionRenford.create({
         data: {
           missionId: mission.id,
           profilRenfordId: match.profilRenfordId,
-          statut: isProposed ? 'propose' : 'shortliste',
-          estShortliste: !isProposed,
-          ordreShortlist: isProposed ? null : index - maxActiveProposals + 1,
+          statut: 'nouveau',
         },
       }),
     );
@@ -568,73 +527,14 @@ export const syncMissionMatches = async (
 
   if (writes.length > 0) {
     await prisma.$transaction(writes);
-    await normalizeAssignmentOrdering(mission.id);
   }
 
   return {
     missionId: mission.id,
     totalEligible: rankedMatches.length,
     queued: rankedMatches.length,
-    proposed: Math.min(rankedMatches.length, maxActiveProposals),
+    proposed: rankedMatches.length,
   };
-};
-
-export const promoteNextMissionRenfordProposal = async (missionId: string): Promise<number> => {
-  const mission = await prisma.mission.findUnique({
-    where: { id: missionId },
-    select: {
-      id: true,
-      modeMission: true,
-    },
-  });
-
-  if (!mission) {
-    return 0;
-  }
-
-  const activeProposalLimit = ACTIVE_PROPOSALS_BY_MODE[mission.modeMission];
-  const currentProposalsCount = await prisma.missionRenford.count({
-    where: {
-      missionId,
-      statut: 'propose',
-    },
-  });
-
-  const missingProposals = Math.max(0, activeProposalLimit - currentProposalsCount);
-  if (missingProposals === 0) {
-    return 0;
-  }
-
-  const shortlists = await prisma.missionRenford.findMany({
-    where: {
-      missionId,
-      statut: 'shortliste',
-    },
-    orderBy: [{ ordreShortlist: 'asc' }, { dateCreation: 'asc' }],
-    select: { id: true },
-    take: missingProposals,
-  });
-
-  if (shortlists.length === 0) {
-    return 0;
-  }
-
-  await prisma.$transaction(
-    shortlists.map((assignment) =>
-      prisma.missionRenford.update({
-        where: { id: assignment.id },
-        data: {
-          statut: 'propose',
-          estShortliste: false,
-          ordreShortlist: null,
-          dateProposition: new Date(),
-        },
-      }),
-    ),
-  );
-
-  await normalizeAssignmentOrdering(missionId);
-  return shortlists.length;
 };
 
 export const syncMissionMatchesForOpenMissions = async (): Promise<{
@@ -679,11 +579,10 @@ export const syncMissionMatchesForOpenMissions = async (): Promise<{
 export const registerMissionRenfordResponse = async (params: {
   missionId: string;
   profilRenfordId: string;
-  response: 'accepte' | 'refuse';
+  response: 'selection_en_cours' | 'refuse_par_renford';
 }): Promise<{
   missionRenfordId: string;
   statut: StatutMissionRenford;
-  promotedCount: number;
 }> => {
   const missionRenford = await prisma.missionRenford.findFirst({
     where: {
@@ -701,26 +600,34 @@ export const registerMissionRenfordResponse = async (params: {
     throw new Error('MISSION_RENFORD_NOT_FOUND');
   }
 
-  if (missionRenford.statut !== 'propose') {
+  if (missionRenford.statut !== 'nouveau') {
     throw new Error('MISSION_RENFORD_NOT_PROPOSED');
   }
 
-  const nextStatus: StatutMissionRenford = params.response === 'accepte' ? 'accepte' : 'refuse';
+  const nextStatus: StatutMissionRenford =
+    params.response === 'selection_en_cours' ? 'selection_en_cours' : 'refuse_par_renford';
   const now = new Date();
 
-  await prisma.missionRenford.update({
-    where: { id: missionRenford.id },
-    data: {
-      statut: nextStatus,
-      dateReponse: now,
-      estShortliste: false,
-      ordreShortlist: null,
-    },
-  });
+  if (params.response === 'selection_en_cours') {
+    const currentMaxOrder = await prisma.missionRenford.aggregate({
+      where: {
+        missionId: missionRenford.missionId,
+        statut: 'selection_en_cours',
+      },
+      _max: { ordreShortlist: true },
+    });
 
-  let promotedCount = 0;
+    const nextOrder = (currentMaxOrder._max.ordreShortlist ?? 0) + 1;
 
-  if (params.response === 'accepte') {
+    await prisma.missionRenford.update({
+      where: { id: missionRenford.id },
+      data: {
+        statut: nextStatus,
+        dateReponse: now,
+        ordreShortlist: nextOrder,
+      },
+    });
+
     await prisma.mission.update({
       where: { id: missionRenford.missionId },
       data: {
@@ -728,17 +635,108 @@ export const registerMissionRenfordResponse = async (params: {
       },
     });
   } else {
-    promotedCount = await promoteNextMissionRenfordProposal(missionRenford.missionId);
+    await prisma.missionRenford.update({
+      where: { id: missionRenford.id },
+      data: {
+        statut: nextStatus,
+        dateReponse: now,
+        ordreShortlist: null,
+      },
+    });
 
-    if (promotedCount === 0) {
-      const refreshResult = await syncMissionMatches(missionRenford.missionId);
-      promotedCount = refreshResult.proposed;
+    const refreshResult = await syncMissionMatches(missionRenford.missionId);
+    if (refreshResult.proposed === 0) {
+      logger.info({ missionId: missionRenford.missionId }, 'No new matches found after refusal');
     }
   }
 
   return {
     missionRenfordId: missionRenford.id,
     statut: nextStatus,
-    promotedCount,
+  };
+};
+
+export const registerEtablissementMissionRenfordResponse = async (params: {
+  missionId: string;
+  missionRenfordId: string;
+  response: 'attente_de_signature' | 'refuse_par_etablissement';
+}): Promise<{
+  missionRenfordId: string;
+  statut: StatutMissionRenford;
+}> => {
+  const missionRenford = await prisma.missionRenford.findFirst({
+    where: {
+      id: params.missionRenfordId,
+      missionId: params.missionId,
+      statut: 'selection_en_cours',
+    },
+    select: {
+      id: true,
+      missionId: true,
+    },
+  });
+
+  if (!missionRenford) {
+    throw new Error('MISSION_RENFORD_NOT_FOUND');
+  }
+
+  if (params.response === 'attente_de_signature') {
+    await prisma.$transaction([
+      prisma.missionRenford.update({
+        where: { id: missionRenford.id },
+        data: {
+          statut: 'attente_de_signature',
+          ordreShortlist: null,
+        },
+      }),
+      prisma.missionRenford.updateMany({
+        where: {
+          missionId: missionRenford.missionId,
+          statut: 'selection_en_cours',
+          id: { not: missionRenford.id },
+        },
+        data: {
+          statut: 'refuse_par_etablissement',
+          ordreShortlist: null,
+        },
+      }),
+      prisma.mission.update({
+        where: { id: missionRenford.missionId },
+        data: {
+          statut: 'attente_de_signature',
+        },
+      }),
+    ]);
+  } else {
+    await prisma.missionRenford.update({
+      where: { id: missionRenford.id },
+      data: {
+        statut: 'refuse_par_etablissement',
+        ordreShortlist: null,
+      },
+    });
+
+    await normalizeSelectionOrdering(missionRenford.missionId);
+
+    const remainingInQueue = await prisma.missionRenford.count({
+      where: {
+        missionId: missionRenford.missionId,
+        statut: 'selection_en_cours',
+      },
+    });
+
+    if (remainingInQueue === 0) {
+      await prisma.mission.update({
+        where: { id: missionRenford.missionId },
+        data: {
+          statut: 'en_recherche',
+        },
+      });
+    }
+  }
+
+  return {
+    missionRenfordId: missionRenford.id,
+    statut: params.response,
   };
 };

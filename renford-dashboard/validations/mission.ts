@@ -92,35 +92,6 @@ export const TYPE_PAIEMENT_LABELS: Record<
   prelevement_sepa: "Prélèvement SEPA",
 };
 
-export const STATUT_MISSION_RENFORD = [
-  "propose",
-  "accepte",
-  "refuse",
-  "shortliste",
-  "selectionne",
-  "contrat_envoye",
-  "contrat_signe",
-  "en_cours",
-  "termine",
-  "annule",
-] as const;
-
-export const STATUT_MISSION_RENFORD_LABELS: Record<
-  (typeof STATUT_MISSION_RENFORD)[number],
-  string
-> = {
-  propose: "Proposé",
-  accepte: "Accepté",
-  refuse: "Refusé",
-  shortliste: "Shortlisté",
-  selectionne: "Sélectionné",
-  contrat_envoye: "Contrat envoyé",
-  contrat_signe: "Contrat signé",
-  en_cours: "En cours",
-  termine: "Terminé",
-  annule: "Annulé",
-};
-
 export const DISCIPLINE_MISSION = [
   "pilates",
   "yoga",

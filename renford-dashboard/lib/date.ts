@@ -10,7 +10,7 @@ export const formatTime = (date: Date | undefined | null) => {
   return moment(date).format("HH:mm");
 };
 
-export const formatDate = (date: Date | undefined | null) => {
+export const formatDate = (date: Date | string | undefined | null) => {
   if (!date) return "";
   return moment(date).format("DD-MM-YYYY");
 };

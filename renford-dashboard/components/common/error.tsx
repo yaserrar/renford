@@ -10,8 +10,8 @@ const Error = ({ className, message }: Props) => {
   return (
     <main
       className={cn(
-        "flex h-40 flex-col items-center justify-center rounded-lg border shadow-lg bg-white",
-        className
+        "flex h-40 flex-col items-center justify-center rounded-lg border bg-secondary-background",
+        className,
       )}
     >
       <AlertTriangle size={25} />

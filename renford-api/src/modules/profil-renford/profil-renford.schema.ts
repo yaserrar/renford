@@ -7,6 +7,12 @@ export const updateCouvertureSchema = z.object({
 
 export type UpdateCouvertureSchema = z.infer<typeof updateCouvertureSchema>;
 
+export const profilRenfordIdParamsSchema = z.object({
+  profilRenfordId: z.string().uuid("L'identifiant du profil Renford est invalide"),
+});
+
+export type ProfilRenfordIdParamsSchema = z.infer<typeof profilRenfordIdParamsSchema>;
+
 export const updateAvatarSchema = z.object({
   avatarChemin: z.string().nullable(),
 });

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Briefcase } from "lucide-react";
 import Pagination from "@/components/common/pagination";
 import {
   EtablissementMissionsTab,
   MissionEtablissement,
 } from "@/types/mission";
 import EtablissementMissionCard from "./etablissement-mission-card";
+import CenterState from "@/components/common/center-state";
 
 type EtablissementMissionsPanelProps = {
   missions: MissionEtablissement[];
@@ -17,25 +17,6 @@ type EtablissementMissionsPanelProps = {
 };
 
 const MISSIONS_PER_PAGE = 4;
-
-type CenterStateProps = {
-  title: string;
-  description: string;
-};
-
-function CenterState({ title, description }: CenterStateProps) {
-  return (
-    <div className="flex min-h-[360px] items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md rounded-2xl border border-dashed border-border bg-white/70 p-8 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-secondary/10 text-secondary-dark">
-          <Briefcase className="h-6 w-6" />
-        </div>
-        <p className="text-lg font-semibold text-foreground">{title}</p>
-        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-      </div>
-    </div>
-  );
-}
 
 export default function EtablissementMissionsPanel({
   missions,
@@ -68,6 +49,7 @@ export default function EtablissementMissionsPanel({
       <CenterState
         title="Chargement des missions"
         description="Nous récupérons les dernières missions de cet onglet."
+        isLoading
       />
     );
   }

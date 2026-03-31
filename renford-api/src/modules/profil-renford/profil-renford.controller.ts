@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import prisma from '../../config/prisma';
 import type {
+  ProfilRenfordIdParamsSchema,
   UpdateAvatarSchema,
   UpdateCouvertureSchema,
   UpdateDiplomesProfilSchema,
@@ -12,6 +13,53 @@ import type {
   UpdateProfilRenfordSchema,
   UpdateQualificationsProfilSchema,
 } from './profil-renford.schema';
+
+export const getPublicProfilRenford = async (
+  req: Request<ProfilRenfordIdParamsSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    if (req.utilisateur?.typeUtilisateur !== 'etablissement') {
+      return res.status(403).json({
+        message: 'Seuls les établissements peuvent consulter ce profil Renford',
+      });
+    }
+
+    const profilRenford = await prisma.profilRenford.findUnique({
+      where: { id: req.params.profilRenfordId },
+      include: {
+        utilisateur: {
+          select: {
+            id: true,
+            nom: true,
+            prenom: true,
+          },
+        },
+        renfordDiplomes: {
+          orderBy: [{ anneeObtention: 'desc' }, { dateCreation: 'desc' }],
+        },
+        experiencesProfessionnelles: {
+          orderBy: [{ dateDebut: 'desc' }, { dateCreation: 'desc' }],
+        },
+      },
+    });
+
+    if (!profilRenford) {
+      return res.status(404).json({ message: 'Profil Renford non trouvé' });
+    }
+
+    return res.json(profilRenford);
+  } catch (err) {
+    return next(err);
+  }
+};
 
 export const updateCouverture = async (
   req: Request<unknown, unknown, UpdateCouvertureSchema>,

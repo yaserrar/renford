@@ -80,7 +80,7 @@ export default function QualificationEditDialog({
 
   const justificatifCarteProFileName = useMemo(
     () => (justificatifCartePro ? justificatifCartePro.split("/").pop() : null),
-    [justificatifCartePro]
+    [justificatifCartePro],
   );
 
   const onSubmit = (data: UpdateProfilRenfordQualificationsSchema) => {
@@ -99,7 +99,7 @@ export default function QualificationEditDialog({
         shouldValidate: true,
       });
     },
-    [setValue]
+    [setValue],
   );
 
   return (
@@ -254,7 +254,7 @@ export default function QualificationEditDialog({
                   />
                   <Label
                     htmlFor="proposeJournee"
-                    className="cursor-pointer font-normal"
+                    className="cursor-pointer font-normal mb-0"
                   >
                     Je propose des prestations facturées à la journée
                   </Label>
@@ -292,7 +292,7 @@ export default function QualificationEditDialog({
                   />
                   <Label
                     htmlFor="proposeDemiJournee"
-                    className="cursor-pointer font-normal"
+                    className="cursor-pointer font-normal mb-0"
                   >
                     Je propose des prestations facturées à demi-journée
                   </Label>

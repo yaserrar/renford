@@ -110,6 +110,14 @@ export type ProfilRenfordMissionSimple = {
   };
 };
 
+export type PublicProfilRenford = ProfilRenford & {
+  utilisateur: {
+    id: string;
+    nom: string;
+    prenom: string;
+  };
+};
+
 // Type de poste du Renford
 export type RenfordTypePoste = {
   id: string;

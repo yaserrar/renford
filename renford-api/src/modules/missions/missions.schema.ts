@@ -334,13 +334,24 @@ export const finalizeMissionPaymentSchema = z.discriminatedUnion('typePaiement',
 ]);
 
 export const respondToMissionProposalSchema = z.object({
-  response: z.enum(['accepte', 'refuse'], {
+  response: z.enum(['selection_en_cours', 'refuse_par_renford'], {
     required_error: 'Veuillez préciser une réponse valide',
   }),
 });
 
 export const missionIdParamsSchema = z.object({
   missionId: z.string().uuid("L'identifiant de mission est invalide"),
+});
+
+export const missionRenfordIdParamsSchema = z.object({
+  missionId: z.string().uuid("L'identifiant de mission est invalide"),
+  missionRenfordId: z.string().uuid("L'identifiant de mission renford est invalide"),
+});
+
+export const respondToMissionRenfordByEtablissementSchema = z.object({
+  response: z.enum(['attente_de_signature', 'refuse_par_etablissement'], {
+    required_error: 'Veuillez préciser une réponse valide',
+  }),
 });
 
 export const getEtablissementMissionsQuerySchema = z.object({
@@ -355,6 +366,10 @@ export type CreateMissionSchema = z.infer<typeof createMissionSchema>;
 export type FinalizeMissionPaymentSchema = z.infer<typeof finalizeMissionPaymentSchema>;
 export type RespondToMissionProposalSchema = z.infer<typeof respondToMissionProposalSchema>;
 export type MissionIdParamsSchema = z.infer<typeof missionIdParamsSchema>;
+export type MissionRenfordIdParamsSchema = z.infer<typeof missionRenfordIdParamsSchema>;
+export type RespondToMissionRenfordByEtablissementSchema = z.infer<
+  typeof respondToMissionRenfordByEtablissementSchema
+>;
 export type GetEtablissementMissionsQuerySchema = z.infer<
   typeof getEtablissementMissionsQuerySchema
 >;

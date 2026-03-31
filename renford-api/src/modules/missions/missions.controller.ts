@@ -5,7 +5,11 @@ import { mail } from '../../config/mail';
 import { env } from '../../config/env';
 import { logger } from '../../config/logger';
 import { getMissionDemandeConfirmeeEmail } from '../../config/email-templates';
-import { registerMissionRenfordResponse, syncMissionMatches } from '../../jobs/missions.matching';
+import {
+  registerMissionRenfordResponse,
+  registerEtablissementMissionRenfordResponse,
+  syncMissionMatches,
+} from '../../jobs/missions.matching';
 import { getTypeMissionLabel } from './missions.schema';
 import type {
   CreateMissionSchema,
@@ -13,7 +17,9 @@ import type {
   FinalizeMissionPaymentSchema,
   GetEtablissementMissionsQuerySchema,
   MissionIdParamsSchema,
+  MissionRenfordIdParamsSchema,
   RespondToMissionProposalSchema,
+  RespondToMissionRenfordByEtablissementSchema,
 } from './missions.schema';
 
 const ETABLISSEMENT_TAB_STATUS_MAP: Record<EtablissementMissionsTab, StatutMission[]> = {
@@ -174,11 +180,7 @@ export const getEtablissementMissionDetails = async (
               },
             },
           },
-          orderBy: [
-            { estShortliste: 'asc' },
-            { ordreShortlist: 'asc' },
-            { dateProposition: 'asc' },
-          ],
+          orderBy: [{ ordreShortlist: 'asc' }, { dateProposition: 'asc' }],
         },
       },
     });
@@ -457,6 +459,62 @@ export const respondToMissionProposal = async (
       if (error instanceof Error && error.message === 'MISSION_RENFORD_NOT_PROPOSED') {
         return res.status(400).json({
           message: 'Cette mission nest pas actuellement proposée à ce Renford',
+        });
+      }
+
+      throw error;
+    }
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const respondToMissionRenfordByEtablissement = async (
+  req: Request<MissionRenfordIdParamsSchema, unknown, RespondToMissionRenfordByEtablissementSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    if (req.utilisateur?.typeUtilisateur !== 'etablissement') {
+      return res
+        .status(403)
+        .json({ message: 'Seuls les établissements peuvent répondre à une candidature' });
+    }
+
+    const mission = await prisma.mission.findFirst({
+      where: {
+        id: req.params.missionId,
+        etablissement: {
+          profilEtablissement: {
+            utilisateurId: userId,
+          },
+        },
+      },
+      select: { id: true },
+    });
+
+    if (!mission) {
+      return res.status(404).json({ message: 'Mission non trouvée' });
+    }
+
+    try {
+      const result = await registerEtablissementMissionRenfordResponse({
+        missionId: req.params.missionId,
+        missionRenfordId: req.params.missionRenfordId,
+        response: req.body.response,
+      });
+
+      return res.json(result);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'MISSION_RENFORD_NOT_FOUND') {
+        return res.status(404).json({
+          message: 'Candidature non trouvée ou non en cours de sélection',
         });
       }
 

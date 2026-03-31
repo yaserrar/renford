@@ -1,4 +1,5 @@
 import { getErrorMessage } from "@/lib/utils";
+import { PublicProfilRenford } from "@/types/profil-renford";
 import {
   UpdateProfilRenfordAvatarSchema,
   UpdateProfilRenfordCouvertureSchema,
@@ -11,9 +12,24 @@ import {
   UpdateProfilRenfordPortfolioSchema,
   UpdateProfilRenfordQualificationsSchema,
 } from "@/validations/profil-renford";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import useAxios from "./axios";
+
+export const usePublicProfilRenford = (profilRenfordId?: string) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["public-profil-renford", profilRenfordId],
+    queryFn: async () => {
+      return (
+        await axios.get(`/profil-renford/public/${profilRenfordId}`)
+      ).data as PublicProfilRenford;
+    },
+    enabled: Boolean(profilRenfordId),
+    staleTime: 1000 * 60 * 5,
+  });
+};
 
 export const useUpdateProfilRenfordCouverture = () => {
   const axios = useAxios();

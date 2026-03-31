@@ -105,3 +105,47 @@ export const useEtablissementMissionDetails = (missionId?: string) => {
     staleTime: 1000 * 60,
   });
 };
+
+type RespondToMissionRenfordResponse = {
+  missionRenfordId: string;
+  statut: string;
+};
+
+export const useRespondToMissionRenford = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      missionId,
+      missionRenfordId,
+      response,
+    }: {
+      missionId: string;
+      missionRenfordId: string;
+      response: "attente_de_signature" | "refuse_par_etablissement";
+    }) => {
+      return (
+        await axios.post(
+          `/etablissement/missions/${missionId}/renfords/${missionRenfordId}/reponse`,
+          { response },
+        )
+      ).data as RespondToMissionRenfordResponse;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["etablissement-mission-details", variables.missionId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["etablissement-missions"] });
+      toast.success(
+        variables.response === "attente_de_signature"
+          ? "Renford accepté, en attente de signature"
+          : "Renford refusé",
+      );
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};

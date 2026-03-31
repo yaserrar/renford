@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticateToken } from '../../middleware/auth.middleware';
 import { validateResource } from '../../middleware/validate.resource';
 import {
+  getPublicProfilRenford,
   updateAvatar,
   updateCouverture,
   updateDiplomesProfil,
@@ -14,6 +15,7 @@ import {
   updateQualificationsProfil,
 } from './profil-renford.controller';
 import {
+  profilRenfordIdParamsSchema,
   updateAvatarSchema,
   updateCouvertureSchema,
   updateDiplomesProfilSchema,
@@ -28,6 +30,20 @@ import {
 
 const router = Router();
 
+router.get(
+  '/public/:profilRenfordId',
+  authenticateToken(),
+  validateResource({ params: profilRenfordIdParamsSchema }),
+  getPublicProfilRenford,
+);
+
+router.put(
+  '/',
+  authenticateToken(),
+  validateResource(updateProfilRenfordSchema),
+  updateProfilRenford,
+);
+
 router.put(
   '/couverture',
   authenticateToken(),
@@ -36,13 +52,6 @@ router.put(
 );
 
 router.put('/avatar', authenticateToken(), validateResource(updateAvatarSchema), updateAvatar);
-
-router.put(
-  '/',
-  authenticateToken(),
-  validateResource(updateProfilRenfordSchema),
-  updateProfilRenford,
-);
 
 router.put(
   '/description',

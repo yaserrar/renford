@@ -632,9 +632,9 @@ enum Discipline {
 enum StatutMission {
     brouillon                  // Mission en préparation, pas encore soumise
     ajouter_mode_paiement      // Aucun moyen de paiement valide, publication bloquée
-    en_recherche               // Mission publiée, en recherche de candidatures
-    candidatures_disponibles   // Un ou plusieurs Renfords ont candidaté
-    attente_de_signature       // Candidature retenue, contrat en attente de signature
+    en_recherche               // Mission publiée, en recherche de candidatures, pas encore reçu aucune candidature
+    candidatures_disponibles   // Un ou plusieurs Renfords ont candidaté (ils ont accepté la mission), en attente de sélection
+    attente_de_signature       // Candidature retenue, contrat en attente de signature (l'etablissement a accepté la candidature du Renford, mais le contrat n'est pas encore signé)
     mission_en_cours           // Contrat signé, mission démarrée
     remplacement_en_cours      // Remplacement temporaire suite à une absence
     en_litige                  // Incident ou désaccord nécessitant arbitrage
@@ -687,10 +687,9 @@ model MissionRenford {
     profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id])
 
     // Statut de cette assignation
-    statut StatutMissionRenford @default(shortliste)
+    statut StatutMissionRenford @default(nouveau)
 
-    // Shortlist (pour mode COACH - 1 à 3 profils)
-    estShortliste  Boolean @default(false)
+    // Ordre dans la file d'attente (selection_en_cours)
     ordreShortlist Int?
 
     // Dates clés
@@ -718,11 +717,10 @@ model MissionRenford {
 
 // Enum utilisée par MissionRenford
 enum StatutMissionRenford {
-    shortliste               // Profil retenu en réserve, pas encore visible comme opportunité active
     nouveau                  // Opportunité nouvellement proposée au Renford, pas encore consultée
     vu                       // Opportunité consultée par le Renford, en attente d'une action
     refuse_par_renford       // Le Renford a refusé l'opportunité ou la proposition
-    selection_en_cours       // Le profil reste dans le processus de sélection côté établissement
+    selection_en_cours       // Le Renford a accepté la mission, en attente de décision de l'établissement (file d'attente ordonnée par ordreShortlist)
     attente_de_signature     // Le Renford est retenu, contrat en préparation ou à signer
     refuse_par_etablissement // Le profil n'est finalement pas retenu par l'établissement
     contrat_signe            // Le contrat est signé, la mission est confirmée pour ce Renford
