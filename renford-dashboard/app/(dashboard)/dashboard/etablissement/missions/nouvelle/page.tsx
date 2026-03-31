@@ -20,7 +20,7 @@ import {
 import { H2, H3 } from "@/components/ui/typography";
 import {
   useCreateMission,
-  useEtablissementMissionsByTab,
+  useGteEtablissementMissionsByTab,
 } from "@/hooks/mission";
 import { MissionEtablissement } from "@/types/mission";
 import { useCurrentUser } from "@/hooks/utilisateur";
@@ -160,7 +160,7 @@ export default function NouvelleMissionPage() {
 
   const { data: user } = useCurrentUser();
   const createMissionMutation = useCreateMission();
-  const missionsHistoryQuery = useEtablissementMissionsByTab();
+  const missionsHistoryQuery = useGteEtablissementMissionsByTab();
 
   const {
     control,

@@ -9,6 +9,7 @@ import {
 } from "@/validations/mission";
 import { TYPE_MISSION } from "@/validations/profil-renford";
 import { Etablissement } from "@/types/etablissement";
+import { MissionRenford } from "@/types/mission-renford";
 
 export type ModeMission = (typeof MODE_MISSION)[number];
 export type StatutMission = (typeof STATUT_MISSION)[number];
@@ -23,10 +24,10 @@ export type TypePaiementMission = (typeof TYPE_PAIEMENT)[number];
 export type PlageHoraireMission = {
   id: string;
   missionId: string;
-  date: Date;
+  date: Date | string;
   heureDebut: string;
   heureFin: string;
-  dateCreation?: Date;
+  dateCreation?: Date | string;
 };
 
 export type Mission = {
@@ -41,8 +42,8 @@ export type Mission = {
   materielsRequis: MaterielMission[];
   description: string | null;
   etablissementId: string;
-  dateDebut: Date;
-  dateFin: Date;
+  dateDebut: Date | string;
+  dateFin: Date | string;
   methodeTarification: MethodeTarificationMission;
   tarif: number | string | null;
   pourcentageVariationTarif: number | string | null;
@@ -52,14 +53,14 @@ export type Mission = {
   dateExpirationCarte: string | null;
   cvvCarte: string | null;
   autorisationDebit: boolean;
-  dateAutorisationDebit: Date | null;
+  dateAutorisationDebit: Date | string | null;
   titulaireCompteBancaire: string | null;
   IBANCompteBancaire: string | null;
   BICCompteBancaire: string | null;
   autorisationPrelevement: boolean;
-  dateAutorisationPrelevement: Date | null;
-  dateCreation?: Date;
-  dateMiseAJour?: Date;
+  dateAutorisationPrelevement: Date | string | null;
+  dateCreation?: Date | string;
+  dateMiseAJour?: Date | string;
 };
 
 export type MissionEtablissement = Mission & {
@@ -67,6 +68,10 @@ export type MissionEtablissement = Mission & {
   etablissement?: Etablissement;
 
   totalHours?: number;
+};
+
+export type MissionDetailsEtablissement = MissionEtablissement & {
+  missionsRenford: MissionRenford[];
 };
 
 export type EtablissementMissionsTab =

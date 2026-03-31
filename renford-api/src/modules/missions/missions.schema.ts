@@ -333,6 +333,12 @@ export const finalizeMissionPaymentSchema = z.discriminatedUnion('typePaiement',
   sepaPaymentSchema,
 ]);
 
+export const respondToMissionProposalSchema = z.object({
+  response: z.enum(['accepte', 'refuse'], {
+    required_error: 'Veuillez préciser une réponse valide',
+  }),
+});
+
 export const missionIdParamsSchema = z.object({
   missionId: z.string().uuid("L'identifiant de mission est invalide"),
 });
@@ -347,6 +353,7 @@ export const getEtablissementMissionsQuerySchema = z.object({
 
 export type CreateMissionSchema = z.infer<typeof createMissionSchema>;
 export type FinalizeMissionPaymentSchema = z.infer<typeof finalizeMissionPaymentSchema>;
+export type RespondToMissionProposalSchema = z.infer<typeof respondToMissionProposalSchema>;
 export type MissionIdParamsSchema = z.infer<typeof missionIdParamsSchema>;
 export type GetEtablissementMissionsQuerySchema = z.infer<
   typeof getEtablissementMissionsQuerySchema

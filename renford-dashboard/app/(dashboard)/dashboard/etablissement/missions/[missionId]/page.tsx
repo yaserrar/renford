@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { useParams } from "next/navigation";
 import {
   CalendarDays,
@@ -15,7 +14,8 @@ import MissionStatusBadge from "@/components/common/mission-status-badge";
 import { Button } from "@/components/ui/button";
 import { H2 } from "@/components/ui/typography";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEtablissementMissionsByTab } from "@/hooks/mission";
+import { useEtablissementMissionDetails } from "@/hooks/mission";
+import { formatWeekdayDayMonth } from "@/lib/date";
 import {
   formatAmount,
   formatDurationHours,
@@ -57,17 +57,11 @@ function formatTimeRange(value: string, fallback = "-") {
 export default function EtablissementMissionDetailsPage() {
   const { missionId } = useParams<{ missionId: string }>();
 
-  const missionsQuery = useEtablissementMissionsByTab();
+  const missionQuery = useEtablissementMissionDetails(missionId);
+  const mission = missionQuery.data;
 
-  const missions = useMemo(() => missionsQuery.data ?? [], [missionsQuery.data]);
-
-  const mission = useMemo(
-    () => missions.find((item) => item.id === missionId),
-    [missionId, missions],
-  );
-
-  const isLoading = missionsQuery.isLoading;
-  const isError = missionsQuery.isError;
+  const isLoading = missionQuery.isLoading;
+  const isError = missionQuery.isError;
 
   if (isLoading) {
     return (
@@ -142,11 +136,7 @@ export default function EtablissementMissionDetailsPage() {
   const totalTtc = totalHt + serviceFees;
 
   const horaires = (mission.PlageHoraireMission ?? []).map((slot) => {
-    const weekdayDate = new Intl.DateTimeFormat("fr-FR", {
-      weekday: "long",
-      day: "2-digit",
-      month: "2-digit",
-    }).format(slot.date);
+    const weekdayDate = formatWeekdayDayMonth(slot.date);
 
     return `${weekdayDate} - ${formatTimeRange(slot.heureDebut)} à ${formatTimeRange(slot.heureFin)}`;
   });
@@ -235,7 +225,7 @@ export default function EtablissementMissionDetailsPage() {
 
           <div className="bg-secondary-background m-1 min-h-[620px] rounded-3xl border p-4 md:p-6">
             <TabsContent value="details" className="space-y-4">
-              <div className="rounded-full border border-primary-dark bg-primary-light py-2 px-4">
+              {/* <div className="rounded-full border border-primary-dark bg-primary-light py-2 px-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-3 text-foreground">
                     <FileSignature className="h-5 w-5" />
@@ -247,7 +237,7 @@ export default function EtablissementMissionDetailsPage() {
                     Signer le contrat
                   </Button>
                 </div>
-              </div>
+              </div> */}
 
               <section className="rounded-3xl border border-border bg-white px-4 py-4 md:px-5 md:py-5">
                 <div className="mb-5 space-y-2">

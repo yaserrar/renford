@@ -1,6 +1,7 @@
 import { getErrorMessage } from "@/lib/utils";
 import {
   EtablissementMissionsTab,
+  MissionDetailsEtablissement,
   MissionEtablissement,
 } from "@/types/mission";
 import {
@@ -10,46 +11,6 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import useAxios from "./axios";
-
-const parseDate = (value: string | Date | null | undefined): Date | null => {
-  if (!value) return null;
-  const parsed = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const normalizeMissionDates = (
-  mission: MissionEtablissement,
-): MissionEtablissement => {
-  const normalizedPlages = (mission.PlageHoraireMission ?? []).map((slot) => ({
-    ...slot,
-    date: parseDate(slot.date) ?? new Date(),
-    dateCreation: parseDate(slot.dateCreation ?? null) ?? undefined,
-  }));
-
-  const normalizedEtablissement = mission.etablissement
-    ? {
-        ...mission.etablissement,
-        dateCreation:
-          parseDate(mission.etablissement.dateCreation as Date | string) ??
-          new Date(),
-        dateMiseAJour:
-          parseDate(mission.etablissement.dateMiseAJour as Date | string) ??
-          new Date(),
-      }
-    : mission.etablissement;
-
-  return {
-    ...mission,
-    dateDebut: parseDate(mission.dateDebut) ?? new Date(),
-    dateFin: parseDate(mission.dateFin) ?? new Date(),
-    dateAutorisationDebit: parseDate(mission.dateAutorisationDebit),
-    dateAutorisationPrelevement: parseDate(mission.dateAutorisationPrelevement),
-    dateCreation: parseDate(mission.dateCreation ?? null) ?? undefined,
-    dateMiseAJour: parseDate(mission.dateMiseAJour ?? null) ?? undefined,
-    PlageHoraireMission: normalizedPlages,
-    etablissement: normalizedEtablissement,
-  };
-};
 
 type CreateMissionResponse = {
   id: string;
@@ -111,7 +72,7 @@ export const useFinalizeMissionPayment = () => {
   });
 };
 
-export const useEtablissementMissionsByTab = (
+export const useGteEtablissementMissionsByTab = (
   tab?: EtablissementMissionsTab,
 ) => {
   const axios = useAxios();
@@ -125,8 +86,22 @@ export const useEtablissementMissionsByTab = (
         })
       ).data as MissionEtablissement[];
 
-      return data.map(normalizeMissionDates);
+      return data;
     },
+    staleTime: 1000 * 60,
+  });
+};
+
+export const useEtablissementMissionDetails = (missionId?: string) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["etablissement-mission-details", missionId],
+    queryFn: async () => {
+      return (await axios.get(`/etablissement/missions/${missionId}`))
+        .data as MissionDetailsEtablissement;
+    },
+    enabled: Boolean(missionId),
     staleTime: 1000 * 60,
   });
 };

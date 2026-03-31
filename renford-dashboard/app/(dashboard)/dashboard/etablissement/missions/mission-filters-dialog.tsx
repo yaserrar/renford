@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,6 +69,7 @@ export default function MissionFiltersDialog({
   onChange,
   onReset,
 }: MissionFiltersDialogProps) {
+  const [open, setOpen] = useState(false);
   const fromDate = parseFilterDate(filters.fromDate);
   const toDate = parseFilterDate(filters.toDate);
 
@@ -76,8 +78,13 @@ export default function MissionFiltersDialog({
     Number(Boolean(filters.fromDate)) +
     Number(Boolean(filters.toDate));
 
+  const handleReset = () => {
+    onReset();
+    setOpen(false);
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="relative">
           <SlidersHorizontal className="h-4 w-4" />
@@ -159,7 +166,7 @@ export default function MissionFiltersDialog({
             <Button
               type="button"
               variant="ghost"
-              onClick={onReset}
+              onClick={handleReset}
               className="text-muted-foreground hover:text-black"
             >
               Réinitialiser les filtres

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H2 } from "@/components/ui/typography";
-import { useEtablissementMissionsByTab } from "@/hooks/mission";
+import { useGteEtablissementMissionsByTab } from "@/hooks/mission";
 import {
   EtablissementMissionsTab,
   MissionEtablissement,
@@ -27,6 +27,17 @@ const parseInputDate = (value: string): Date | null => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
+const parseMissionDate = (
+  value: Date | string | null | undefined,
+): Date | null => {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const isMissionMatchingFilters = (
   mission: MissionEtablissement,
   filters: MissionFilters,
@@ -36,7 +47,8 @@ const isMissionMatchingFilters = (
   }
 
   const fromDate = parseInputDate(filters.fromDate);
-  if (fromDate && mission.dateDebut < fromDate) {
+  const missionStartDate = parseMissionDate(mission.dateDebut);
+  if (fromDate && missionStartDate && missionStartDate < fromDate) {
     return false;
   }
 
@@ -45,7 +57,9 @@ const isMissionMatchingFilters = (
     const endOfDay = new Date(toDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    if (mission.dateFin > endOfDay) {
+    const missionEndDate = parseMissionDate(mission.dateFin);
+
+    if (missionEndDate && missionEndDate > endOfDay) {
       return false;
     }
   }
@@ -54,7 +68,7 @@ const isMissionMatchingFilters = (
 };
 
 export default function EtablissementMissionsPage() {
-  const missionsQuery = useEtablissementMissionsByTab();
+  const missionsQuery = useGteEtablissementMissionsByTab();
   const [filters, setFilters] = useState<MissionFilters>(DEFAULT_FILTERS);
 
   const allMissions = missionsQuery.data ?? [];
@@ -81,7 +95,9 @@ export default function EtablissementMissionsPage() {
         ) as EtablissementMissionsTab[]
       ).reduce(
         (acc, tab) => {
-          const statuses = ETABLISSEMENT_MISSIONS_STATUS_GROUPS[tab];
+          const statuses = ETABLISSEMENT_MISSIONS_STATUS_GROUPS[
+            tab
+          ] as readonly MissionEtablissement["statut"][];
 
           acc[tab] = allMissions.filter(
             (mission) =>

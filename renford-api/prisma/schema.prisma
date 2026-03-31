@@ -687,7 +687,7 @@ model MissionRenford {
     profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id])
 
     // Statut de cette assignation
-    statut StatutMissionRenford @default(propose)
+    statut StatutMissionRenford @default(shortliste)
 
     // Shortlist (pour mode COACH - 1 à 3 profils)
     estShortliste  Boolean @default(false)
@@ -718,16 +718,17 @@ model MissionRenford {
 
 // Enum utilisée par MissionRenford
 enum StatutMissionRenford {
-    propose
-    accepte
-    refuse
-    shortliste
-    selectionne
-    contrat_envoye
-    contrat_signe
-    en_cours
-    termine
-    annule
+    shortliste               // Profil retenu en réserve, pas encore visible comme opportunité active
+    nouveau                  // Opportunité nouvellement proposée au Renford, pas encore consultée
+    vu                       // Opportunité consultée par le Renford, en attente d'une action
+    refuse_par_renford       // Le Renford a refusé l'opportunité ou la proposition
+    selection_en_cours       // Le profil reste dans le processus de sélection côté établissement
+    attente_de_signature     // Le Renford est retenu, contrat en préparation ou à signer
+    refuse_par_etablissement // Le profil n'est finalement pas retenu par l'établissement
+    contrat_signe            // Le contrat est signé, la mission est confirmée pour ce Renford
+    mission_en_cours         // La prestation a démarré
+    mission_terminee         // La prestation est terminée
+    annule                   // L'assignation est annulée avant sa fin normale
 }
 
 // // ============================================================================

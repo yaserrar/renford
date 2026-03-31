@@ -4,13 +4,16 @@ import { validateResource } from '../../middleware/validate.resource';
 import {
   createMission,
   finalizeMissionPayment,
+  getEtablissementMissionDetails,
   getEtablissementMissions,
+  respondToMissionProposal,
 } from './missions.controller';
 import {
   createMissionSchema,
   finalizeMissionPaymentSchema,
   getEtablissementMissionsQuerySchema,
   missionIdParamsSchema,
+  respondToMissionProposalSchema,
 } from './missions.schema';
 
 const router = Router();
@@ -20,6 +23,13 @@ router.get(
   authenticateToken(),
   validateResource({ query: getEtablissementMissionsQuerySchema }),
   getEtablissementMissions,
+);
+
+router.get(
+  '/etablissement/missions/:missionId',
+  authenticateToken(),
+  validateResource({ params: missionIdParamsSchema }),
+  getEtablissementMissionDetails,
 );
 
 router.post(
@@ -34,6 +44,13 @@ router.post(
   authenticateToken(),
   validateResource({ params: missionIdParamsSchema, body: finalizeMissionPaymentSchema }),
   finalizeMissionPayment,
+);
+
+router.post(
+  '/renford/missions/:missionId/reponse',
+  authenticateToken(),
+  validateResource({ params: missionIdParamsSchema, body: respondToMissionProposalSchema }),
+  respondToMissionProposal,
 );
 
 export default router;

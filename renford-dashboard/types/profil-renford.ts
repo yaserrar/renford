@@ -93,6 +93,23 @@ export type ProfilRenfordSimple = {
   ville: string | null;
 };
 
+export type ProfilRenfordMissionSimple = {
+  id: string;
+  utilisateurId: string;
+  avatarChemin: string | null;
+  titreProfil: string | null;
+  niveauExperience: NiveauExperience | null;
+  noteMoyenne: number | null;
+  ville: string | null;
+  utilisateur: {
+    id: string;
+    nom: string;
+    prenom: string;
+    email: string;
+    telephone: string | null;
+  };
+};
+
 // Type de poste du Renford
 export type RenfordTypePoste = {
   id: string;
