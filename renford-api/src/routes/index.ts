@@ -12,6 +12,7 @@ import missionsRenfordRouter from '../modules/missions-renford/missions-renford.
 import favorisRenfordRouter from '../modules/favoris-renford/favoris-renford.route';
 import accueilRouter from '../modules/accueil/accueil.route';
 import parrainageRouter from '../modules/parrainage/parrainage.route';
+import planningRouter from '../modules/planning/planning.route';
 
 const router = Router();
 
@@ -27,6 +28,7 @@ router.use('/', missionsRenfordRouter);
 router.use('/', favorisRenfordRouter);
 router.use('/', accueilRouter);
 router.use('/', parrainageRouter);
+router.use('/', planningRouter);
 
 router.use('/upload', uploadsRouter);
 

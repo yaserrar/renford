@@ -78,3 +78,72 @@ export type EtablissementMissionsTab =
   | "en-recherche"
   | "confirmees"
   | "terminees";
+
+// ─── Planning types ─────────────────────────────────────────
+
+export type PlanningSlot = {
+  id: string;
+  missionId: string;
+  date: string;
+  heureDebut: string;
+  heureFin: string;
+};
+
+export type PlanningRenford = {
+  id: string;
+  nom: string;
+  prenom: string;
+  avatarChemin: string | null;
+  titreProfil: string | null;
+  slots: PlanningSlot[];
+};
+
+export type EtablissementPlanningResponse = {
+  etablissements: Array<{
+    id: string;
+    nom: string;
+    avatarChemin: string | null;
+  }>;
+  planning: PlanningRenford[];
+};
+
+// ─── Renford planning types ─────────────────────────────────
+
+export type RenfordPlanningSlot = {
+  id: string;
+  missionId: string;
+  date: string;
+  heureDebut: string;
+  heureFin: string;
+  totalHours: number;
+  discipline: DisciplineMission;
+  tarif: number | string | null;
+  methodeTarification: MethodeTarificationMission;
+  materielsRequis: MaterielMission[];
+  etablissement: {
+    id: string;
+    nom: string;
+    avatarChemin: string | null;
+    adresse: string;
+    codePostal: string;
+    ville: string;
+  };
+};
+
+export type RepetitionIndisponibilite =
+  | "aucune"
+  | "tous_les_jours"
+  | "toutes_les_semaines";
+
+export type IndisponibiliteRenford = {
+  id: string;
+  profilRenfordId: string;
+  dateDebut: string;
+  dateFin: string;
+  heureDebut: string | null;
+  heureFin: string | null;
+  journeeEntiere: boolean;
+  repetition: RepetitionIndisponibilite;
+  dateCreation: string;
+  dateMiseAJour: string;
+};

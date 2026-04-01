@@ -47,6 +47,7 @@ export default function EtablissementMissionsPanel({
   if (isLoading) {
     return (
       <CenterState
+        className="border-0"
         title="Chargement des missions"
         description="Nous récupérons les dernières missions de cet onglet."
         isLoading
@@ -57,6 +58,7 @@ export default function EtablissementMissionsPanel({
   if (isError) {
     return (
       <CenterState
+        className="border-0"
         title="Impossible de charger les missions"
         description="Réessayez dans quelques instants ou actualisez la page."
       />
@@ -66,6 +68,7 @@ export default function EtablissementMissionsPanel({
   if (missions.length === 0) {
     return (
       <CenterState
+        className="border-0"
         title="Aucune mission pour le moment"
         description="Publiez une nouvelle mission ou revenez plus tard pour voir les mises a jour."
       />

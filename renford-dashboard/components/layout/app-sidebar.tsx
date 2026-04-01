@@ -31,7 +31,7 @@ import { Logo } from "../common/logo";
 const RENFORD_MAIN_LINKS = [
   { title: "Accueil", url: "/dashboard/renford/accueil", icon: Home },
   { title: "Missions", url: "/dashboard/renford/missions", icon: Handshake },
-  { title: "Planning", url: "#", icon: CalendarDays },
+  { title: "Planning", url: "/dashboard/renford/planning", icon: CalendarDays },
   {
     title: "Facture & Paiements",
     url: "#",
@@ -48,7 +48,7 @@ const ETABLISSEMENT_MAIN_LINKS = [
   },
   {
     title: "Planning",
-    url: "#",
+    url: "/dashboard/etablissement/planning",
     icon: CalendarDays,
   },
   {

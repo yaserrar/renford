@@ -1,8 +1,11 @@
 import { getErrorMessage } from "@/lib/utils";
 import {
   EtablissementMissionsTab,
+  EtablissementPlanningResponse,
+  IndisponibiliteRenford,
   MissionDetailsEtablissement,
   MissionEtablissement,
+  RenfordPlanningSlot,
 } from "@/types/mission";
 import {
   MissionRenfordDetails,
@@ -226,6 +229,107 @@ export const useRespondToMissionProposal = () => {
     onError: (error: any) => {
       const message = getErrorMessage(error?.response?.data?.message);
       toast.error(message);
+    },
+  });
+};
+
+// ─── Établissement planning hook ────────────────────────────
+
+export const useEtablissementPlanning = (
+  from?: string,
+  to?: string,
+  etablissementId?: string,
+) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["etablissement-planning", from, to, etablissementId],
+    queryFn: async () => {
+      const params: Record<string, string> = {};
+      if (from) params.from = from;
+      if (to) params.to = to;
+      if (etablissementId) params.etablissementId = etablissementId;
+
+      return (await axios.get("/etablissement/planning", { params }))
+        .data as EtablissementPlanningResponse;
+    },
+    staleTime: 1000 * 60,
+  });
+};
+
+// ─── Renford planning hooks ─────────────────────────────────
+
+export const useRenfordPlanning = (from?: string, to?: string) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["renford-planning", from, to],
+    queryFn: async () => {
+      const params: Record<string, string> = {};
+      if (from) params.from = from;
+      if (to) params.to = to;
+
+      return (await axios.get("/renford/planning", { params }))
+        .data as RenfordPlanningSlot[];
+    },
+    staleTime: 1000 * 60,
+  });
+};
+
+export const useIndisponibilites = () => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["renford-indisponibilites"],
+    queryFn: async () => {
+      return (await axios.get("/renford/indisponibilites"))
+        .data as IndisponibiliteRenford[];
+    },
+    staleTime: 1000 * 60,
+  });
+};
+
+export const useCreateIndisponibilite = () => {
+  const axios = useAxios();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      dateDebut: string;
+      dateFin: string;
+      heureDebut?: string;
+      heureFin?: string;
+      journeeEntiere: boolean;
+      repetition: string;
+    }) => {
+      return (await axios.post("/renford/indisponibilites", payload)).data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["renford-indisponibilites"] });
+      toast.success("Indisponibilité ajoutée");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+};
+
+export const useDeleteIndisponibilite = () => {
+  const axios = useAxios();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (indisponibiliteId: string) => {
+      return (
+        await axios.delete(`/renford/indisponibilites/${indisponibiliteId}`)
+      ).data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["renford-indisponibilites"] });
+      toast.success("Indisponibilité supprimée");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
     },
   });
 };

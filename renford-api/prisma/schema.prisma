@@ -326,6 +326,7 @@ model ProfilRenford {
     experiencesProfessionnelles ExperienceProfessionnelleRenford[]
     missionsRenford              MissionRenford[]
     favoris                      FavorisRenford[]
+    indisponibilites             IndisponibiliteRenford[]
 
     @@index([statutCertification])
     @@index([niveauExperience])
@@ -753,6 +754,37 @@ model FavorisRenford {
     @@index([profilEtablissementId])
     @@index([profilRenfordId])
     @@map("favoris_renford")
+}
+
+// ============================================================================
+// TABLE: Indisponibilités des renfords
+// ============================================================================
+
+enum RepetitionIndisponibilite {
+    aucune
+    tous_les_jours
+    toutes_les_semaines
+}
+
+model IndisponibiliteRenford {
+    id              String @id @default(uuid())
+    profilRenfordId String
+    profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
+
+    dateDebut  DateTime @db.Date
+    dateFin    DateTime @db.Date
+    heureDebut String?  // HH:MM - null si journée entière
+    heureFin   String?  // HH:MM - null si journée entière
+    journeeEntiere Boolean @default(true)
+
+    repetition RepetitionIndisponibilite @default(aucune)
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([profilRenfordId])
+    @@index([dateDebut, dateFin])
+    @@map("indisponibilites_renford")
 }
 
 // // ============================================================================
