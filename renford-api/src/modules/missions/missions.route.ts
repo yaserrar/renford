@@ -6,7 +6,6 @@ import {
   finalizeMissionPayment,
   getEtablissementMissionDetails,
   getEtablissementMissions,
-  respondToMissionProposal,
   respondToMissionRenfordByEtablissement,
 } from './missions.controller';
 import {
@@ -15,7 +14,6 @@ import {
   getEtablissementMissionsQuerySchema,
   missionIdParamsSchema,
   missionRenfordIdParamsSchema,
-  respondToMissionProposalSchema,
   respondToMissionRenfordByEtablissementSchema,
 } from './missions.schema';
 
@@ -23,42 +21,35 @@ const router = Router();
 
 router.get(
   '/etablissement/missions',
-  authenticateToken(),
+  authenticateToken(['etablissement']),
   validateResource({ query: getEtablissementMissionsQuerySchema }),
   getEtablissementMissions,
 );
 
 router.get(
   '/etablissement/missions/:missionId',
-  authenticateToken(),
+  authenticateToken(['etablissement']),
   validateResource({ params: missionIdParamsSchema }),
   getEtablissementMissionDetails,
 );
 
 router.post(
   '/etablissement/missions',
-  authenticateToken(),
+  authenticateToken(['etablissement']),
   validateResource(createMissionSchema),
   createMission,
 );
 
 router.post(
   '/etablissement/missions/:missionId/paiement',
-  authenticateToken(),
+  authenticateToken(['etablissement']),
   validateResource({ params: missionIdParamsSchema, body: finalizeMissionPaymentSchema }),
   finalizeMissionPayment,
 );
 
 router.post(
-  '/renford/missions/:missionId/reponse',
-  authenticateToken(),
-  validateResource({ params: missionIdParamsSchema, body: respondToMissionProposalSchema }),
-  respondToMissionProposal,
-);
-
-router.post(
   '/etablissement/missions/:missionId/renfords/:missionRenfordId/reponse',
-  authenticateToken(),
+  authenticateToken(['etablissement']),
   validateResource({
     params: missionRenfordIdParamsSchema,
     body: respondToMissionRenfordByEtablissementSchema,

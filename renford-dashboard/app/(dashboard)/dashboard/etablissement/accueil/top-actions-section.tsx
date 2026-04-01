@@ -14,7 +14,7 @@ const ACTIONS = [
   },
   {
     label: "Gérer les sites / établissements",
-    href: "/dashboard/etablissement/sites",
+    href: "/dashboard/etablissement/profil?tab=sites",
     icon: Settings,
   },
   {

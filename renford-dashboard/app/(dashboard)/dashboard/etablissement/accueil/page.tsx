@@ -1,12 +1,14 @@
 "use client";
 
 import { useCurrentUser } from "@/hooks/utilisateur";
+import { useEtablissementAccueil } from "@/hooks/accueil";
 import EtablissementIndicatorsSection from "./indicators-section";
 import EtablissementPlanningSection from "./planning-section";
 import EtablissementTopActionsSection from "./top-actions-section";
 
 export default function EtablissementAccueilPage() {
   const { data: currentUser } = useCurrentUser();
+  const { data: accueilData } = useEtablissementAccueil();
 
   const todayLabel = new Intl.DateTimeFormat("fr-FR", {
     weekday: "long",
@@ -27,8 +29,8 @@ export default function EtablissementAccueilPage() {
           </p>
         </section>
         <EtablissementTopActionsSection />
-        <EtablissementIndicatorsSection />
-        <EtablissementPlanningSection />
+        <EtablissementIndicatorsSection indicators={accueilData?.indicators} />
+        <EtablissementPlanningSection planning={accueilData?.planning} />
       </div>
     </main>
   );

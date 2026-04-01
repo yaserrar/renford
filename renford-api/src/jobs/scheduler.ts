@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { logger } from '../config/logger';
-import { syncMissionMatchesForOpenMissions } from './missions.matching';
+import { syncMissionMatchesForOpenMissions } from './missions-matching';
 
 /**
  * Initialize all scheduled jobs/cron tasks

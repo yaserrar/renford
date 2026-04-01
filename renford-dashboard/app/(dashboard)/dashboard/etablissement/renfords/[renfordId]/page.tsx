@@ -1,11 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import CenterState from "@/components/common/center-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-
+import { Button } from "@/components/ui/button";
 import { H2 } from "@/components/ui/typography";
 import { usePublicProfilRenford } from "@/hooks/profil-renford";
+import {
+  useAddFavori,
+  useCheckFavori,
+  useRemoveFavori,
+} from "@/hooks/favoris-renford";
 import { formatDate } from "@/lib/date";
 import { formatAmount, getInitials, getUrl } from "@/lib/utils";
 import {
@@ -13,14 +19,20 @@ import {
   NIVEAU_EXPERIENCE_LABELS,
   TYPE_MISSION_LABELS,
 } from "@/validations/profil-renford";
-import { MapPin, Star } from "lucide-react";
+import { Heart, MapPin, Star } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
+import ProposerMissionDialog from "../proposer-mission-dialog";
 
 export default function EtablissementPublicRenfordProfilePage() {
   const { renfordId } = useParams<{ renfordId: string }>();
+  const [dialogOpen, setDialogOpen] = useState(false);
   const profileQuery = usePublicProfilRenford(renfordId);
+  const favoriQuery = useCheckFavori(renfordId);
+  const addFavoriMutation = useAddFavori();
+  const removeFavoriMutation = useRemoveFavori();
   const profil = profileQuery.data;
+  const isFavori = favoriQuery.data?.isFavori ?? false;
 
   if (profileQuery.isLoading) {
     return (
@@ -151,6 +163,33 @@ export default function EtablissementPublicRenfordProfilePage() {
                   <span className="font-medium text-foreground">
                     {formatAmount(profil.tarifHoraire)}
                   </span>
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 rounded-full"
+                    onClick={() =>
+                      isFavori
+                        ? removeFavoriMutation.mutate(profil.id)
+                        : addFavoriMutation.mutate(profil.id)
+                    }
+                    disabled={
+                      addFavoriMutation.isPending ||
+                      removeFavoriMutation.isPending
+                    }
+                  >
+                    <Heart
+                      className={`h-4 w-4 ${isFavori ? "fill-current" : ""}`}
+                    />
+                  </Button>
+                  <Button
+                    variant="dark"
+                    className="flex-1 rounded-full"
+                    onClick={() => setDialogOpen(true)}
+                  >
+                    Proposer une mission
+                  </Button>
                 </div>
               </div>
             </div>
@@ -313,6 +352,13 @@ export default function EtablissementPublicRenfordProfilePage() {
           </section>
         </div>
       </div>
+
+      <ProposerMissionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        profilRenfordId={profil.id}
+        renfordName={fullName}
+      />
     </main>
   );
 }

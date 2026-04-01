@@ -1,5 +1,6 @@
 import "@/app/globals.css";
 import AppSidebar from "@/components/layout/app-sidebar";
+import MobileSidebarToggle from "@/components/layout/mobile-sidebar-toggle";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import CurrentUserProvider from "@/providers/current-user-provider";
 import SessionProvider from "@/providers/session-provider";
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: Props) {
               <SidebarProvider>
                 <AppSidebar />
                 <SidebarInset>
+                  <MobileSidebarToggle />
                   <main className="h-full bg-white px-2">{children}</main>
                 </SidebarInset>
               </SidebarProvider>

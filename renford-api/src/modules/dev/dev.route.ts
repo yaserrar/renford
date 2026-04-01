@@ -1,8 +1,17 @@
 import { Router } from 'express';
 import { authenticateToken } from '../../middleware/auth.middleware';
+import { env } from '../../config/env';
 import { devResetOnboarding, devResetToStepThree } from './dev.controller';
 
 const router = Router();
+
+// Bloquer les routes dev en production
+router.use((_req, res, next) => {
+  if (env.NODE_ENV === 'production') {
+    return res.status(404).json({ message: 'Not found' });
+  }
+  next();
+});
 
 // Toutes les routes dev nécessitent une authentification
 router.use(authenticateToken());

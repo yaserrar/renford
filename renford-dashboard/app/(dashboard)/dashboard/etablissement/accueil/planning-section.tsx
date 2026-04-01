@@ -1,70 +1,35 @@
 "use client";
 
 import PlanningItem from "@/components/common/planning-item";
+import PlanningEmptyState from "@/components/common/planning-empty-state";
 import { buttonVariants } from "@/components/ui/button";
+import { formatWeekdayDayMonth } from "@/lib/date";
 import { cn } from "@/lib/utils";
+import { EtablissementAccueilPlanningSlot } from "@/types/accueil";
+import { DISCIPLINE_MISSION_LABELS } from "@/validations/mission";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-const PLANNING = [
-  {
-    dateGroup: "Aujourd'hui - Lundi 8 janvier",
-    nameLabel: "Jessica",
-    title: "Coach yoga",
-    subtitle: "Aujourd'hui - Lundi 8 janvier",
-    dateLabel: "Séance",
-    timeLabel: "8h00 - 10h00 · 2h",
-    logoSrc: "/planning-people/coach1.jpg",
-    amountValue: "30 €",
-    amountSuffix: "HT",
-    visualType: "avatar" as const,
-  },
-  {
-    dateGroup: "Demain - Mardi 9 janvier",
-    nameLabel: "Jérôme",
-    title: "Coach pilates",
-    subtitle: "Demain - Mardi 9 janvier",
-    dateLabel: "Séance",
-    timeLabel: "8h00 - 10h00 · 2h",
-    logoSrc: "/planning-people/coach2.jpeg",
-    amountValue: "30 €",
-    amountSuffix: "HT",
-    visualType: "avatar" as const,
-  },
-  {
-    dateGroup: "Demain - Mardi 9 janvier",
-    nameLabel: "Maxime",
-    title: "Coach cardio",
-    subtitle: "Demain - Mardi 9 janvier",
-    dateLabel: "Séance",
-    timeLabel: "8h00 - 10h00 · 2h",
-    logoSrc: "/planning-people/coach3.jpg",
-    amountValue: "30 €",
-    amountSuffix: "HT",
-    visualType: "avatar" as const,
-  },
-];
+type Props = {
+  planning?: EtablissementAccueilPlanningSlot[];
+};
 
-const groupedPlanning = PLANNING.reduce<
-  Array<{ dateGroup: string; items: (typeof PLANNING)[number][] }>
->((groups, entry) => {
-  const existingGroup = groups.find(
-    (group) => group.dateGroup === entry.dateGroup,
-  );
+export default function EtablissementPlanningSection({ planning }: Props) {
+  const slots = planning ?? [];
 
-  if (existingGroup) {
-    existingGroup.items.push(entry);
-  } else {
-    groups.push({
-      dateGroup: entry.dateGroup,
-      items: [entry],
-    });
-  }
+  const grouped = slots.reduce<
+    Array<{ dateGroup: string; items: EtablissementAccueilPlanningSlot[] }>
+  >((groups, slot) => {
+    const dateGroup = formatWeekdayDayMonth(slot.date);
+    const existing = groups.find((g) => g.dateGroup === dateGroup);
+    if (existing) {
+      existing.items.push(slot);
+    } else {
+      groups.push({ dateGroup, items: [slot] });
+    }
+    return groups;
+  }, []);
 
-  return groups;
-}, []);
-
-export default function EtablissementPlanningSection() {
   return (
     <section className="rounded-2xl border border-border bg-white p-4 md:p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -85,31 +50,49 @@ export default function EtablissementPlanningSection() {
         </Link>
       </div>
 
-      <div className="space-y-5">
-        {groupedPlanning.map((group) => (
-          <div key={group.dateGroup} className="space-y-2">
-            <p className="text-sm md:text-base font-semibold text-foreground text-left">
-              {group.dateGroup}
-            </p>
-            <div className="space-y-3">
-              {group.items.map((entry, index) => (
-                <PlanningItem
-                  key={`${group.dateGroup}-${entry.title}-${index}`}
-                  title={entry.title}
-                  nameLabel={entry.nameLabel}
-                  subtitle={entry.subtitle}
-                  dateLabel={entry.dateLabel}
-                  timeLabel={entry.timeLabel}
-                  logoSrc={entry.logoSrc}
-                  amountValue={entry.amountValue}
-                  amountSuffix={entry.amountSuffix}
-                  visualType={entry.visualType}
-                />
-              ))}
+      {grouped.length === 0 ? (
+        <PlanningEmptyState
+          description="Postez une mission et recevez vos premiers profils dès aujourd'hui."
+          ctaLabel="Nouvelle mission"
+          ctaHref="/dashboard/etablissement/missions/nouvelle"
+        />
+      ) : (
+        <div className="space-y-5">
+          {grouped.map((group) => (
+            <div key={group.dateGroup} className="space-y-2">
+              <p className="text-sm md:text-base font-semibold text-foreground text-left capitalize">
+                {group.dateGroup}
+              </p>
+              <div className="space-y-3">
+                {group.items.map((slot, index) => {
+                  const disciplineLabel =
+                    DISCIPLINE_MISSION_LABELS[slot.discipline] ??
+                    slot.discipline;
+                  const renfordName = slot.renford
+                    ? `${slot.renford.prenom}`
+                    : undefined;
+                  const tarif = slot.tarif ? `${slot.tarif} €` : undefined;
+
+                  return (
+                    <PlanningItem
+                      key={`${slot.id}-${index}`}
+                      title={disciplineLabel}
+                      nameLabel={renfordName}
+                      subtitle={slot.renford?.titreProfil ?? undefined}
+                      dateLabel={formatWeekdayDayMonth(slot.date)}
+                      timeLabel={`${slot.heureDebut} - ${slot.heureFin} · ${slot.totalHours}h`}
+                      logoSrc={slot.renford?.avatarChemin ?? undefined}
+                      amountValue={tarif}
+                      amountSuffix="HT"
+                      visualType="avatar"
+                    />
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

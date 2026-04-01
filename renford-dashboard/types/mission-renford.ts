@@ -1,4 +1,16 @@
 import { ProfilRenfordMissionSimple } from "@/types/profil-renford";
+import { Etablissement } from "@/types/etablissement";
+import { RENFORD_MISSIONS_TAB } from "@/validations/mission-renford";
+import {
+  DisciplineMission,
+  MaterielMission,
+  MethodeTarificationMission,
+  ModeMission,
+  NiveauExperienceMission,
+  PlageHoraireMission,
+  StatutMission,
+  TypeMissionSpecialite,
+} from "@/types/mission";
 
 export type StatutMissionRenford =
   | "nouveau"
@@ -28,4 +40,64 @@ export type MissionRenford = {
   dateCreation: Date | string;
   dateMiseAJour: Date | string;
   profilRenford: ProfilRenfordMissionSimple;
+};
+
+export type RenfordMissionsTab = (typeof RENFORD_MISSIONS_TAB)[number];
+
+// Établissement simplifié retourné avec les missions renford
+export type EtablissementMissionRenford = Pick<
+  Etablissement,
+  "id" | "nom" | "avatarChemin" | "adresse" | "codePostal" | "ville"
+>;
+
+// Mission imbriquée dans la réponse getRenfordMissions
+export type MissionForRenford = {
+  id: string;
+  statut: StatutMission;
+  modeMission: ModeMission;
+  discipline: DisciplineMission;
+  specialitePrincipale: TypeMissionSpecialite;
+  specialitesSecondaires: TypeMissionSpecialite[];
+  niveauExperienceRequis: NiveauExperienceMission | null;
+  assuranceObligatoire: boolean;
+  materielsRequis: MaterielMission[];
+  description: string | null;
+  etablissementId: string;
+  dateDebut: Date | string;
+  dateFin: Date | string;
+  methodeTarification: MethodeTarificationMission;
+  tarif: number | string | null;
+  pourcentageVariationTarif: number | string | null;
+  dateCreation: Date | string;
+  etablissement: EtablissementMissionRenford;
+  PlageHoraireMission: PlageHoraireMission[];
+  totalHours: number;
+};
+
+// Item retourné par GET /renford/missions
+export type MissionRenfordListItem = {
+  id: string;
+  missionId: string;
+  profilRenfordId: string;
+  statut: StatutMissionRenford;
+  ordreShortlist: number | null;
+  dateProposition: Date | string;
+  dateReponse: Date | string | null;
+  dateContratSigne: Date | string | null;
+  tarifNegocie: number | string | null;
+  dateCreation: Date | string;
+  dateMiseAJour: Date | string;
+  mission: MissionForRenford;
+};
+
+// Item retourné par GET /renford/missions/:missionId
+export type MissionRenfordDetails = MissionRenfordListItem & {
+  lienVisio: string | null;
+  dateVisio: Date | string | null;
+  visioEffectuee: boolean;
+  mission: MissionForRenford & {
+    etablissement: EtablissementMissionRenford & {
+      typeEtablissement: string;
+    };
+  };
 };

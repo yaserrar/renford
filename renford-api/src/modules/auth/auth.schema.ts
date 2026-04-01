@@ -43,6 +43,7 @@ export const signupSchema = z.object({
     .email({ message: "L'email est invalide" })
     .max(250, '250 caractères maximum'),
   password: passwordSchema,
+  parrainId: z.string().uuid().optional(),
 });
 
 export type SignupSchema = z.infer<typeof signupSchema>;

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { InputPassword } from "@/components/ui/input-password";
 import { Label } from "@/components/ui/label";
 import { useSignup } from "@/hooks/auth";
+import useParrainageStore from "@/stores/parrainage-store";
 import { signupSchema, SignupSchema } from "@/validations/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
@@ -17,6 +18,7 @@ import { Controller, SubmitHandler, useForm } from "react-hook-form";
 const SignupForm = () => {
   const router = useRouter();
   const signup = useSignup();
+  const { parrainId, clearParrainId } = useParrainageStore();
 
   const {
     register,
@@ -32,11 +34,15 @@ const SignupForm = () => {
 
   const onSubmit: SubmitHandler<SignupSchema> = (data) => {
     const { acceptTerms, ...payload } = data;
-    signup.mutate(payload, {
-      onSuccess: () => {
-        router.push("/verification-compte");
+    signup.mutate(
+      { ...payload, ...(parrainId ? { parrainId } : {}) },
+      {
+        onSuccess: () => {
+          clearParrainId();
+          router.push("/verification-compte");
+        },
       },
-    });
+    );
   };
 
   return (

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRenfordAccueil } from "@/hooks/accueil";
 import { useCurrentUser } from "@/hooks/utilisateur";
 import RenfordIndicatorsSection from "./indicators-section";
 import RenfordPlanningSection from "./planning-section";
@@ -7,6 +8,7 @@ import RenfordTopActionsSection from "./top-actions-section";
 
 export default function RenfordAccueilPage() {
   const { data: currentUser } = useCurrentUser();
+  const { data: accueilData } = useRenfordAccueil();
 
   const todayLabel = new Intl.DateTimeFormat("fr-FR", {
     weekday: "long",
@@ -26,9 +28,11 @@ export default function RenfordAccueilPage() {
             Bonjour {currentUser?.prenom || ""}
           </p>
         </section>
-        <RenfordTopActionsSection />
-        <RenfordIndicatorsSection />
-        <RenfordPlanningSection />
+        <RenfordTopActionsSection
+          nouvellesOpportunites={accueilData?.indicators?.nouvellesOpportunites}
+        />
+        <RenfordIndicatorsSection indicators={accueilData?.indicators} />
+        <RenfordPlanningSection planning={accueilData?.planning} />
       </div>
     </main>
   );

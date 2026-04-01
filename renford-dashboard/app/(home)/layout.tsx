@@ -1,5 +1,6 @@
 import "@/app/globals.css";
 import AuthProvider from "@/providers/auth-provider";
+import ParrainageProvider from "@/providers/parrainage-provider";
 import TanstackQueryProvider from "@/providers/tanstack-query-provider";
 import { Metadata } from "next";
 import { Suspense } from "react";
@@ -41,8 +42,10 @@ export default async function RootLayout({ children }: Props) {
         <TanstackQueryProvider>
           <AuthProvider>
             <Suspense>
-              <Toaster closeButton richColors />
-              <main className="bg-white">{children}</main>
+              <ParrainageProvider>
+                <Toaster closeButton richColors />
+                <main className="bg-white">{children}</main>
+              </ParrainageProvider>
             </Suspense>
           </AuthProvider>
         </TanstackQueryProvider>

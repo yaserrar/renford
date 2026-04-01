@@ -48,6 +48,9 @@ model Utilisateur {
     codeReinitialisationMdp String?
     dateCreationCodeReinit  DateTime?
 
+    // Parrainage
+    parrainId String? // ID de l'utilisateur ayant parrainé cet utilisateur
+
     // Métadonnées
     derniereConnexion DateTime?
     dateCreation      DateTime  @default(now())
@@ -146,6 +149,7 @@ model ProfilEtablissement {
 
     // Relations
     etablissements Etablissement[]
+    favoris        FavorisRenford[]
 
     @@map("profils_etablissement")
 }
@@ -321,6 +325,7 @@ model ProfilRenford {
     renfordDiplomes             RenfordDiplome[]
     experiencesProfessionnelles ExperienceProfessionnelleRenford[]
     missionsRenford              MissionRenford[]
+    favoris                      FavorisRenford[]
 
     @@index([statutCertification])
     @@index([niveauExperience])
@@ -727,6 +732,27 @@ enum StatutMissionRenford {
     mission_en_cours         // La prestation a démarré
     mission_terminee         // La prestation est terminée
     annule                   // L'assignation est annulée avant sa fin normale
+}
+
+// ============================================================================
+// TABLE: Favoris Renford (établissements qui sauvegardent des profils renford)
+// ============================================================================
+
+model FavorisRenford {
+    id String @id @default(uuid())
+
+    profilEtablissementId String
+    profilEtablissement   ProfilEtablissement @relation(fields: [profilEtablissementId], references: [id], onDelete: Cascade)
+
+    profilRenfordId String
+    profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
+
+    dateCreation DateTime @default(now())
+
+    @@unique([profilEtablissementId, profilRenfordId])
+    @@index([profilEtablissementId])
+    @@index([profilRenfordId])
+    @@map("favoris_renford")
 }
 
 // // ============================================================================

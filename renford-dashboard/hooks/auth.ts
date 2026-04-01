@@ -42,7 +42,9 @@ export const useSignup = () => {
   const { setSession } = useSession();
 
   return useMutation({
-    mutationFn: async (data: Omit<SignupSchema, "acceptTerms">) => {
+    mutationFn: async (
+      data: Omit<SignupSchema, "acceptTerms"> & { parrainId?: string },
+    ) => {
       return (await axios.post(`${API_BASE_URL}/auth/signup`, data))
         .data as JwtToken;
     },
@@ -68,7 +70,7 @@ export const useSendCode = () => {
     },
     onSuccess: async (data) => {
       toast.success(
-        data.message || "Code de réinitialisation envoyé par email"
+        data.message || "Code de réinitialisation envoyé par email",
       );
     },
     onError: async (error: any) => {

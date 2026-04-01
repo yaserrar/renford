@@ -39,65 +39,70 @@ router.get(
 
 router.put(
   '/',
-  authenticateToken(),
+  authenticateToken(['renford']),
   validateResource(updateProfilRenfordSchema),
   updateProfilRenford,
 );
 
 router.put(
   '/couverture',
-  authenticateToken(),
+  authenticateToken(['renford']),
   validateResource(updateCouvertureSchema),
   updateCouverture,
 );
 
-router.put('/avatar', authenticateToken(), validateResource(updateAvatarSchema), updateAvatar);
+router.put(
+  '/avatar',
+  authenticateToken(['renford']),
+  validateResource(updateAvatarSchema),
+  updateAvatar,
+);
 
 router.put(
   '/description',
-  authenticateToken(),
+  authenticateToken(['renford']),
   validateResource(updateDescriptionProfilSchema),
   updateDescriptionProfil,
 );
 
 router.put(
   '/disponibilites',
-  authenticateToken(),
+  authenticateToken(['renford']),
   validateResource(updateDisponibilitesProfilSchema),
   updateDisponibilitesProfil,
 );
 
 router.put(
   '/experiences',
-  authenticateToken(),
+  authenticateToken(['renford']),
   validateResource(updateExperiencesProfilSchema),
   updateExperiencesProfil,
 );
 
 router.put(
   '/diplomes',
-  authenticateToken(),
+  authenticateToken(['renford']),
   validateResource(updateDiplomesProfilSchema),
   updateDiplomesProfil,
 );
 
 router.put(
   '/portfolio',
-  authenticateToken(),
+  authenticateToken(['renford']),
   validateResource(updatePortfolioProfilSchema),
   updatePortfolioProfil,
 );
 
 router.put(
   '/qualifications',
-  authenticateToken(),
+  authenticateToken(['renford']),
   validateResource(updateQualificationsProfilSchema),
   updateQualificationsProfil,
 );
 
 router.put(
   '/identite',
-  authenticateToken(),
+  authenticateToken(['renford']),
   validateResource(updateIdentiteProfilSchema),
   updateIdentiteProfil,
 );

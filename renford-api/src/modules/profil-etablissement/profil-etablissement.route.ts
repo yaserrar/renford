@@ -22,42 +22,42 @@ const router = Router();
 
 router.put(
   '/couverture',
-  authenticateToken(),
+  authenticateToken(['etablissement']),
   validateResource(updateCouvertureProfilEtablissementSchema),
   updateCouvertureProfilEtablissement,
 );
 
 router.put(
   '/avatar',
-  authenticateToken(),
+  authenticateToken(['etablissement']),
   validateResource(updateAvatarProfilEtablissementSchema),
   updateAvatarProfilEtablissement,
 );
 
 router.put(
   '/infos',
-  authenticateToken(),
+  authenticateToken(['etablissement']),
   validateResource(updateInfosProfilEtablissementSchema),
   updateInfosProfilEtablissement,
 );
 
 router.put(
   '/identite',
-  authenticateToken(),
+  authenticateToken(['etablissement']),
   validateResource(updateIdentiteProfilEtablissementSchema),
   updateIdentiteProfilEtablissement,
 );
 
 router.post(
   '/etablissements',
-  authenticateToken(),
+  authenticateToken(['etablissement']),
   validateResource(createEtablissementSiteSchema),
   createEtablissementSite,
 );
 
 router.put(
   '/etablissements/:etablissementId',
-  authenticateToken(),
+  authenticateToken(['etablissement']),
   validateResource(updateEtablissementSiteSchema),
   updateEtablissementSite,
 );

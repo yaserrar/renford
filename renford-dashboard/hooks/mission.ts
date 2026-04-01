@@ -5,6 +5,11 @@ import {
   MissionEtablissement,
 } from "@/types/mission";
 import {
+  MissionRenfordDetails,
+  MissionRenfordListItem,
+  RenfordMissionsTab,
+} from "@/types/mission-renford";
+import {
   CreateMissionPayloadSchema,
   FinalizeMissionPaymentSchema,
 } from "@/validations/mission";
@@ -141,6 +146,81 @@ export const useRespondToMissionRenford = () => {
         variables.response === "attente_de_signature"
           ? "Renford accepté, en attente de signature"
           : "Renford refusé",
+      );
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+// ─── Renford missions hooks ─────────────────────────────────
+
+export const useRenfordMissions = (tab?: RenfordMissionsTab) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["renford-missions", tab ?? "all"],
+    queryFn: async () => {
+      const data = (
+        await axios.get("/renford/missions", {
+          params: tab ? { tab } : undefined,
+        })
+      ).data as MissionRenfordListItem[];
+
+      return data;
+    },
+    staleTime: 1000 * 60,
+  });
+};
+
+export const useRenfordMissionDetails = (missionId?: string) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["renford-mission-details", missionId],
+    queryFn: async () => {
+      return (await axios.get(`/renford/missions/${missionId}`))
+        .data as MissionRenfordDetails;
+    },
+    enabled: Boolean(missionId),
+    staleTime: 1000 * 60,
+  });
+};
+
+type RespondToMissionProposalResponse = {
+  missionRenfordId: string;
+  statut: string;
+};
+
+export const useRespondToMissionProposal = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      missionId,
+      response,
+    }: {
+      missionId: string;
+      response: "selection_en_cours" | "refuse_par_renford";
+    }) => {
+      return (
+        await axios.post(`/renford/missions/${missionId}/reponse`, {
+          response,
+        })
+      ).data as RespondToMissionProposalResponse;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["renford-missions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["renford-mission-details", variables.missionId],
+      });
+      toast.success(
+        variables.response === "selection_en_cours"
+          ? "Candidature envoyée"
+          : "Mission refusée",
       );
     },
     onError: (error: any) => {

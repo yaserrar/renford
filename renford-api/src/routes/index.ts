@@ -8,6 +8,10 @@ import devRouter from '../modules/dev/dev.route';
 import profilRenfordRouter from '../modules/profil-renford/profil-renford.route';
 import profilEtablissementRouter from '../modules/profil-etablissement/profil-etablissement.route';
 import missionsRouter from '../modules/missions/missions.route';
+import missionsRenfordRouter from '../modules/missions-renford/missions-renford.route';
+import favorisRenfordRouter from '../modules/favoris-renford/favoris-renford.route';
+import accueilRouter from '../modules/accueil/accueil.route';
+import parrainageRouter from '../modules/parrainage/parrainage.route';
 
 const router = Router();
 
@@ -19,6 +23,10 @@ router.use('/onboarding', onboardingRouter);
 router.use('/profil-renford', profilRenfordRouter);
 router.use('/profil-etablissement', profilEtablissementRouter);
 router.use('/', missionsRouter);
+router.use('/', missionsRenfordRouter);
+router.use('/', favorisRenfordRouter);
+router.use('/', accueilRouter);
+router.use('/', parrainageRouter);
 
 router.use('/upload', uploadsRouter);
 

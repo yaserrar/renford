@@ -6,10 +6,9 @@ import { env } from '../../config/env';
 import { logger } from '../../config/logger';
 import { getMissionDemandeConfirmeeEmail } from '../../config/email-templates';
 import {
-  registerMissionRenfordResponse,
   registerEtablissementMissionRenfordResponse,
   syncMissionMatches,
-} from '../../jobs/missions.matching';
+} from '../../jobs/missions-matching';
 import { getTypeMissionLabel } from './missions.schema';
 import type {
   CreateMissionSchema,
@@ -18,7 +17,6 @@ import type {
   GetEtablissementMissionsQuerySchema,
   MissionIdParamsSchema,
   MissionRenfordIdParamsSchema,
-  RespondToMissionProposalSchema,
   RespondToMissionRenfordByEtablissementSchema,
 } from './missions.schema';
 
@@ -77,17 +75,7 @@ export const getEtablissementMissions = async (
   next: NextFunction,
 ) => {
   try {
-    const userId = req.userId;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
-    if (req.utilisateur?.typeUtilisateur !== 'etablissement') {
-      return res
-        .status(403)
-        .json({ message: 'Seuls les établissements peuvent consulter ces missions' });
-    }
+    const userId = req.userId!;
 
     const tab = req.query.tab;
     const statuts = tab ? ETABLISSEMENT_TAB_STATUS_MAP[tab] : ETABLISSEMENT_ALL_STATUSES;
@@ -131,17 +119,7 @@ export const getEtablissementMissionDetails = async (
   next: NextFunction,
 ) => {
   try {
-    const userId = req.userId;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
-    if (req.utilisateur?.typeUtilisateur !== 'etablissement') {
-      return res
-        .status(403)
-        .json({ message: 'Seuls les établissements peuvent consulter cette mission' });
-    }
+    const userId = req.userId!;
 
     const mission = await prisma.mission.findFirst({
       where: {
@@ -204,17 +182,7 @@ export const createMission = async (
   next: NextFunction,
 ) => {
   try {
-    const userId = req.userId;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
-    if (req.utilisateur?.typeUtilisateur !== 'etablissement') {
-      return res
-        .status(403)
-        .json({ message: 'Seuls les établissements peuvent créer une mission' });
-    }
+    const userId = req.userId!;
 
     const profilEtablissement = await prisma.profilEtablissement.findUnique({
       where: { utilisateurId: userId },
@@ -331,17 +299,7 @@ export const finalizeMissionPayment = async (
   next: NextFunction,
 ) => {
   try {
-    const userId = req.userId;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
-    if (req.utilisateur?.typeUtilisateur !== 'etablissement') {
-      return res
-        .status(403)
-        .json({ message: 'Seuls les établissements peuvent finaliser un paiement mission' });
-    }
+    const userId = req.userId!;
 
     const mission = await prisma.mission.findFirst({
       where: {
@@ -414,78 +372,13 @@ export const finalizeMissionPayment = async (
   }
 };
 
-export const respondToMissionProposal = async (
-  req: Request<MissionIdParamsSchema, unknown, RespondToMissionProposalSchema>,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const userId = req.userId;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
-    if (req.utilisateur?.typeUtilisateur !== 'renford') {
-      return res
-        .status(403)
-        .json({ message: 'Seuls les Renfords peuvent répondre à une proposition' });
-    }
-
-    const profilRenford = await prisma.profilRenford.findUnique({
-      where: { utilisateurId: userId },
-      select: { id: true },
-    });
-
-    if (!profilRenford) {
-      return res.status(404).json({ message: 'Profil Renford non trouvé' });
-    }
-
-    try {
-      const result = await registerMissionRenfordResponse({
-        missionId: req.params.missionId,
-        profilRenfordId: profilRenford.id,
-        response: req.body.response,
-      });
-
-      return res.json(result);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'MISSION_RENFORD_NOT_FOUND') {
-        return res
-          .status(404)
-          .json({ message: 'Aucune proposition de mission trouvée pour ce Renford' });
-      }
-
-      if (error instanceof Error && error.message === 'MISSION_RENFORD_NOT_PROPOSED') {
-        return res.status(400).json({
-          message: 'Cette mission nest pas actuellement proposée à ce Renford',
-        });
-      }
-
-      throw error;
-    }
-  } catch (err) {
-    return next(err);
-  }
-};
-
 export const respondToMissionRenfordByEtablissement = async (
   req: Request<MissionRenfordIdParamsSchema, unknown, RespondToMissionRenfordByEtablissementSchema>,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const userId = req.userId;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
-    if (req.utilisateur?.typeUtilisateur !== 'etablissement') {
-      return res
-        .status(403)
-        .json({ message: 'Seuls les établissements peuvent répondre à une candidature' });
-    }
+    const userId = req.userId!;
 
     const mission = await prisma.mission.findFirst({
       where: {

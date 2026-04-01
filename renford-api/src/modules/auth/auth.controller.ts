@@ -29,7 +29,7 @@ export const signup = async (
   next: NextFunction,
 ) => {
   try {
-    const { password } = req.body;
+    const { password, parrainId } = req.body;
     const email = normalizeEmail(req.body.email);
 
     // Vérifier si l'email existe déjà
@@ -60,6 +60,7 @@ export const signup = async (
         statut: 'en_attente_verification',
         codeVerificationEmail: verificationCode,
         dateCreationCodeVerif: new Date(),
+        parrainId: parrainId || null,
       },
     });
 
