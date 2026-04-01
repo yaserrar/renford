@@ -287,7 +287,13 @@ const evaluateRenfordMatch = async (
   favoriteRenfordIds: Set<string>,
   existingStatus?: StatutMissionRenford,
 ): Promise<EvaluatedRenfordMatch | null> => {
+  const renfordLabel = `${profilRenford.utilisateur.prenom} ${profilRenford.utilisateur.nom} (${profilRenford.id})`;
+
   if (existingStatus && REMATCH_BLOCKING_STATUSES.has(existingStatus)) {
+    logger.info(
+      { missionId: mission.id, renford: renfordLabel, existingStatus },
+      '[🤝 matching] SKIP: blocked by existing status',
+    );
     return null;
   }
 
@@ -295,14 +301,36 @@ const evaluateRenfordMatch = async (
     profilRenford.utilisateur.typeUtilisateur !== 'renford' ||
     profilRenford.utilisateur.statut !== 'actif'
   ) {
+    logger.info(
+      {
+        missionId: mission.id,
+        renford: renfordLabel,
+        typeUtilisateur: profilRenford.utilisateur.typeUtilisateur,
+        statut: profilRenford.utilisateur.statut,
+      },
+      '[🤝 matching] SKIP: user not active renford',
+    );
     return null;
   }
 
   if (!profilRenford.typeMission.includes(mission.specialitePrincipale)) {
+    logger.info(
+      {
+        missionId: mission.id,
+        renford: renfordLabel,
+        renfordTypeMission: profilRenford.typeMission,
+        missionSpecialite: mission.specialitePrincipale,
+      },
+      '[🤝 matching] SKIP: specialite mismatch',
+    );
     return null;
   }
 
   if (mission.assuranceObligatoire && !profilRenford.assuranceRCPro) {
+    logger.info(
+      { missionId: mission.id, renford: renfordLabel },
+      '[🤝 matching] SKIP: assurance RCPro required but missing',
+    );
     return null;
   }
 
@@ -313,15 +341,41 @@ const evaluateRenfordMatch = async (
     requiredExperience !== 'peut_importe' &&
     EXPERIENCE_RANK[renfordExperience] < EXPERIENCE_RANK[requiredExperience]
   ) {
+    logger.info(
+      { missionId: mission.id, renford: renfordLabel, requiredExperience, renfordExperience },
+      '[🤝 matching] SKIP: insufficient experience',
+    );
     return null;
   }
 
   if (!isRenfordAvailableForMission(mission, profilRenford)) {
+    logger.info(
+      {
+        missionId: mission.id,
+        renford: renfordLabel,
+        missionDateDebut: mission.dateDebut,
+        missionDateFin: mission.dateFin,
+        renfordDateDebut: profilRenford.dateDebut,
+        renfordDateFin: profilRenford.dateFin,
+        dureeIllimitee: profilRenford.dureeIllimitee,
+      },
+      '[🤝 matching] SKIP: renford not available for mission schedule',
+    );
     return null;
   }
 
   const locationScore = getLocationScore(mission, profilRenford);
   if (locationScore === null) {
+    logger.info(
+      {
+        missionId: mission.id,
+        renford: renfordLabel,
+        renfordZoneDeplacement: profilRenford.zoneDeplacement,
+        etablissementVille: mission.etablissement.ville,
+        renfordVille: profilRenford.ville,
+      },
+      '[🤝 matching] SKIP: outside zone de deplacement',
+    );
     return null;
   }
 
@@ -331,6 +385,17 @@ const evaluateRenfordMatch = async (
   const renfordTarif = getRenfordTarifForMission(profilRenford, mission.methodeTarification);
 
   if (renfordTarif === null || renfordTarif > maxSupportedTarif) {
+    logger.info(
+      {
+        missionId: mission.id,
+        renford: renfordLabel,
+        missionTarif,
+        maxSupportedTarif,
+        renfordTarif,
+        methodeTarification: mission.methodeTarification,
+      },
+      '[🤝 matching] SKIP: tarif incompatible',
+    );
     return null;
   }
 
@@ -428,6 +493,8 @@ export const syncMissionMatches = async (
   queued: number;
   proposed: number;
 }> => {
+  logger.info({ missionId }, '[🤝 matching] syncMissionMatches START');
+
   const mission = await prisma.mission.findUnique({
     where: { id: missionId },
     include: {
@@ -440,6 +507,10 @@ export const syncMissionMatches = async (
   });
 
   if (!mission || mission.statut !== 'en_recherche') {
+    logger.warn(
+      { missionId, statut: mission?.statut },
+      '[🤝 matching] SKIP: mission not found or not en_recherche',
+    );
     return {
       missionId,
       totalEligible: 0,
@@ -447,6 +518,19 @@ export const syncMissionMatches = async (
       proposed: 0,
     };
   }
+
+  logger.info(
+    {
+      missionId,
+      specialite: mission.specialitePrincipale,
+      methodeTarification: mission.methodeTarification,
+      tarif: mission.tarif,
+      assuranceObligatoire: mission.assuranceObligatoire,
+      niveauExperienceRequis: mission.niveauExperienceRequis,
+      existingAssignmentsCount: mission.missionsRenford.length,
+    },
+    '[🤝 matching] mission details',
+  );
 
   const favoriteRenfordIds = await getFavoriteRenfordIdsForMission(mission);
   const existingAssignments = new Map(
@@ -457,6 +541,10 @@ export const syncMissionMatches = async (
   );
 
   const renfordProfiles = await getEligibleRenfordProfiles(mission);
+  logger.info(
+    { missionId, eligibleProfilesCount: renfordProfiles.length },
+    '[🤝 matching] eligible profiles fetched',
+  );
   const evaluatedMatches = await Promise.all(
     renfordProfiles.map((profilRenford) =>
       evaluateRenfordMatch(
@@ -472,6 +560,18 @@ export const syncMissionMatches = async (
     .filter((match): match is EvaluatedRenfordMatch => Boolean(match))
     .sort((left, right) => right.score - left.score)
     .slice(0, MATCH_QUEUE_LIMIT);
+
+  logger.info(
+    {
+      missionId,
+      totalEvaluated: renfordProfiles.length,
+      matchedCount: rankedMatches.length,
+      topScores: rankedMatches.map((m) => ({ id: m.profilRenfordId, score: m.score })),
+    },
+    rankedMatches.length > 0
+      ? '[🤝 matching] 🎯 ranking complete'
+      : '[🤝 matching] ranking complete',
+  );
 
   const desiredMatchIds = new Set(rankedMatches.map((match) => match.profilRenfordId));
 
@@ -529,12 +629,20 @@ export const syncMissionMatches = async (
     await prisma.$transaction(writes);
   }
 
-  return {
+  const result = {
     missionId: mission.id,
     totalEligible: rankedMatches.length,
     queued: rankedMatches.length,
     proposed: rankedMatches.length,
   };
+
+  logger.info(
+    result,
+    result.proposed > 0
+      ? '[🤝 matching] 🎯 syncMissionMatches DONE'
+      : '[🤝 matching] syncMissionMatches DONE',
+  );
+  return result;
 };
 
 export const syncMissionMatchesForOpenMissions = async (): Promise<{

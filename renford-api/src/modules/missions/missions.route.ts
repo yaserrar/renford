@@ -6,6 +6,7 @@ import {
   finalizeMissionPayment,
   getEtablissementMissionDetails,
   getEtablissementMissions,
+  getEtablissementPendingMissionsCount,
   respondToMissionRenfordByEtablissement,
 } from './missions.controller';
 import {
@@ -18,6 +19,12 @@ import {
 } from './missions.schema';
 
 const router = Router();
+
+router.get(
+  '/etablissement/missions/pending-count',
+  authenticateToken(['etablissement']),
+  getEtablissementPendingMissionsCount,
+);
 
 router.get(
   '/etablissement/missions',

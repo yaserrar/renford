@@ -69,6 +69,35 @@ const getMissionTotalHours = (
   }, 0);
 };
 
+export const getEtablissementPendingMissionsCount = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+
+    const profilEtablissement = await prisma.profilEtablissement.findUnique({
+      where: { utilisateurId: userId },
+      select: { etablissements: { select: { id: true } } },
+    });
+
+    if (!profilEtablissement) {
+      return res.status(404).json({ message: 'Profil établissement non trouvé' });
+    }
+
+    const etablissementIds = profilEtablissement.etablissements.map((e) => e.id);
+
+    const count = await prisma.mission.count({
+      where: { etablissementId: { in: etablissementIds }, statut: 'en_recherche' },
+    });
+
+    return res.json({ count });
+  } catch (err) {
+    return next(err);
+  }
+};
+
 export const getEtablissementMissions = async (
   req: Request<unknown, unknown, unknown, GetEtablissementMissionsQuerySchema>,
   res: Response,

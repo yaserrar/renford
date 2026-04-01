@@ -51,6 +51,33 @@ const getMissionTotalHours = (
   }, 0);
 };
 
+export const getRenfordPendingMissionsCount = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+
+    const profilRenford = await prisma.profilRenford.findUnique({
+      where: { utilisateurId: userId },
+      select: { id: true },
+    });
+
+    if (!profilRenford) {
+      return res.status(404).json({ message: 'Profil Renford non trouvé' });
+    }
+
+    const count = await prisma.missionRenford.count({
+      where: { profilRenfordId: profilRenford.id, statut: 'nouveau' },
+    });
+
+    return res.json({ count });
+  } catch (err) {
+    return next(err);
+  }
+};
+
 export const getRenfordMissions = async (
   req: Request<unknown, unknown, unknown, GetRenfordMissionsQuerySchema>,
   res: Response,

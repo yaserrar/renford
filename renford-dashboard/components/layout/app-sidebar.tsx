@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import NavAccount from "./nav-account";
 import NavMain from "./nav-main";
 import { useCurrentUser } from "@/hooks/utilisateur";
+import { usePendingMissionsCount } from "@/hooks/mission";
 import { Logo } from "../common/logo";
 
 const RENFORD_MAIN_LINKS = [
@@ -61,16 +62,16 @@ const ETABLISSEMENT_MAIN_LINKS = [
     url: "#",
     icon: ScrollText,
   },
-  {
-    title: "Gérer les sites",
-    url: "#",
-    icon: Building2,
-  },
+  // {
+  //   title: "Gérer les sites",
+  //   url: "#",
+  //   icon: Building2,
+  // },
 ];
 
 const RENFORD_FOOTER_LINKS = [
   { title: "Bons plans", url: "#", icon: Percent },
-  { title: "Support", url: "#", icon: CircleHelp },
+  { title: "Support", url: "/dashboard/support", icon: CircleHelp },
 ];
 
 const ETABLISSEMENT_FOOTER_LINKS = [
@@ -81,7 +82,7 @@ const ETABLISSEMENT_FOOTER_LINKS = [
   },
   {
     title: "Support",
-    url: "#",
+    url: "/dashboard/support",
     icon: CircleHelp,
   },
 ];
@@ -92,11 +93,23 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
   const isEtablissement = typeUtilisateur === "etablissement";
   const isRenford = typeUtilisateur === "renford";
 
-  const mainLinks = isEtablissement
-    ? ETABLISSEMENT_MAIN_LINKS
-    : isRenford
-      ? RENFORD_MAIN_LINKS
-      : RENFORD_MAIN_LINKS;
+  const { data: pendingData } = usePendingMissionsCount();
+  const pendingCount = pendingData?.count ?? 0;
+
+  const mainLinks = React.useMemo(() => {
+    if (isEtablissement) {
+      return ETABLISSEMENT_MAIN_LINKS.map((link) =>
+        link.url === "/dashboard/etablissement/missions"
+          ? { ...link, badge: pendingCount }
+          : link,
+      );
+    }
+    return RENFORD_MAIN_LINKS.map((link) =>
+      link.url === "/dashboard/renford/missions"
+        ? { ...link, badge: pendingCount }
+        : link,
+    );
+  }, [isEtablissement, pendingCount]);
 
   const footerLinks = isEtablissement
     ? ETABLISSEMENT_FOOTER_LINKS

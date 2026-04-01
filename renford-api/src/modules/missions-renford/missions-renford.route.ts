@@ -4,6 +4,7 @@ import { validateResource } from '../../middleware/validate.resource';
 import {
   getRenfordMissions,
   getRenfordMissionDetails,
+  getRenfordPendingMissionsCount,
   respondToMissionProposal,
 } from './missions-renford.controller';
 import {
@@ -13,6 +14,12 @@ import {
 } from './missions-renford.schema';
 
 const router = Router();
+
+router.get(
+  '/renford/missions/pending-count',
+  authenticateToken(['renford']),
+  getRenfordPendingMissionsCount,
+);
 
 router.get(
   '/renford/missions',

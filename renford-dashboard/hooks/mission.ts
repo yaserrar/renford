@@ -19,6 +19,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import useAxios from "./axios";
+import { useCurrentUser } from "./utilisateur";
 
 type CreateMissionResponse = {
   id: string;
@@ -331,5 +332,28 @@ export const useDeleteIndisponibilite = () => {
     onError: (error) => {
       toast.error(getErrorMessage(error));
     },
+  });
+};
+
+// ─── Pending missions count (renford: nouveau / etablissement: en_recherche) ──
+
+export const usePendingMissionsCount = () => {
+  const axios = useAxios();
+  const { data: currentUser } = useCurrentUser();
+
+  const endpoint =
+    currentUser?.typeUtilisateur === "renford"
+      ? "/renford/missions/pending-count"
+      : "/etablissement/missions/pending-count";
+
+  return useQuery({
+    queryKey: ["pending-missions-count", currentUser?.typeUtilisateur],
+    queryFn: async () => {
+      return (await axios.get(endpoint)).data as {
+        count: number;
+      };
+    },
+    enabled: !!currentUser,
+    staleTime: 1000 * 30,
   });
 };

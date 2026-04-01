@@ -33,9 +33,7 @@ export default function EtablissementPlanningSection({ planning }: Props) {
   return (
     <section className="rounded-2xl border border-border bg-white p-4 md:p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="text-xl md:text-2xl font-semibold text-foreground">
-          Mon planning
-        </p>
+        <p className="text-xl font-semibold text-foreground">Mon planning</p>
         <Link
           href="/dashboard/etablissement/planning"
           className={cn(

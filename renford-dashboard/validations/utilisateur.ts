@@ -20,6 +20,27 @@ export const TYPE_NOTIFICATION_PREFERENCE = [
   "missions",
 ] as const;
 
+// ─── Labels ──────────────────────────────────────────────────
+
+export const TYPE_UTILISATEUR_LABELS: Record<
+  (typeof TYPE_UTILISATEUR)[number],
+  string
+> = {
+  etablissement: "Établissement",
+  renford: "Renford",
+  administrateur: "Administrateur",
+};
+
+export const STATUT_COMPTE_LABELS: Record<
+  (typeof STATUT_COMPTE)[number],
+  string
+> = {
+  actif: "Actif",
+  suspendu: "Suspendu",
+  en_attente_verification: "En attente",
+  onboarding: "Onboarding",
+};
+
 export const updateProfileSchema = z.object({
   nom: z.string().min(2, "2 caractères minimum").optional(),
   prenom: z.string().min(2, "2 caractères minimum").optional(),

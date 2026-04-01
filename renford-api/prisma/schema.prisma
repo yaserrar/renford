@@ -60,6 +60,7 @@ model Utilisateur {
     firebaseAuth        FirebaseAuthInfo?
     profilEtablissement ProfilEtablissement?
     profilRenford       ProfilRenford?
+    messagesContact     MessageContact[]
 
     @@index([email])
     @@index([typeUtilisateur])
@@ -785,6 +786,31 @@ model IndisponibiliteRenford {
     @@index([profilRenfordId])
     @@index([dateDebut, dateFin])
     @@map("indisponibilites_renford")
+}
+
+// ============================================================================
+// TABLE: Messages de contact (support / contactez-nous)
+// ============================================================================
+
+model MessageContact {
+    id String @id @default(uuid())
+
+    utilisateurId String
+    utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+    email String
+    sujet String
+    texte String @db.Text
+
+    traite  Boolean   @default(false)
+    traiteA DateTime?
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([utilisateurId])
+    @@index([traite])
+    @@map("messages_contact")
 }
 
 // // ============================================================================

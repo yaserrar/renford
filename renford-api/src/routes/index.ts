@@ -13,6 +13,11 @@ import favorisRenfordRouter from '../modules/favoris-renford/favoris-renford.rou
 import accueilRouter from '../modules/accueil/accueil.route';
 import parrainageRouter from '../modules/parrainage/parrainage.route';
 import planningRouter from '../modules/planning/planning.route';
+import contactRouter from '../modules/contact/contact.route';
+import adminAdministrateursRouter from '../modules-admin/administrateurs/admin.route';
+import adminUtilisateursRouter from '../modules-admin/utilisateurs/utilisateur.route';
+import adminStatistiquesRouter from '../modules-admin/statistiques/statistiques.route';
+import adminMessagesContactRouter from '../modules-admin/messages-contact/messages-contact.route';
 
 const router = Router();
 
@@ -29,6 +34,13 @@ router.use('/', favorisRenfordRouter);
 router.use('/', accueilRouter);
 router.use('/', parrainageRouter);
 router.use('/', planningRouter);
+router.use('/', contactRouter);
+
+// ── Admin modules ───────────────────────────────────────────
+router.use('/', adminAdministrateursRouter);
+router.use('/', adminUtilisateursRouter);
+router.use('/', adminStatistiquesRouter);
+router.use('/', adminMessagesContactRouter);
 
 router.use('/upload', uploadsRouter);
 

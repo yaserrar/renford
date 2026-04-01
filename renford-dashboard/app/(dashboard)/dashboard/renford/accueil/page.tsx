@@ -1,6 +1,7 @@
 "use client";
 
 import { useRenfordAccueil } from "@/hooks/accueil";
+import { usePendingMissionsCount } from "@/hooks/mission";
 import { useCurrentUser } from "@/hooks/utilisateur";
 import RenfordIndicatorsSection from "./indicators-section";
 import RenfordPlanningSection from "./planning-section";
@@ -9,6 +10,7 @@ import RenfordTopActionsSection from "./top-actions-section";
 export default function RenfordAccueilPage() {
   const { data: currentUser } = useCurrentUser();
   const { data: accueilData } = useRenfordAccueil();
+  const { data: pendingData } = usePendingMissionsCount();
 
   const todayLabel = new Intl.DateTimeFormat("fr-FR", {
     weekday: "long",
@@ -28,9 +30,7 @@ export default function RenfordAccueilPage() {
             Bonjour {currentUser?.prenom || ""}
           </p>
         </section>
-        <RenfordTopActionsSection
-          nouvellesOpportunites={accueilData?.indicators?.nouvellesOpportunites}
-        />
+        <RenfordTopActionsSection nouvellesOpportunites={pendingData?.count} />
         <RenfordIndicatorsSection indicators={accueilData?.indicators} />
         <RenfordPlanningSection planning={accueilData?.planning} />
       </div>
