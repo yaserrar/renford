@@ -1,6 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn, getInitials, getUrl } from "@/lib/utils";
 import { RenfordPlanningSlot } from "@/types/mission";
 import {
   DISCIPLINE_MISSION_LABELS,
@@ -8,7 +9,6 @@ import {
   METHODE_TARIFICATION_SUFFIXES,
 } from "@/validations/mission";
 import { Clock3, MapPin, List, AlertTriangle } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 
 type Props = {
@@ -33,25 +33,26 @@ export default function MissionCard({ slot, className }: Props) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border bg-white p-4 md:p-5",
+        "rounded-3xl border border-border bg-white px-4 py-4 md:px-5 md:py-5",
         className,
       )}
     >
       <div className="flex items-start gap-4">
-        {/* Logo */}
-        <div className="hidden sm:flex h-20 w-20 min-w-20 items-center justify-center overflow-hidden rounded-xl bg-gray-50">
-          {slot.etablissement.avatarChemin ? (
-            <Image
-              src={slot.etablissement.avatarChemin}
-              alt={slot.etablissement.nom}
-              width={80}
-              height={80}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <span className="text-xs text-muted-foreground">LOGO</span>
-          )}
-        </div>
+        {/* Avatar */}
+        <Avatar className="mt-0.5 hidden h-20 w-20 shrink-0 rounded-md border border-input sm:flex">
+          <AvatarImage
+            src={
+              slot.etablissement.avatarChemin
+                ? getUrl(slot.etablissement.avatarChemin)
+                : undefined
+            }
+            alt={slot.etablissement.nom}
+            className="rounded-md"
+          />
+          <AvatarFallback className="rounded-md text-sm font-medium">
+            {getInitials(slot.etablissement.nom)}
+          </AvatarFallback>
+        </Avatar>
 
         {/* Content */}
         <div className="flex-1 min-w-0">

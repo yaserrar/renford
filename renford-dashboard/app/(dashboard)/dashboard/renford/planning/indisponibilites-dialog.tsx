@@ -84,14 +84,6 @@ export default function IndisponibilitesDialog({ children }: Props) {
             <DialogTitle className="text-lg font-semibold">
               Mes indisponibilités
             </DialogTitle>
-            <DialogClose asChild>
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </DialogClose>
           </div>
         </DialogHeader>
 

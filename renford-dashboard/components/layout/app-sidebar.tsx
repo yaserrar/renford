@@ -21,13 +21,15 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import NavAccount from "./nav-account";
 import NavMain from "./nav-main";
 import { useCurrentUser } from "@/hooks/utilisateur";
 import { usePendingMissionsCount } from "@/hooks/mission";
 import { Logo } from "../common/logo";
+import { cn } from "@/lib/utils";
 
 const RENFORD_MAIN_LINKS = [
   { title: "Accueil", url: "/dashboard/renford/accueil", icon: Home },
@@ -89,6 +91,7 @@ const ETABLISSEMENT_FOOTER_LINKS = [
 
 const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
   const { data: currentUser } = useCurrentUser();
+  const { setOpen, open } = useSidebar();
   const typeUtilisateur = currentUser?.typeUtilisateur;
   const isEtablissement = typeUtilisateur === "etablissement";
   const isRenford = typeUtilisateur === "renford";
@@ -122,25 +125,25 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
     : "/dashboard/renford/accueil";
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader className="px-6 pt-6 pb-3">
-        <Link href={homeHref} className="flex items-center gap-3">
-          <Logo />
-        </Link>
-      </SidebarHeader>
-
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader className="px-6 pt-2"></SidebarHeader>
       <SidebarContent className="px-1 pt-2 pb-4">
+        <button className="cursor-pointer ml-2" onClick={() => setOpen(!open)}>
+          <Logo onlyIcon={!open} size={open ? "lg" : "sm"} />
+        </button>
+
         {isEtablissement && (
-          <Button
-            asChild
-            variant="outline-secondary"
-            className="mx-2 rounded-sm"
+          <Link
+            href="/dashboard/etablissement/missions/nouvelle"
+            className={buttonVariants({
+              variant: "outline-secondary",
+              className: cn("mx-2 rounded-sm mt-4", !open && "mx-1"),
+              size: open ? "default" : "icon",
+            })}
           >
-            <Link href="/dashboard/etablissement/missions/nouvelle">
-              <Plus className="h-6 w-6" />
-              Demande de mission
-            </Link>
-          </Button>
+            <Plus />
+            {open && "Demande de mission"}
+          </Link>
         )}
 
         <NavMain items={mainLinks} />

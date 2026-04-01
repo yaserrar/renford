@@ -11,6 +11,8 @@ import {
 import { ETABLISSEMENT_MISSIONS_STATUS_GROUPS } from "@/validations/mission";
 import EtablissementMissionsPanel from "./etablissement-missions-panel";
 import MissionFiltersDialog, { MissionFilters } from "./mission-filters-dialog";
+import MissionStatusBadge from "@/components/common/mission-status-badge";
+import MissionRenfordStatusBadge from "@/components/common/mission-renford-status-badge";
 
 const DEFAULT_FILTERS: MissionFilters = {
   siteId: "",
@@ -120,7 +122,6 @@ export default function EtablissementMissionsPage() {
     <main className="mt-8 space-y-6">
       <div className="w-full space-y-4">
         <H2>Liste des missions</H2>
-
         <Tabs defaultValue="en-recherche" className="w-full">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <TabsList>

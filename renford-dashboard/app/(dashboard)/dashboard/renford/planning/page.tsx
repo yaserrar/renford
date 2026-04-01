@@ -1,16 +1,16 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import DateRangePicker from "@/components/ui/date-range-picker";
+import { H2 } from "@/components/ui/typography";
 import { useRenfordPlanning } from "@/hooks/mission";
-import { cn } from "@/lib/utils";
 import { RenfordPlanningSlot } from "@/types/mission";
-import { format, isToday, isTomorrow, addDays } from "date-fns";
-import { fr } from "date-fns/locale";
+import { format, isToday, isTomorrow } from "date-fns";
+import { DateRange } from "react-day-picker";
 import { CalendarOff, Info } from "lucide-react";
 import { useMemo, useState } from "react";
 import IndisponibilitesDialog from "./indisponibilites-dialog";
 import MissionCard from "./mission-card";
-import PeriodFilter from "./period-filter";
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -44,22 +44,25 @@ function groupByDate(slots: RenfordPlanningSlot[]) {
 // ─── Page ────────────────────────────────────────────────────
 
 export default function RenfordPlanningPage() {
-  const [fromDate, setFromDate] = useState<Date | undefined>();
-  const [toDate, setToDate] = useState<Date | undefined>();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
-  const fromStr = fromDate ? format(fromDate, "yyyy-MM-dd") : undefined;
-  const toStr = toDate ? format(toDate, "yyyy-MM-dd") : undefined;
+  const fromStr = dateRange?.from
+    ? format(dateRange.from, "yyyy-MM-dd")
+    : undefined;
+  const toStr = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
 
   const { data: slots, isLoading } = useRenfordPlanning(fromStr, toStr);
 
   const grouped = useMemo(() => groupByDate(slots ?? []), [slots]);
 
   return (
-    <main className="min-h-screen bg-secondary-background rounded-2xl m-1 px-4 md:px-8 py-6 md:py-8">
-      <div className="mx-auto w-full space-y-5">
-        {/* Header */}
+    <main className="mt-8 space-y-6">
+      <div className="w-full space-y-4">
+        <H2>Planning</H2>
+
+        {/* Header actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold">Planning</h1>
+          <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
           <IndisponibilitesDialog>
             <Button variant="outline" className="gap-2">
               <CalendarOff className="h-4 w-4" />
@@ -67,23 +70,11 @@ export default function RenfordPlanningPage() {
             </Button>
           </IndisponibilitesDialog>
         </div>
+      </div>
 
-        {/* Period filter */}
-        <PeriodFilter
-          from={fromDate}
-          to={toDate}
-          onRangeChange={(f, t) => {
-            setFromDate(f);
-            setToDate(t);
-          }}
-          onClear={() => {
-            setFromDate(undefined);
-            setToDate(undefined);
-          }}
-        />
-
+      <div className="bg-secondary-background min-h-[620px] rounded-3xl border m-1 p-4 md:p-6">
         {/* Info banner */}
-        <div className="flex items-center gap-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <Info className="h-5 w-5 shrink-0" />
           <p>
             Merci de venir légèrement en avance pour faciliter la prise de
@@ -93,11 +84,11 @@ export default function RenfordPlanningPage() {
 
         {/* Content */}
         {isLoading ? (
-          <div className="flex h-[300px] items-center justify-center rounded-2xl bg-white">
+          <div className="flex h-[300px] items-center justify-center rounded-3xl border border-border bg-white">
             <p className="text-sm text-muted-foreground">Chargement...</p>
           </div>
         ) : grouped.length === 0 ? (
-          <div className="flex h-[300px] flex-col items-center justify-center gap-2 rounded-2xl bg-white">
+          <div className="flex h-[300px] flex-col items-center justify-center gap-2 rounded-3xl border border-border bg-white">
             <p className="text-sm text-muted-foreground">
               Aucune mission sur cette période
             </p>

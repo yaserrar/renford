@@ -86,7 +86,9 @@ export default function RenfordMissionCard({ item }: RenfordMissionCardProps) {
         <div className="">
           <div className="flex min-w-0 items-center gap-3">
             <Avatar
-              className={cn("mt-0.5 h-16 w-16 shrink-0 border border-input")}
+              className={cn(
+                "mt-0.5 h-20 w-20 shrink-0 border border-input rounded-md",
+              )}
             >
               <AvatarImage
                 src={
@@ -95,8 +97,9 @@ export default function RenfordMissionCard({ item }: RenfordMissionCardProps) {
                     : undefined
                 }
                 alt={etablissement?.nom ?? "Établissement"}
+                className="rounded-md"
               />
-              <AvatarFallback className="text-sm font-medium">
+              <AvatarFallback className="text-sm font-medium rounded-md">
                 {getInitials(etablissement?.nom)}
               </AvatarFallback>
             </Avatar>
@@ -112,19 +115,17 @@ export default function RenfordMissionCard({ item }: RenfordMissionCardProps) {
                   {etablissement.ville}
                 </p>
               )}
-            </div>
-          </div>
 
-          <div className="pt-2 text-sm text-gray-600">
-            <p className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
-              Du {formatFrenchDate(mission.dateDebut)} au{" "}
-              {formatFrenchDate(mission.dateFin)}
-            </p>
-            <p className="flex items-center gap-2">
-              <Clock3 className="h-4 w-4 text-muted-foreground" />
-              {timeRange} · {formatDurationHours(mission.totalHours)}
-            </p>
+              <p className="flex items-center gap-2 text-sm">
+                <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                Du {formatFrenchDate(mission.dateDebut)} au{" "}
+                {formatFrenchDate(mission.dateFin)}
+              </p>
+              <p className="flex items-center gap-2 text-sm">
+                <Clock3 className="h-4 w-4 text-muted-foreground" />
+                {timeRange} · {formatDurationHours(mission.totalHours)}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -141,64 +142,37 @@ export default function RenfordMissionCard({ item }: RenfordMissionCardProps) {
               </span>
             </div>
 
-            {isOpportunite ? (
-              <div className="hidden items-center gap-2 md:flex">
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={handleRefuse}
-                  disabled={respondMutation.isPending}
-                >
-                  Refuser
-                </Button>
-                <Button
-                  variant="dark"
-                  type="button"
-                  onClick={handleAccept}
-                  disabled={respondMutation.isPending}
-                >
-                  Accepter
-                </Button>
-              </div>
-            ) : (
-              <Button variant="dark" className="hidden md:flex" type="button">
-                Détail
-              </Button>
-            )}
+            <Button variant="dark" className="hidden md:flex" type="button">
+              Détail
+            </Button>
           </div>
         </div>
 
-        {isOpportunite ? (
-          <div className="flex w-full items-center gap-2 md:hidden">
-            <Button
-              variant="outline"
-              className="flex-1"
-              type="button"
-              onClick={handleRefuse}
-              disabled={respondMutation.isPending}
-            >
-              Refuser
-            </Button>
-            <Button
-              variant="dark"
-              className="flex-1"
-              type="button"
-              onClick={handleAccept}
-              disabled={respondMutation.isPending}
-            >
-              Accepter
-            </Button>
-          </div>
-        ) : (
+        <Button variant="dark" className="flex w-full md:hidden" type="button">
+          Détail
+        </Button>
+      </div>
+
+      {isOpportunite && (
+        <div className="flex items-left gap-2 mt-2">
+          <Button
+            variant="outline"
+            type="button"
+            onClick={handleRefuse}
+            disabled={respondMutation.isPending}
+          >
+            Refuser
+          </Button>
           <Button
             variant="dark"
-            className="flex w-full md:hidden"
             type="button"
+            onClick={handleAccept}
+            disabled={respondMutation.isPending}
           >
-            Détail
+            Accepter
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </article>
   );
 }

@@ -2,12 +2,14 @@
 
 import { useParams } from "next/navigation";
 import { CalendarDays, Clock3, MapPin } from "lucide-react";
+import DetailRow from "@/components/common/detail-row";
 import DocumentCategoryCard from "@/components/common/document-category-card";
 import MissionRenfordStatusBadge from "@/components/common/mission-renford-status-badge";
 import CenterState from "@/components/common/center-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { H2 } from "@/components/ui/typography";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useRenfordMissionDetails,
   useRespondToMissionProposal,
@@ -189,202 +191,202 @@ export default function RenfordMissionDetailsPage() {
   const isOpportunite = OPPORTUNITE_STATUSES.includes(missionRenford.statut);
   const isSignable = SIGNABLE_STATUSES.includes(missionRenford.statut);
 
+  const etablissementName = etablissement?.nom ?? "-";
+
   return (
     <main className="mt-8 space-y-6">
       <H2>Détail de la mission</H2>
 
-      <div className="bg-secondary-background rounded-3xl border m-1 p-6 h-full">
-        <div className="space-y-6">
-          <section className="rounded-3xl border border-input bg-white p-6">
-            <div className="flex flex-wrap items-start justify-between gap-6">
-              <div className="space-y-3">
+      <Tabs defaultValue="details" className="w-full">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <TabsList>
+            <TabsTrigger value="details" className="px-4">
+              Détail
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="px-4">
+              Document & facture
+            </TabsTrigger>
+          </TabsList>
+
+          {isOpportunite && (
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                className="px-5"
+                onClick={() =>
+                  respondMutation.mutate({
+                    missionId: mission.id,
+                    response: "refuse_par_renford",
+                  })
+                }
+                disabled={respondMutation.isPending}
+              >
+                Refuser
+              </Button>
+              <Button
+                variant="dark"
+                className="px-5"
+                onClick={() =>
+                  respondMutation.mutate({
+                    missionId: mission.id,
+                    response: "selection_en_cours",
+                  })
+                }
+                disabled={respondMutation.isPending}
+              >
+                Accepter
+              </Button>
+            </div>
+          )}
+
+          {isSignable && (
+            <Button variant="dark" className="px-8">
+              Signer le contrat
+            </Button>
+          )}
+        </div>
+
+        <div className="bg-secondary-background m-1 min-h-[620px] rounded-3xl border p-4 md:p-6">
+          <TabsContent value="details" className="space-y-4">
+            <div className="rounded-full border border-border bg-white px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar className="h-12 w-12 border border-input">
+                    <AvatarImage
+                      src={
+                        etablissement?.avatarChemin
+                          ? getUrl(etablissement.avatarChemin)
+                          : undefined
+                      }
+                      alt={etablissementName}
+                    />
+                    <AvatarFallback>
+                      {getInitials(etablissementName)}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="min-w-0">
+                    <p className="truncate text-lg font-semibold text-foreground">
+                      {etablissementName}
+                    </p>
+                    <p className="truncate text-base text-muted-foreground">
+                      {etablissement
+                        ? `${etablissement.adresse}, ${etablissement.codePostal} ${etablissement.ville}`
+                        : "-"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <section className="rounded-3xl border border-border bg-white px-4 py-4 md:px-5 md:py-5">
+              <div className="mb-5 space-y-2">
                 <MissionRenfordStatusBadge status={missionRenford.statut} />
                 <h3 className="text-2xl font-semibold text-foreground">
                   {missionTitle}
                 </h3>
-                <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <p className="flex items-center gap-2 text-base text-muted-foreground">
                   <CalendarDays className="h-4 w-4" />
                   Du {formatFrenchDate(mission.dateDebut)} au{" "}
                   {formatFrenchDate(mission.dateFin)}
                 </p>
               </div>
 
-              {isOpportunite && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    className="px-5"
-                    onClick={() =>
-                      respondMutation.mutate({
-                        missionId: mission.id,
-                        response: "refuse_par_renford",
-                      })
-                    }
-                    disabled={respondMutation.isPending}
-                  >
-                    Refuser
-                  </Button>
-                  <Button
-                    variant="dark"
-                    className="px-5"
-                    onClick={() =>
-                      respondMutation.mutate({
-                        missionId: mission.id,
-                        response: "selection_en_cours",
-                      })
-                    }
-                    disabled={respondMutation.isPending}
-                  >
-                    Accepter
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-6 flex items-center gap-4 border-t border-input pt-6">
-              <Avatar className="h-12 w-12 border border-input">
-                <AvatarImage
-                  src={
-                    etablissement?.avatarChemin
-                      ? getUrl(etablissement.avatarChemin)
-                      : undefined
-                  }
-                  alt={etablissement?.nom ?? "Établissement"}
-                />
-                <AvatarFallback>
-                  {getInitials(etablissement?.nom)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-semibold text-foreground">
-                  {etablissement?.nom ?? "-"}
-                </p>
-                <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  {etablissement
-                    ? `${etablissement.adresse}, ${etablissement.codePostal} ${etablissement.ville}`
-                    : "-"}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-input bg-white p-6">
-            <h3 className="text-xl font-semibold text-foreground">
-              Jour & horaires
-            </h3>
-            <div className="mt-4 space-y-2 text-sm">
-              {horaires.length > 0 ? (
-                horaires.map((line) => (
-                  <p key={line} className="text-foreground">
-                    {line}
-                  </p>
-                ))
-              ) : (
-                <p className="text-muted-foreground">-</p>
-              )}
-              <p className="mt-2 flex items-center gap-2 text-muted-foreground">
-                <Clock3 className="h-4 w-4" />
-                {formatDurationHours(totalHours)}
-              </p>
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-input bg-white p-6">
-            <h3 className="text-xl font-semibold text-foreground">Détails</h3>
-            <div className="mt-4 space-y-3 text-sm">
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-input p-4">
-                <span className="text-muted-foreground">
-                  Niveau d&apos;expérience minimum
-                </span>
-                <span className="font-medium text-foreground">
-                  {niveauLabel}
-                </span>
-              </div>
-              <div className="rounded-2xl border border-input p-4">
-                <p className="text-muted-foreground">Matériel nécessaire</p>
-                <div className="mt-1">
-                  {materiels.map((materiel) => (
-                    <p key={materiel} className="font-medium text-foreground">
-                      {materiel}
+              <DetailRow
+                label="Site d'exécution de la mission"
+                value={
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      {etablissementName}
                     </p>
-                  ))}
+                    <p className="mt-1 flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      {etablissement
+                        ? `${etablissement.adresse}, ${etablissement.codePostal} ${etablissement.ville}`
+                        : "-"}
+                    </p>
+                  </div>
+                }
+              />
+
+              <DetailRow
+                label="Jour & horaires"
+                value={
+                  <div>
+                    {horaires.length > 0 ? (
+                      horaires.map((line) => <p key={line}>{line}</p>)
+                    ) : (
+                      <p>-</p>
+                    )}
+                    <p className="mt-1 flex items-center gap-2 text-muted-foreground">
+                      <Clock3 className="h-4 w-4" />
+                      {formatDurationHours(totalHours)}
+                    </p>
+                  </div>
+                }
+              />
+
+              <DetailRow
+                label="Niveau d'expérience minimum"
+                value={niveauLabel}
+              />
+
+              <DetailRow
+                label="Matériel nécessaire"
+                value={
+                  <div>
+                    {materiels.map((materiel) => (
+                      <p key={materiel}>{materiel}</p>
+                    ))}
+                  </div>
+                }
+              />
+
+              <DetailRow
+                label="Description de la mission"
+                value={mission.description ?? "Aucune description renseignée."}
+              />
+
+              <DetailRow
+                label="Tarification"
+                className="border-b-0"
+                value={`${formatAmount(mission.tarif)}${METHODE_TARIFICATION_SUFFIXES[mission.methodeTarification]} HT`}
+              />
+
+              <div className="mt-3 border-t border-border/70 pt-4">
+                <div className="ml-auto grid w-full max-w-sm gap-2 text-right text-base">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="font-medium text-foreground">
+                      Total HT
+                    </span>
+                    <span className="text-xl font-semibold text-foreground">
+                      {formatAmount(totalHt)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 text-muted-foreground">
+                    <span>frais de service inclus HT</span>
+                    <span>{formatAmount(serviceFees)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 text-muted-foreground">
+                    <span>Total TTC</span>
+                    <span>{formatAmount(totalTtc)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </TabsContent>
 
-          <section className="rounded-3xl border border-input bg-white p-6">
-            <h3 className="text-xl font-semibold text-foreground">
-              Description
-            </h3>
-            <p className="mt-4 whitespace-pre-line text-sm leading-6 text-muted-foreground">
-              {mission.description ?? "Aucune description renseignée."}
-            </p>
-          </section>
-
-          <section className="rounded-3xl border border-input bg-white p-6">
-            <h3 className="text-xl font-semibold text-foreground">
-              Tarification
-            </h3>
-            <div className="mt-4 space-y-3 text-sm">
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-input p-4">
-                <span className="text-muted-foreground">Tarif</span>
-                <span className="font-medium text-foreground">
-                  {formatAmount(mission.tarif)}
-                  {
-                    METHODE_TARIFICATION_SUFFIXES[mission.methodeTarification]
-                  }{" "}
-                  HT
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-input p-4">
-                <span className="text-muted-foreground">Total HT</span>
-                <span className="text-xl font-semibold text-foreground">
-                  {formatAmount(totalHt)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-input p-4">
-                <span className="text-muted-foreground">
-                  Frais de service inclus HT
-                </span>
-                <span className="font-medium text-foreground">
-                  {formatAmount(serviceFees)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-input p-4">
-                <span className="text-muted-foreground">Total TTC</span>
-                <span className="font-medium text-foreground">
-                  {formatAmount(totalTtc)}
-                </span>
-              </div>
-
-              {isSignable && (
-                <div className="mt-3 flex justify-end">
-                  <Button variant="dark" className="px-8">
-                    Signer le contrat
-                  </Button>
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-input bg-white p-6">
-            <h3 className="text-xl font-semibold text-foreground">
-              Documents & Factures
-            </h3>
-            <div className="mt-4 space-y-4">
-              {documentGroups.map((group) => (
-                <DocumentCategoryCard
-                  key={group.title}
-                  title={group.title}
-                  documents={group.documents}
-                />
-              ))}
-            </div>
-          </section>
+          <TabsContent value="documents" className="space-y-4">
+            {documentGroups.map((group) => (
+              <DocumentCategoryCard
+                key={group.title}
+                title={group.title}
+                documents={group.documents}
+              />
+            ))}
+          </TabsContent>
         </div>
-      </div>
+      </Tabs>
     </main>
   );
 }

@@ -32,7 +32,7 @@ export const STATUT_MISSION_LABELS: Record<
   brouillon: "Brouillon",
   ajouter_mode_paiement: "Ajouter un mode de paiement",
   en_recherche: "En recherche",
-  candidatures_disponibles: "Candidatures disponibles",
+  candidatures_disponibles: "Candidature(s) disponible(s)",
   attente_de_signature: "Attente de signature",
   mission_en_cours: "Mission en cours",
   remplacement_en_cours: "Remplacement en cours",

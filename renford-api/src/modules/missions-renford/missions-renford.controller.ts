@@ -187,6 +187,14 @@ export const getRenfordMissionDetails = async (
       return res.status(404).json({ message: 'Mission non trouvée' });
     }
 
+    if (missionRenford.statut === 'nouveau') {
+      await prisma.missionRenford.update({
+        where: { id: missionRenford.id },
+        data: { statut: 'vu' },
+      });
+      missionRenford.statut = 'vu';
+    }
+
     return res.json({
       ...missionRenford,
       mission: {

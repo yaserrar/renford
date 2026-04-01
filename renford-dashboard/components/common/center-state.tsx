@@ -16,7 +16,7 @@ function CenterState({
 }: CenterStateProps) {
   return (
     <div
-      className={`flex min-h-[360px] items-center justify-center px-4 py-8 border bg-secondary-background rounded-lg ${className}`}
+      className={`flex min-h-[450px] items-center justify-center px-4 py-8 border bg-secondary-background rounded-lg ${className}`}
     >
       <div className="w-full max-w-md rounded-2xl border border-dashed border-border bg-white p-8 text-center">
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-secondary/10 text-secondary-dark">

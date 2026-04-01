@@ -226,7 +226,7 @@ export default function EtablissementMissionDetailsPage() {
         <div className="bg-secondary-background m-1 min-h-[620px] rounded-3xl border p-4 md:p-6">
           <TabsContent value="details" className="space-y-4">
             {firstMissionRenford ? (
-              <div className="rounded-full border border-input bg-white px-4 py-3">
+              <div className="rounded-full border border-border bg-white px-4 py-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
                     <Avatar className="h-12 w-12 border border-input">
@@ -246,7 +246,7 @@ export default function EtablissementMissionDetailsPage() {
                     </Avatar>
 
                     <div className="min-w-0">
-                      <p className="truncate text-2xl font-semibold text-foreground">
+                      <p className="truncate text-lg font-semibold text-foreground">
                         {renfordFullName} {renfordStatusLabel}
                       </p>
                       <p className="truncate text-base text-muted-foreground">
