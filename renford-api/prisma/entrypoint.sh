@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 echo "Prisma generate..."
 npx prisma generate --schema=./schema.prisma
 

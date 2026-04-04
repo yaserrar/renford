@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
     
 echo "Prisma migrate..."
 dotenv -e .env -- npx prisma migrate deploy
@@ -10,5 +12,5 @@ dotenv -e .env -- npx prisma generate
 echo "Build..."
 npm run build
 
-echo "App is runing..."
+echo "App is running..."
 npm run start
