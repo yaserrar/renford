@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import MissionStatusBadge from "@/components/common/mission-status-badge";
-import { MissionEtablissement, StatutMission } from "@/types/mission";
+import { MissionEtablissement } from "@/types/mission";
 import {
   DISCIPLINE_MISSION_LABELS,
-  ETABLISSEMENT_MISSIONS_STATUS_GROUPS,
   METHODE_TARIFICATION_SUFFIXES,
 } from "@/validations/mission";
 import {
@@ -23,10 +22,6 @@ type EtablissementMissionCardProps = {
   mission: MissionEtablissement;
 };
 
-const EN_RECHERCHE_STATUSES: StatutMission[] = [
-  ...ETABLISSEMENT_MISSIONS_STATUS_GROUPS["en-recherche"],
-];
-
 export default function EtablissementMissionCard({
   mission,
 }: EtablissementMissionCardProps) {
@@ -34,14 +29,11 @@ export default function EtablissementMissionCard({
 
   const missionTitle =
     DISCIPLINE_MISSION_LABELS[mission.discipline] ?? "Mission";
-  const isEnRecherche = EN_RECHERCHE_STATUSES.includes(mission.statut);
   const horaires = mission.PlageHoraireMission ?? [];
 
   // Avatar logic: show renford avatar if assigned, otherwise etablissement avatar
   const renford = mission.renfordAssigne;
-  const avatarSrc = renford
-    ? getUrl(renford.avatarChemin)
-    : getUrl(mission.etablissement?.avatarChemin);
+  const avatarSrc = renford ? getUrl(renford.avatarChemin) : "";
   const avatarInitials = renford
     ? getInitials(`${renford.prenom} ${renford.nom}`)
     : getInitials(mission.etablissement?.nom);

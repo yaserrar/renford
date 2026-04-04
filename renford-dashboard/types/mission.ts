@@ -65,7 +65,9 @@ export type Mission = {
 
 export type MissionEtablissement = Mission & {
   PlageHoraireMission?: PlageHoraireMission[];
-  etablissement?: Etablissement;
+  etablissement?: Etablissement & {
+    avatarChemin: string | null;
+  };
   renfordAssigne?: {
     id: string;
     avatarChemin: string | null;
