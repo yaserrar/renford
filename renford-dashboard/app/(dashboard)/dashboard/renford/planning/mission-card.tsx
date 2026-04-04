@@ -1,6 +1,7 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { buttonVariants } from "@/components/ui/button";
 import { cn, getInitials, getUrl } from "@/lib/utils";
 import { RenfordPlanningSlot } from "@/types/mission";
 import {
@@ -105,9 +106,8 @@ export default function MissionCard({ slot, className }: Props) {
           <div className="mt-3 flex justify-end">
             <Link
               href={`/dashboard/renford/missions/${slot.missionId}`}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-orange-600 hover:text-orange-700"
+              className={buttonVariants({ variant: "dark" })}
             >
-              <AlertTriangle className="h-3.5 w-3.5" />
               Un problème ?
             </Link>
           </div>

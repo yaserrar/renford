@@ -2,11 +2,19 @@ import type { NextFunction, Request, Response } from 'express';
 import type { StatutMissionRenford } from '@prisma/client';
 import prisma from '../../config/prisma';
 import { registerMissionRenfordResponse } from '../../jobs/missions-matching';
+import { saveSignatureDataUrl } from '../../utils/signature-storage';
+import {
+  buildMissionDocumentPdf,
+  getMissionDocumentFilename,
+  type MissionDocumentType,
+} from '../missions/mission-documents';
 import type {
   GetRenfordMissionsQuerySchema,
+  RenfordMissionDocumentParamsSchema,
   RenfordMissionIdParamsSchema,
   RenfordMissionsTab,
   RespondToMissionProposalSchema,
+  SignMissionDocumentSchema,
 } from './missions-renford.schema';
 
 const RENFORD_TAB_STATUS_MAP: Record<RenfordMissionsTab, StatutMissionRenford[]> = {
@@ -110,7 +118,7 @@ export const getRenfordMissions = async (
               select: {
                 id: true,
                 nom: true,
-                avatarChemin: true,
+                profilEtablissement: { select: { avatarChemin: true } },
                 adresse: true,
                 codePostal: true,
                 ville: true,
@@ -125,13 +133,17 @@ export const getRenfordMissions = async (
       orderBy: [{ dateProposition: 'desc' }],
     });
 
-    const results = missionsRenford.map((mr) => ({
-      ...mr,
-      mission: {
-        ...mr.mission,
-        totalHours: getMissionTotalHours(mr.mission.PlageHoraireMission),
-      },
-    }));
+    const results = missionsRenford.map((mr) => {
+      const { profilEtablissement: etabProfil, ...etabRest } = mr.mission.etablissement;
+      return {
+        ...mr,
+        mission: {
+          ...mr.mission,
+          etablissement: { ...etabRest, avatarChemin: etabProfil.avatarChemin },
+          totalHours: getMissionTotalHours(mr.mission.PlageHoraireMission),
+        },
+      };
+    });
 
     return res.json(results);
   } catch (err) {
@@ -168,7 +180,7 @@ export const getRenfordMissionDetails = async (
               select: {
                 id: true,
                 nom: true,
-                avatarChemin: true,
+                profilEtablissement: { select: { avatarChemin: true } },
                 adresse: true,
                 codePostal: true,
                 ville: true,
@@ -195,10 +207,12 @@ export const getRenfordMissionDetails = async (
       missionRenford.statut = 'vu';
     }
 
+    const { profilEtablissement: etabProfil, ...etabRest } = missionRenford.mission.etablissement;
     return res.json({
       ...missionRenford,
       mission: {
         ...missionRenford.mission,
+        etablissement: { ...etabRest, avatarChemin: etabProfil.avatarChemin },
         totalHours: getMissionTotalHours(missionRenford.mission.PlageHoraireMission),
       },
     });
@@ -247,6 +261,189 @@ export const respondToMissionProposal = async (
 
       throw error;
     }
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const signContractByRenford = async (
+  req: Request<RenfordMissionIdParamsSchema, unknown, SignMissionDocumentSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+
+    const profilRenford = await prisma.profilRenford.findUnique({
+      where: { utilisateurId: userId },
+      select: { id: true },
+    });
+
+    if (!profilRenford) {
+      return res.status(404).json({ message: 'Profil Renford non trouvé' });
+    }
+
+    const missionRenford = await prisma.missionRenford.findFirst({
+      where: {
+        mission: { id: req.params.missionId },
+        profilRenfordId: profilRenford.id,
+      },
+    });
+
+    if (!missionRenford) {
+      return res.status(404).json({ message: 'Mission non trouvée' });
+    }
+
+    if (missionRenford.statut !== 'attente_de_signature') {
+      return res.status(400).json({
+        message: 'Ce contrat ne peut pas être signé dans son état actuel',
+      });
+    }
+
+    const updated = await prisma.missionRenford.update({
+      where: { id: missionRenford.id },
+      data: {
+        statut: 'contrat_signe',
+        dateContratSigne: new Date(),
+        signatureContratPrestationRenfordChemin: await saveSignatureDataUrl(
+          req.body.signatureDataUrl,
+          'signatures/contrat-prestation',
+          `renford-${missionRenford.id}`,
+        ),
+      },
+      select: { id: true, statut: true, dateContratSigne: true },
+    });
+
+    return res.json(updated);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const signAttestationByRenford = async (
+  req: Request<RenfordMissionIdParamsSchema, unknown, SignMissionDocumentSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+
+    const profilRenford = await prisma.profilRenford.findUnique({
+      where: { utilisateurId: userId },
+      select: { id: true },
+    });
+
+    if (!profilRenford) {
+      return res.status(404).json({ message: 'Profil Renford non trouvé' });
+    }
+
+    const missionRenford = await prisma.missionRenford.findFirst({
+      where: {
+        mission: { id: req.params.missionId },
+        profilRenfordId: profilRenford.id,
+      },
+      include: { mission: { select: { statut: true, modeMission: true } } },
+    });
+
+    if (!missionRenford) {
+      return res.status(404).json({ message: 'Mission non trouvée' });
+    }
+
+    if (missionRenford.mission.modeMission !== 'flex') {
+      return res.status(400).json({
+        message: "L'attestation de mission est uniquement disponible pour les missions Flex",
+      });
+    }
+
+    if (
+      missionRenford.statut !== 'mission_terminee' ||
+      missionRenford.mission.statut !== 'mission_terminee'
+    ) {
+      return res.status(400).json({
+        message: "L'attestation de mission ne peut être signée qu'après la fin de mission",
+      });
+    }
+
+    const updated = await prisma.missionRenford.update({
+      where: { id: missionRenford.id },
+      data: {
+        signatureAttestationMissionRenfordChemin: await saveSignatureDataUrl(
+          req.body.signatureDataUrl,
+          'signatures/attestation-mission',
+          `renford-${missionRenford.id}`,
+        ),
+      },
+      select: { id: true, statut: true, signatureAttestationMissionRenfordChemin: true },
+    });
+
+    return res.json(updated);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const downloadMissionDocumentByRenford = async (
+  req: Request<RenfordMissionDocumentParamsSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+    const { missionId, documentType } = req.params;
+
+    const profilRenford = await prisma.profilRenford.findUnique({
+      where: { utilisateurId: userId },
+      select: { id: true },
+    });
+
+    if (!profilRenford) {
+      return res.status(404).json({ message: 'Profil Renford non trouvé' });
+    }
+
+    const missionRenford = await prisma.missionRenford.findFirst({
+      where: {
+        missionId,
+        profilRenfordId: profilRenford.id,
+      },
+      include: {
+        profilRenford: {
+          include: { utilisateur: true },
+        },
+        mission: {
+          include: {
+            PlageHoraireMission: true,
+            etablissement: {
+              include: {
+                profilEtablissement: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!missionRenford) {
+      return res.status(404).json({ message: 'Mission non trouvée' });
+    }
+
+    if (documentType === 'attestation_mission' && missionRenford.mission.modeMission !== 'flex') {
+      return res.status(400).json({
+        message: "L'attestation de mission est uniquement disponible pour les missions Flex",
+      });
+    }
+
+    const pdfBuffer = buildMissionDocumentPdf(documentType as MissionDocumentType, {
+      mission: missionRenford.mission,
+      missionRenford,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${getMissionDocumentFilename(documentType as MissionDocumentType, missionId)}"`,
+    );
+
+    return res.send(pdfBuffer);
   } catch (err) {
     return next(err);
   }

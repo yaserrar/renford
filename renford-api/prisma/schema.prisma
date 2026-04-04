@@ -61,6 +61,7 @@ model Utilisateur {
     profilEtablissement ProfilEtablissement?
     profilRenford       ProfilRenford?
     messagesContact     MessageContact[]
+    notifications       Notification[]
 
     @@index([email])
     @@index([typeUtilisateur])
@@ -164,7 +165,6 @@ model Etablissement {
 
     profilEtablissementId String
     profilEtablissement   ProfilEtablissement @relation(fields: [profilEtablissementId], references: [id], onDelete: Cascade)
-    avatarChemin          String?
 
     // Informations
     nom               String
@@ -712,6 +712,12 @@ model MissionRenford {
     // Tarif négocié final
     tarifNegocie Decimal? @db.Decimal(8, 2)
 
+    // Signatures des documents contractuels
+    signatureContratPrestationRenfordChemin      String?
+    signatureContratPrestationEtablissementChemin String?
+    signatureAttestationMissionRenfordChemin      String?
+    signatureAttestationMissionEtablissementChemin String?
+
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
 
@@ -721,6 +727,7 @@ model MissionRenford {
     @@index([statut])
     @@map("missions_renfords")
 }
+
 
 // Enum utilisée par MissionRenford
 enum StatutMissionRenford {
@@ -811,6 +818,43 @@ model MessageContact {
     @@index([utilisateurId])
     @@index([traite])
     @@map("messages_contact")
+}
+
+// ============================================================================
+// TABLE: Notifications internes (in-app)
+// ============================================================================
+
+model Notification {
+    id String @id @default(uuid())
+
+    utilisateurId String
+    utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+    titre       String
+    description String
+    source      SourceNotification
+    lu          Boolean @default(false)
+
+    // sourceId contient l'identifiant de l'entité source (mission, missionRenford, etc.)
+    sourceId String?
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([utilisateurId])
+    @@index([source])
+    @@index([lu])
+    @@index([source, sourceId])
+    @@map("notifications")
+}
+
+enum SourceNotification {
+    missions
+    mission_renfords
+    etablissements
+    renfords
+    paiements
+    systeme
 }
 
 // // ============================================================================

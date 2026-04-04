@@ -1,5 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
 import {
   Accordion,
   AccordionContent,
@@ -26,8 +29,27 @@ import { FAQ_RENFORD, FAQ_ETABLISSEMENT } from "./faq-data";
 // ─── Page ────────────────────────────────────────────────────
 
 export default function SupportPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data: currentUser } = useCurrentUser();
   const mutation = useCreateContactMessage();
+
+  const activeTab = useMemo(() => {
+    const tab = searchParams.get("tab");
+    return tab === "contact" ? "contact" : "faq";
+  }, [searchParams]);
+
+  const onTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === "contact") {
+      params.set("tab", "contact");
+    } else {
+      params.delete("tab");
+    }
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
+  };
 
   const faqItems =
     currentUser?.typeUtilisateur === "etablissement"
@@ -54,7 +76,7 @@ export default function SupportPage() {
       <div className="w-full space-y-4">
         <H2>Support</H2>
 
-        <Tabs defaultValue="faq" className="w-full">
+        <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
           <TabsList>
             <TabsTrigger value="faq" className="px-4">
               FAQ

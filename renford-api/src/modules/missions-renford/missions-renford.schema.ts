@@ -21,6 +21,24 @@ export const respondToMissionProposalSchema = z.object({
   }),
 });
 
+export const signMissionDocumentSchema = z.object({
+  signatureDataUrl: z
+    .string({ required_error: 'La signature est requise' })
+    .regex(/^data:image\/(png|jpeg|jpg);base64,/, 'Format de signature invalide'),
+});
+
+export const renfordMissionDocumentParamsSchema = z.object({
+  missionId: z.string().uuid("L'identifiant de mission est invalide"),
+  documentType: z.enum([
+    'facture_prestation',
+    'facture_commission',
+    'contrat_prestation',
+    'attestation_mission',
+  ]),
+});
+
 export type GetRenfordMissionsQuerySchema = z.infer<typeof getRenfordMissionsQuerySchema>;
 export type RenfordMissionIdParamsSchema = z.infer<typeof renfordMissionIdParamsSchema>;
 export type RespondToMissionProposalSchema = z.infer<typeof respondToMissionProposalSchema>;
+export type SignMissionDocumentSchema = z.infer<typeof signMissionDocumentSchema>;
+export type RenfordMissionDocumentParamsSchema = z.infer<typeof renfordMissionDocumentParamsSchema>;

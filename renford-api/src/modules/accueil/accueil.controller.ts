@@ -70,7 +70,13 @@ export const getEtablissementAccueil = async (req: Request, res: Response, next:
       include: {
         mission: {
           include: {
-            etablissement: { select: { id: true, nom: true, avatarChemin: true } },
+            etablissement: {
+              select: {
+                id: true,
+                nom: true,
+                profilEtablissement: { select: { avatarChemin: true } },
+              },
+            },
             missionsRenford: {
               where: { statut: { in: ['contrat_signe', 'mission_en_cours'] } },
               include: {
@@ -93,6 +99,7 @@ export const getEtablissementAccueil = async (req: Request, res: Response, next:
 
     const planning = upcomingSlots.map((slot) => {
       const renford = slot.mission.missionsRenford[0]?.profilRenford;
+      const { profilEtablissement: etabProfil, ...etabRest } = slot.mission.etablissement;
       return {
         id: slot.id,
         date: slot.date,
@@ -102,7 +109,7 @@ export const getEtablissementAccueil = async (req: Request, res: Response, next:
         discipline: slot.mission.discipline,
         tarif: slot.mission.tarif,
         methodeTarification: slot.mission.methodeTarification,
-        etablissement: slot.mission.etablissement,
+        etablissement: { ...etabRest, avatarChemin: etabProfil.avatarChemin },
         renford: renford
           ? {
               id: renford.id,
@@ -202,7 +209,7 @@ export const getRenfordAccueil = async (req: Request, res: Response, next: NextF
               select: {
                 id: true,
                 nom: true,
-                avatarChemin: true,
+                profilEtablissement: { select: { avatarChemin: true } },
                 adresse: true,
                 codePostal: true,
                 ville: true,
@@ -214,18 +221,21 @@ export const getRenfordAccueil = async (req: Request, res: Response, next: NextF
       orderBy: [{ date: 'asc' }, { heureDebut: 'asc' }],
     });
 
-    const planning = upcomingSlots.map((slot) => ({
-      id: slot.id,
-      date: slot.date,
-      heureDebut: slot.heureDebut,
-      heureFin: slot.heureFin,
-      missionId: slot.missionId,
-      discipline: slot.mission.discipline,
-      tarif: slot.mission.tarif,
-      methodeTarification: slot.mission.methodeTarification,
-      etablissement: slot.mission.etablissement,
-      totalHours: getMissionTotalHours([slot]),
-    }));
+    const planning = upcomingSlots.map((slot) => {
+      const { profilEtablissement: etabProfil, ...etabRest } = slot.mission.etablissement;
+      return {
+        id: slot.id,
+        date: slot.date,
+        heureDebut: slot.heureDebut,
+        heureFin: slot.heureFin,
+        missionId: slot.missionId,
+        discipline: slot.mission.discipline,
+        tarif: slot.mission.tarif,
+        methodeTarification: slot.mission.methodeTarification,
+        etablissement: { ...etabRest, avatarChemin: etabProfil.avatarChemin },
+        totalHours: getMissionTotalHours([slot]),
+      };
+    });
 
     return res.json({
       indicators: {

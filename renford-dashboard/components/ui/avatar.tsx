@@ -15,7 +15,7 @@ const Avatar = React.forwardRef<
     ref={ref}
     className={cn(
       "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
-      className
+      className,
     )}
     {...props}
   />
@@ -31,8 +31,12 @@ const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
   NextImageType
 >(({ className, src, alt, width, height, quality, ...props }, ref) => {
+  if (!src || src === "") {
+    return null;
+  }
+
   const { props: newProps } = getImageProps({
-    src: src ?? "",
+    src,
     alt: alt ?? "Avatar",
     width: width ?? 100,
     height: height ?? 100,
@@ -56,7 +60,7 @@ const AvatarFallback = React.forwardRef<
     ref={ref}
     className={cn(
       "flex h-full w-full items-center justify-center rounded-full bg-gray-50",
-      className
+      className,
     )}
     {...props}
   />

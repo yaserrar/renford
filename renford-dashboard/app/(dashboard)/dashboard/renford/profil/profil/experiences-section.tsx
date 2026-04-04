@@ -5,16 +5,10 @@ import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ExperiencesEditDialog from "./experiences-edit-dialog";
+import { formatYear } from "@/lib/utils";
 
 type ExperiencesSectionProps = {
   me: CurrentUser | undefined;
-};
-
-const formatYear = (value: Date | string | null | undefined) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.getFullYear().toString();
 };
 
 export default function ExperiencesSection({ me }: ExperiencesSectionProps) {

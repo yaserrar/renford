@@ -30,6 +30,7 @@ import { useCurrentUser } from "@/hooks/utilisateur";
 import { usePendingMissionsCount } from "@/hooks/mission";
 import { Logo } from "../common/logo";
 import { cn } from "@/lib/utils";
+import NotificationPopover from "@/components/common/notification-popover";
 
 const RENFORD_MAIN_LINKS = [
   { title: "Accueil", url: "/dashboard/renford/accueil", icon: Home },
@@ -149,9 +150,12 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
         <NavMain items={mainLinks} />
       </SidebarContent>
 
-      <SidebarFooter className="px-4 pb-6 gap-4">
+      <SidebarFooter className="px-1 pt-2 pb-4">
         <div className="border-t border-border pt-4">
           <NavMain items={footerLinks} />
+        </div>
+        <div className="px-1">
+          <NotificationPopover compact={!open} />
         </div>
         <NavAccount />
       </SidebarFooter>

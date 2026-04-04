@@ -6,8 +6,9 @@ import type {
 } from '@prisma/client';
 import prisma from '../config/prisma';
 import { logger } from '../config/logger';
+import { createNotification, createNotifications } from '../config/notification';
 
-const MATCH_QUEUE_LIMIT = 10;
+const MATCH_QUEUE_LIMIT = 50;
 
 const EXPERIENCE_RANK: Record<NiveauExperience, number> = {
   debutant: 1,
@@ -277,6 +278,7 @@ const getRenfordTarifForMission = (
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getFavoriteRenfordIdsForMission = async (_mission: MatchMission): Promise<Set<string>> => {
   return new Set();
 };
@@ -574,6 +576,9 @@ export const syncMissionMatches = async (
   );
 
   const desiredMatchIds = new Set(rankedMatches.map((match) => match.profilRenfordId));
+  const newlyMatchedProfilRenfordIds = rankedMatches
+    .filter((match) => !existingAssignments.has(match.profilRenfordId))
+    .map((match) => match.profilRenfordId);
 
   const writes: Prisma.PrismaPromise<unknown>[] = [];
 
@@ -586,21 +591,12 @@ export const syncMissionMatches = async (
     }
 
     if (desiredMatchIds.has(assignment.profilRenfordId)) {
-      if (assignment.statut !== 'nouveau') {
-        writes.push(
-          prisma.missionRenford.update({
-            where: { id: assignment.id },
-            data: {
-              statut: 'nouveau',
-              ordreShortlist: null,
-            },
-          }),
-        );
-      }
+      // Keep existing 'nouveau' or 'vu' entries as-is — don't reset 'vu' back to 'nouveau'
       return;
     }
 
-    if (assignment.statut === 'nouveau') {
+    // Only delete unconfirmed proposals ('nouveau' or 'vu') that are no longer matched
+    if (assignment.statut === 'nouveau' || assignment.statut === 'vu') {
       writes.push(
         prisma.missionRenford.delete({
           where: { id: assignment.id },
@@ -627,6 +623,33 @@ export const syncMissionMatches = async (
 
   if (writes.length > 0) {
     await prisma.$transaction(writes);
+  }
+
+  if (newlyMatchedProfilRenfordIds.length > 0) {
+    const createdAssignments = await prisma.missionRenford.findMany({
+      where: {
+        missionId: mission.id,
+        profilRenfordId: { in: newlyMatchedProfilRenfordIds },
+      },
+      select: {
+        id: true,
+        profilRenford: {
+          select: {
+            utilisateurId: true,
+          },
+        },
+      },
+    });
+
+    await createNotifications(
+      createdAssignments.map((assignment) => ({
+        utilisateurId: assignment.profilRenford.utilisateurId,
+        source: 'mission_renfords',
+        sourceId: assignment.id,
+        titre: 'Nouvelle mission disponible',
+        description: `Une mission ${mission.discipline} chez ${mission.etablissement.nom} correspond à votre profil.`,
+      })),
+    );
   }
 
   const result = {
@@ -708,7 +731,7 @@ export const registerMissionRenfordResponse = async (params: {
     throw new Error('MISSION_RENFORD_NOT_FOUND');
   }
 
-  if (missionRenford.statut !== 'nouveau') {
+  if (missionRenford.statut !== 'nouveau' && missionRenford.statut !== 'vu') {
     throw new Error('MISSION_RENFORD_NOT_PROPOSED');
   }
 
@@ -742,6 +765,33 @@ export const registerMissionRenfordResponse = async (params: {
         statut: 'candidatures_disponibles',
       },
     });
+
+    const missionOwner = await prisma.mission.findUnique({
+      where: { id: missionRenford.missionId },
+      select: {
+        id: true,
+        discipline: true,
+        etablissement: {
+          select: {
+            profilEtablissement: {
+              select: {
+                utilisateurId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (missionOwner?.etablissement.profilEtablissement.utilisateurId) {
+      await createNotification({
+        utilisateurId: missionOwner.etablissement.profilEtablissement.utilisateurId,
+        source: 'missions',
+        sourceId: missionOwner.id,
+        titre: 'Un Renford a accepté votre mission',
+        description: `Un candidat a accepté votre mission ${missionOwner.discipline}.`,
+      });
+    }
   } else {
     await prisma.missionRenford.update({
       where: { id: missionRenford.id },
@@ -776,11 +826,11 @@ export const registerEtablissementMissionRenfordResponse = async (params: {
     where: {
       id: params.missionRenfordId,
       missionId: params.missionId,
-      statut: 'selection_en_cours',
     },
     select: {
       id: true,
       missionId: true,
+      statut: true,
     },
   });
 
@@ -788,34 +838,67 @@ export const registerEtablissementMissionRenfordResponse = async (params: {
     throw new Error('MISSION_RENFORD_NOT_FOUND');
   }
 
+  const mission = await prisma.mission.findUnique({
+    where: { id: missionRenford.missionId },
+    select: { statut: true },
+  });
+
+  if (!mission) {
+    throw new Error('MISSION_NOT_FOUND');
+  }
+
   if (params.response === 'attente_de_signature') {
-    await prisma.$transaction([
-      prisma.missionRenford.update({
-        where: { id: missionRenford.id },
-        data: {
-          statut: 'attente_de_signature',
-          ordreShortlist: null,
+    if (missionRenford.statut !== 'selection_en_cours') {
+      throw new Error('MISSION_RENFORD_NOT_FOUND');
+    }
+
+    const selectedAssignment = await prisma.missionRenford.update({
+      where: { id: missionRenford.id },
+      data: {
+        statut: 'attente_de_signature',
+        ordreShortlist: null,
+      },
+      select: {
+        missionId: true,
+        profilRenford: {
+          select: {
+            utilisateurId: true,
+          },
         },
-      }),
-      prisma.missionRenford.updateMany({
-        where: {
-          missionId: missionRenford.missionId,
-          statut: 'selection_en_cours',
-          id: { not: missionRenford.id },
-        },
-        data: {
-          statut: 'refuse_par_etablissement',
-          ordreShortlist: null,
-        },
-      }),
-      prisma.mission.update({
-        where: { id: missionRenford.missionId },
-        data: {
-          statut: 'attente_de_signature',
-        },
-      }),
-    ]);
+      },
+    });
+
+    await prisma.mission.update({
+      where: { id: missionRenford.missionId },
+      data: {
+        statut: 'attente_de_signature',
+      },
+    });
+
+    await createNotification({
+      utilisateurId: selectedAssignment.profilRenford.utilisateurId,
+      source: 'missions',
+      sourceId: selectedAssignment.missionId,
+      titre: 'Votre candidature est retenue',
+      description: "L'établissement a retenu votre candidature. Signature du contrat requise.",
+    });
   } else {
+    if (!['selection_en_cours', 'attente_de_signature'].includes(missionRenford.statut)) {
+      throw new Error('MISSION_RENFORD_NOT_FOUND');
+    }
+
+    if (
+      [
+        'mission_en_cours',
+        'remplacement_en_cours',
+        'en_litige',
+        'mission_terminee',
+        'archivee',
+      ].includes(mission.statut)
+    ) {
+      throw new Error('MISSION_ALREADY_STARTED');
+    }
+
     await prisma.missionRenford.update({
       where: { id: missionRenford.id },
       data: {
@@ -838,6 +921,13 @@ export const registerEtablissementMissionRenfordResponse = async (params: {
         where: { id: missionRenford.missionId },
         data: {
           statut: 'en_recherche',
+        },
+      });
+    } else {
+      await prisma.mission.update({
+        where: { id: missionRenford.missionId },
+        data: {
+          statut: 'candidatures_disponibles',
         },
       });
     }

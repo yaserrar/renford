@@ -9,7 +9,7 @@ export const getEtablissementPlanning = async (req: Request, res: Response, next
 
     const profilEtablissement = await prisma.profilEtablissement.findUnique({
       where: { utilisateurId: userId },
-      select: { id: true, etablissements: { select: { id: true, nom: true, avatarChemin: true } } },
+      select: { id: true, avatarChemin: true, etablissements: { select: { id: true, nom: true } } },
     });
 
     if (!profilEtablissement) {
@@ -46,7 +46,13 @@ export const getEtablissementPlanning = async (req: Request, res: Response, next
     const filteredIds = etablissementIds.filter((id) => ownedIds.has(id));
 
     if (filteredIds.length === 0) {
-      return res.json({ etablissements: profilEtablissement.etablissements, planning: [] });
+      return res.json({
+        etablissements: profilEtablissement.etablissements.map((e) => ({
+          ...e,
+          avatarChemin: profilEtablissement.avatarChemin,
+        })),
+        planning: [],
+      });
     }
 
     const slots = await prisma.plageHoraireMission.findMany({
@@ -64,7 +70,7 @@ export const getEtablissementPlanning = async (req: Request, res: Response, next
             statut: true,
             discipline: true,
             etablissementId: true,
-            etablissement: { select: { id: true, nom: true, avatarChemin: true } },
+            etablissement: { select: { id: true, nom: true } },
             missionsRenford: {
               where: { statut: { in: ['contrat_signe', 'mission_en_cours'] } },
               include: {
@@ -132,7 +138,10 @@ export const getEtablissementPlanning = async (req: Request, res: Response, next
     }
 
     return res.json({
-      etablissements: profilEtablissement.etablissements,
+      etablissements: profilEtablissement.etablissements.map((e) => ({
+        ...e,
+        avatarChemin: profilEtablissement.avatarChemin,
+      })),
       planning: Array.from(renfordMap.values()),
     });
   } catch (err) {
@@ -207,7 +216,7 @@ export const getRenfordPlanning = async (req: Request, res: Response, next: Next
               select: {
                 id: true,
                 nom: true,
-                avatarChemin: true,
+                profilEtablissement: { select: { avatarChemin: true } },
                 adresse: true,
                 codePostal: true,
                 ville: true,
@@ -219,19 +228,22 @@ export const getRenfordPlanning = async (req: Request, res: Response, next: Next
       orderBy: [{ date: 'asc' }, { heureDebut: 'asc' }],
     });
 
-    const planning = slots.map((slot) => ({
-      id: slot.id,
-      missionId: slot.missionId,
-      date: slot.date.toISOString(),
-      heureDebut: slot.heureDebut,
-      heureFin: slot.heureFin,
-      totalHours: getMissionTotalHours([slot]),
-      discipline: slot.mission.discipline,
-      tarif: slot.mission.tarif,
-      methodeTarification: slot.mission.methodeTarification,
-      materielsRequis: slot.mission.materielsRequis,
-      etablissement: slot.mission.etablissement,
-    }));
+    const planning = slots.map((slot) => {
+      const { profilEtablissement: etabProfil, ...etabRest } = slot.mission.etablissement;
+      return {
+        id: slot.id,
+        missionId: slot.missionId,
+        date: slot.date.toISOString(),
+        heureDebut: slot.heureDebut,
+        heureFin: slot.heureFin,
+        totalHours: getMissionTotalHours([slot]),
+        discipline: slot.mission.discipline,
+        tarif: slot.mission.tarif,
+        methodeTarification: slot.mission.methodeTarification,
+        materielsRequis: slot.mission.materielsRequis,
+        etablissement: { ...etabRest, avatarChemin: etabProfil.avatarChemin },
+      };
+    });
 
     return res.json(planning);
   } catch (err) {

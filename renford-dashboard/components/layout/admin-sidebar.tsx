@@ -13,6 +13,7 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import AdminNotificationPopover from "@/components/common/admin-notification-popover";
 
 const ADMIN_LINKS = [
   { title: "Accueil", url: "/admin/accueil", icon: Home },
@@ -34,6 +35,9 @@ const AdminSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
         <p className="text-xs font-medium text-muted-foreground mt-1 px-1">
           Panneau d&apos;administration
         </p>
+        <div className="mt-3">
+          <AdminNotificationPopover />
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="px-3 pt-4">
@@ -59,7 +63,7 @@ const AdminSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
         </nav>
       </SidebarContent>
 
-      <SidebarFooter className="px-3 pb-6">
+      <SidebarFooter className="px-1 pt-2 pb-4">
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"

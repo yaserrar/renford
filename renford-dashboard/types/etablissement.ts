@@ -15,7 +15,6 @@ export type Etablissement = {
   typeEtablissement: TypeEtablissement;
   roleEtablissement: RoleEtablissement;
   siret: string;
-  avatarChemin: string | null;
   adresse: string;
   codePostal: string;
   ville: string;

@@ -348,6 +348,23 @@ export const respondToMissionRenfordByEtablissementSchema = z.object({
   }),
 });
 
+export const signMissionDocumentSchema = z.object({
+  signatureDataUrl: z
+    .string({ required_error: 'La signature est requise' })
+    .regex(/^data:image\/(png|jpeg|jpg);base64,/, 'Format de signature invalide'),
+});
+
+export const missionDocumentParamsSchema = z.object({
+  missionId: z.string().uuid("L'identifiant de mission est invalide"),
+  missionRenfordId: z.string().uuid("L'identifiant de mission renford est invalide"),
+  documentType: z.enum([
+    'facture_prestation',
+    'facture_commission',
+    'contrat_prestation',
+    'attestation_mission',
+  ]),
+});
+
 export const getEtablissementMissionsQuerySchema = z.object({
   tab: z
     .enum(ETABLISSEMENT_MISSIONS_TAB, {
@@ -363,6 +380,8 @@ export type MissionRenfordIdParamsSchema = z.infer<typeof missionRenfordIdParams
 export type RespondToMissionRenfordByEtablissementSchema = z.infer<
   typeof respondToMissionRenfordByEtablissementSchema
 >;
+export type SignMissionDocumentSchema = z.infer<typeof signMissionDocumentSchema>;
+export type MissionDocumentParamsSchema = z.infer<typeof missionDocumentParamsSchema>;
 export type GetEtablissementMissionsQuerySchema = z.infer<
   typeof getEtablissementMissionsQuerySchema
 >;

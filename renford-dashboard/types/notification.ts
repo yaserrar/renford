@@ -1,29 +1,34 @@
-import {
-  CANAL_NOTIFICATION,
-  TYPE_NOTIFICATION,
-} from "@/validations/notification";
+export type SourceNotification =
+  | "missions"
+  | "mission_renfords"
+  | "etablissements"
+  | "renfords"
+  | "paiements"
+  | "systeme";
 
-// Type de notification
-export type TypeNotification = (typeof TYPE_NOTIFICATION)[number];
-
-// Canal de notification
-export type CanalNotification = (typeof CANAL_NOTIFICATION)[number];
-
-// Notification
-export type Notification = {
+export type NotificationItem = {
   id: string;
-  destinataireId: string;
-  expediteurId: string | null;
-  type: TypeNotification;
-  canal: CanalNotification;
+  utilisateurId: string;
   titre: string;
-  contenu: string;
-  lienAction: string | null;
-  entiteType: string | null;
-  entiteId: string | null;
+  description: string;
+  source: SourceNotification;
+  sourceId: string | null;
   lu: boolean;
-  luLe: Date | null;
-  envoye: boolean;
-  envoyeLe: Date | null;
-  dateCreation: Date;
+  dateCreation: string;
+  dateMiseAJour: string;
+  targetPath: string | null;
+};
+
+export type NotificationsPaginatedResponse = {
+  data: NotificationItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
+export type UnreadNotificationsCountResponse = {
+  count: number;
 };

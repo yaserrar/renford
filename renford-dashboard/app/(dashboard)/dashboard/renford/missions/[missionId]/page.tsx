@@ -1,18 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { CalendarDays, Clock3, MapPin } from "lucide-react";
 import DetailRow from "@/components/common/detail-row";
 import DocumentCategoryCard from "@/components/common/document-category-card";
 import MissionRenfordStatusBadge from "@/components/common/mission-renford-status-badge";
+import SignatureContratDialog from "@/components/common/signature-contrat-dialog";
 import CenterState from "@/components/common/center-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { H2 } from "@/components/ui/typography";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  useDownloadMissionDocumentByRenford,
   useRenfordMissionDetails,
   useRespondToMissionProposal,
+  useSignAttestationByRenford,
+  useSignContractByRenford,
 } from "@/hooks/mission";
 import { formatWeekdayDayMonth } from "@/lib/date";
 import {
@@ -47,6 +52,12 @@ export default function RenfordMissionDetailsPage() {
 
   const missionQuery = useRenfordMissionDetails(missionId);
   const respondMutation = useRespondToMissionProposal();
+  const signMutation = useSignContractByRenford();
+  const signAttestationMutation = useSignAttestationByRenford();
+  const downloadDocumentMutation = useDownloadMissionDocumentByRenford();
+  const [signDialogOpen, setSignDialogOpen] = useState(false);
+  const [signAttestationDialogOpen, setSignAttestationDialogOpen] =
+    useState(false);
   const missionRenford = missionQuery.data;
 
   const isLoading = missionQuery.isLoading;
@@ -154,18 +165,23 @@ export default function RenfordMissionDetailsPage() {
       : ["Aucun matériel requis"];
 
   const documentDate = formatFrenchDate(mission.dateCreation, "01/01/2025");
+  const isOpportunite = OPPORTUNITE_STATUSES.includes(missionRenford.statut);
+  const isSignable = SIGNABLE_STATUSES.includes(missionRenford.statut);
+  const canSignAttestation =
+    mission.modeMission === "flex" &&
+    missionRenford.statut === "mission_terminee";
 
   const documentGroups = [
     {
       title: "Factures",
       documents: [
         {
-          id: "invoice-service",
+          id: "facture_prestation",
           label: "Facture de la prestation",
           date: documentDate,
         },
         {
-          id: "invoice-platform",
+          id: "facture_commission",
           label: "Facture des frais de services Renford",
           date: documentDate,
         },
@@ -175,21 +191,34 @@ export default function RenfordMissionDetailsPage() {
       title: "Contrat",
       documents: [
         {
-          id: "contract-service",
+          id: "contrat_prestation",
           label: "Contrat de prestation de services",
           date: documentDate,
         },
         {
-          id: "contract-certificate",
+          id: "attestation_mission",
           label: "Attestation de mission",
           date: documentDate,
+          disabled: !canSignAttestation,
+          disabledReason: !canSignAttestation
+            ? "Disponible uniquement pour les missions Flex terminées"
+            : undefined,
         },
       ],
     },
   ];
 
-  const isOpportunite = OPPORTUNITE_STATUSES.includes(missionRenford.statut);
-  const isSignable = SIGNABLE_STATUSES.includes(missionRenford.statut);
+  const filteredDocumentGroups = documentGroups
+    .map((group) => {
+      if (group.title !== "Contrat") return group;
+      return {
+        ...group,
+        documents: group.documents.filter(
+          (doc) => doc.id !== "attestation_mission" || canSignAttestation,
+        ),
+      };
+    })
+    .filter((group) => group.documents.length > 0);
 
   const etablissementName = etablissement?.nom ?? "-";
 
@@ -240,8 +269,24 @@ export default function RenfordMissionDetailsPage() {
           )}
 
           {isSignable && (
-            <Button variant="dark" className="px-8">
-              Signer le contrat
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="dark"
+                className="px-8"
+                onClick={() => setSignDialogOpen(true)}
+              >
+                Signer le contrat
+              </Button>
+            </div>
+          )}
+
+          {canSignAttestation && (
+            <Button
+              variant="outline"
+              className="px-5"
+              onClick={() => setSignAttestationDialogOpen(true)}
+            >
+              Signer l'attestation de mission
             </Button>
           )}
         </div>
@@ -377,16 +422,92 @@ export default function RenfordMissionDetailsPage() {
           </TabsContent>
 
           <TabsContent value="documents" className="space-y-4">
-            {documentGroups.map((group) => (
+            {filteredDocumentGroups.map((group) => (
               <DocumentCategoryCard
                 key={group.title}
                 title={group.title}
                 documents={group.documents}
+                onDownload={(documentId) => {
+                  downloadDocumentMutation.mutate({
+                    missionId: mission.id,
+                    documentType: documentId as
+                      | "facture_prestation"
+                      | "facture_commission"
+                      | "contrat_prestation"
+                      | "attestation_mission",
+                  });
+                }}
+                isDownloading={downloadDocumentMutation.isPending}
               />
             ))}
           </TabsContent>
         </div>
       </Tabs>
+
+      {isSignable && (
+        <SignatureContratDialog
+          open={signDialogOpen}
+          onOpenChange={setSignDialogOpen}
+          signerRole="renford"
+          contractData={{
+            missionTitle: missionTitle,
+            discipline: mission.discipline,
+            dateDebut: mission.dateDebut,
+            dateFin: mission.dateFin,
+            methodeTarification: mission.methodeTarification,
+            tarif: mission.tarif,
+            totalHours,
+            horaires,
+            etablissementNom: etablissementName,
+            etablissementAdresse: etablissement
+              ? `${etablissement.adresse}, ${etablissement.codePostal} ${etablissement.ville}`
+              : "-",
+            renfordNom: "Votre nom",
+            description: mission.description,
+          }}
+          onSign={(signatureDataUrl) => {
+            signMutation.mutate(
+              { missionId: mission.id, signatureDataUrl },
+              { onSuccess: () => setSignDialogOpen(false) },
+            );
+          }}
+          isPending={signMutation.isPending}
+        />
+      )}
+
+      {mission.modeMission === "flex" &&
+        missionRenford.statut === "mission_terminee" && (
+          <SignatureContratDialog
+            open={signAttestationDialogOpen}
+            onOpenChange={setSignAttestationDialogOpen}
+            dialogTitle="Attestation de mission"
+            signButtonText="Signer l'attestation"
+            signerRole="renford"
+            contractData={{
+              missionTitle: missionTitle,
+              discipline: mission.discipline,
+              dateDebut: mission.dateDebut,
+              dateFin: mission.dateFin,
+              methodeTarification: mission.methodeTarification,
+              tarif: mission.tarif,
+              totalHours,
+              horaires,
+              etablissementNom: etablissementName,
+              etablissementAdresse: etablissement
+                ? `${etablissement.adresse}, ${etablissement.codePostal} ${etablissement.ville}`
+                : "-",
+              renfordNom: "Votre nom",
+              description: mission.description,
+            }}
+            onSign={(signatureDataUrl) => {
+              signAttestationMutation.mutate(
+                { missionId: mission.id, signatureDataUrl },
+                { onSuccess: () => setSignAttestationDialogOpen(false) },
+              );
+            }}
+            isPending={signAttestationMutation.isPending}
+          />
+        )}
     </main>
   );
 }

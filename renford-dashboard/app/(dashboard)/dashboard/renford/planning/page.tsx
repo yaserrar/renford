@@ -9,6 +9,7 @@ import { format, isToday, isTomorrow } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { CalendarOff, Info } from "lucide-react";
 import { useMemo, useState } from "react";
+import CenterState from "@/components/common/center-state";
 import IndisponibilitesDialog from "./indisponibilites-dialog";
 import MissionCard from "./mission-card";
 
@@ -64,7 +65,7 @@ export default function RenfordPlanningPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
           <IndisponibilitesDialog>
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2" disabled>
               <CalendarOff className="h-4 w-4" />
               Mes indisponibilités
             </Button>
@@ -74,8 +75,7 @@ export default function RenfordPlanningPage() {
 
       <div className="bg-secondary-background min-h-[620px] rounded-3xl border m-1 p-4 md:p-6">
         {/* Info banner */}
-        <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <Info className="h-5 w-5 shrink-0" />
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-100 px-4 py-3 text-sm text-black font-semibold">
           <p>
             Merci de venir légèrement en avance pour faciliter la prise de
             poste.
@@ -84,15 +84,18 @@ export default function RenfordPlanningPage() {
 
         {/* Content */}
         {isLoading ? (
-          <div className="flex h-[300px] items-center justify-center rounded-3xl border border-border bg-white">
-            <p className="text-sm text-muted-foreground">Chargement...</p>
-          </div>
+          <CenterState
+            title="Chargement du planning"
+            description="Nous récupérons vos missions planifiées."
+            isLoading
+            className="border-0 min-h-[300px] rounded-3xl"
+          />
         ) : grouped.length === 0 ? (
-          <div className="flex h-[300px] flex-col items-center justify-center gap-2 rounded-3xl border border-border bg-white">
-            <p className="text-sm text-muted-foreground">
-              Aucune mission sur cette période
-            </p>
-          </div>
+          <CenterState
+            title="Aucune mission"
+            description="Aucune mission sur cette période."
+            className="border-0 min-h-[300px] rounded-3xl"
+          />
         ) : (
           <div className="space-y-6">
             {grouped.map((group) => (

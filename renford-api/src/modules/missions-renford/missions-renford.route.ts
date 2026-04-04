@@ -2,15 +2,20 @@ import { Router } from 'express';
 import { authenticateToken } from '../../middleware/auth.middleware';
 import { validateResource } from '../../middleware/validate.resource';
 import {
+  downloadMissionDocumentByRenford,
   getRenfordMissions,
   getRenfordMissionDetails,
   getRenfordPendingMissionsCount,
   respondToMissionProposal,
+  signAttestationByRenford,
+  signContractByRenford,
 } from './missions-renford.controller';
 import {
   getRenfordMissionsQuerySchema,
+  renfordMissionDocumentParamsSchema,
   renfordMissionIdParamsSchema,
   respondToMissionProposalSchema,
+  signMissionDocumentSchema,
 } from './missions-renford.schema';
 
 const router = Router();
@@ -40,6 +45,27 @@ router.post(
   authenticateToken(['renford']),
   validateResource({ params: renfordMissionIdParamsSchema, body: respondToMissionProposalSchema }),
   respondToMissionProposal,
+);
+
+router.post(
+  '/renford/missions/:missionId/signature',
+  authenticateToken(['renford']),
+  validateResource({ params: renfordMissionIdParamsSchema, body: signMissionDocumentSchema }),
+  signContractByRenford,
+);
+
+router.post(
+  '/renford/missions/:missionId/attestation/signature',
+  authenticateToken(['renford']),
+  validateResource({ params: renfordMissionIdParamsSchema, body: signMissionDocumentSchema }),
+  signAttestationByRenford,
+);
+
+router.get(
+  '/renford/missions/:missionId/documents/:documentType/download',
+  authenticateToken(['renford']),
+  validateResource({ params: renfordMissionDocumentParamsSchema }),
+  downloadMissionDocumentByRenford,
 );
 
 export default router;

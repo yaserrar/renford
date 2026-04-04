@@ -8,12 +8,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { H2 } from "@/components/ui/typography";
 import { useEtablissementPlanning } from "@/hooks/mission";
 import { cn } from "@/lib/utils";
 import { addDays, format, startOfWeek } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import CenterState from "@/components/common/center-state";
 import RenfordCard from "./renford-card";
 import RenfordRow from "./renford-row";
 
@@ -74,10 +76,9 @@ export default function EtablissementPlanningPage() {
   };
 
   return (
-    <main className="min-h-screen bg-secondary-background rounded-2xl m-1 px-4 md:px-8 py-6 md:py-8">
-      <div className="mx-auto w-full space-y-5">
-        {/* Title */}
-        <h1 className="text-2xl font-bold">Planning</h1>
+    <main className="mt-8 space-y-6">
+      <div className="w-full space-y-4">
+        <H2>Planning</H2>
 
         {/* Controls */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -117,13 +118,18 @@ export default function EtablissementPlanningPage() {
             </SelectContent>
           </Select>
         </div>
+      </div>
 
+      <div className="bg-secondary-background min-h-[620px] rounded-3xl border m-1 p-4 md:p-6">
         {/* ── Desktop table ─────────────────────────────────── */}
         <div className="hidden md:block">
           {isLoading ? (
-            <div className="flex h-[360px] items-center justify-center rounded-2xl bg-white">
-              <p className="text-sm text-muted-foreground">Chargement...</p>
-            </div>
+            <CenterState
+              title="Chargement du planning"
+              description="Nous récupérons le planning de la semaine."
+              isLoading
+              className="border-0 min-h-[360px] rounded-3xl"
+            />
           ) : planning.length === 0 ? (
             <PlanningEmptyState
               description="Postez une mission et recevez vos premiers profils dès aujourd'hui."
@@ -187,9 +193,12 @@ export default function EtablissementPlanningPage() {
 
           {/* Cards */}
           {isLoading ? (
-            <div className="flex h-[200px] items-center justify-center rounded-2xl bg-white">
-              <p className="text-sm text-muted-foreground">Chargement...</p>
-            </div>
+            <CenterState
+              title="Chargement"
+              description="Nous récupérons le planning de la semaine."
+              isLoading
+              className="border-0 min-h-[200px] rounded-3xl"
+            />
           ) : planning.length === 0 ? (
             <PlanningEmptyState
               description="Postez une mission et recevez vos premiers profils dès aujourd'hui."

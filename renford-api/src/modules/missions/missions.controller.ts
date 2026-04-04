@@ -5,19 +5,27 @@ import { mail } from '../../config/mail';
 import { env } from '../../config/env';
 import { logger } from '../../config/logger';
 import { getMissionDemandeConfirmeeEmail } from '../../config/email-templates';
+import { saveSignatureDataUrl } from '../../utils/signature-storage';
 import {
   registerEtablissementMissionRenfordResponse,
   syncMissionMatches,
 } from '../../jobs/missions-matching';
+import {
+  buildMissionDocumentPdf,
+  getMissionDocumentFilename,
+  type MissionDocumentType,
+} from './mission-documents';
 import { getTypeMissionLabel } from './missions.schema';
 import type {
   CreateMissionSchema,
   EtablissementMissionsTab,
   FinalizeMissionPaymentSchema,
   GetEtablissementMissionsQuerySchema,
+  MissionDocumentParamsSchema,
   MissionIdParamsSchema,
   MissionRenfordIdParamsSchema,
   RespondToMissionRenfordByEtablissementSchema,
+  SignMissionDocumentSchema,
 } from './missions.schema';
 
 const ETABLISSEMENT_TAB_STATUS_MAP: Record<EtablissementMissionsTab, StatutMission[]> = {
@@ -119,9 +127,35 @@ export const getEtablissementMissions = async (
         },
       },
       include: {
-        etablissement: true,
+        etablissement: {
+          include: {
+            profilEtablissement: { select: { avatarChemin: true } },
+          },
+        },
         PlageHoraireMission: {
           orderBy: [{ date: 'asc' }, { heureDebut: 'asc' }],
+        },
+        missionsRenford: {
+          where: {
+            statut: {
+              notIn: ['nouveau', 'vu', 'refuse_par_renford', 'refuse_par_etablissement', 'annule'],
+            },
+          },
+          take: 1,
+          orderBy: [{ ordreShortlist: 'asc' }, { dateProposition: 'asc' }],
+          include: {
+            profilRenford: {
+              select: {
+                id: true,
+                avatarChemin: true,
+                titreProfil: true,
+                noteMoyenne: true,
+                utilisateur: {
+                  select: { nom: true, prenom: true },
+                },
+              },
+            },
+          },
         },
       },
       orderBy: [{ dateDebut: 'desc' }, { dateCreation: 'desc' }],
@@ -129,10 +163,24 @@ export const getEtablissementMissions = async (
 
     const missionsWithTotalHours = missions.map((mission) => {
       const totalHours = getMissionTotalHours(mission.PlageHoraireMission);
+      const renford = mission.missionsRenford[0]?.profilRenford;
+      const { profilEtablissement: etabProfil, ...etabRest } = mission.etablissement;
 
       return {
         ...mission,
+        etablissement: { ...etabRest, avatarChemin: etabProfil.avatarChemin },
+        missionsRenford: undefined,
         totalHours,
+        renfordAssigne: renford
+          ? {
+              id: renford.id,
+              avatarChemin: renford.avatarChemin,
+              titreProfil: renford.titreProfil,
+              noteMoyenne: renford.noteMoyenne,
+              nom: renford.utilisateur.nom,
+              prenom: renford.utilisateur.prenom,
+            }
+          : null,
       };
     });
 
@@ -160,11 +208,20 @@ export const getEtablissementMissionDetails = async (
         },
       },
       include: {
-        etablissement: true,
+        etablissement: {
+          include: {
+            profilEtablissement: { select: { avatarChemin: true } },
+          },
+        },
         PlageHoraireMission: {
           orderBy: [{ date: 'asc' }, { heureDebut: 'asc' }],
         },
         missionsRenford: {
+          where: {
+            statut: {
+              notIn: ['nouveau', 'vu', 'refuse_par_renford', 'refuse_par_etablissement', 'annule'],
+            },
+          },
           include: {
             profilRenford: {
               select: {
@@ -196,8 +253,10 @@ export const getEtablissementMissionDetails = async (
       return res.status(404).json({ message: 'Mission non trouvée' });
     }
 
+    const { profilEtablissement: etabProfil, ...etabRest } = mission.etablissement;
     return res.json({
       ...mission,
+      etablissement: { ...etabRest, avatarChemin: etabProfil.avatarChemin },
       totalHours: getMissionTotalHours(mission.PlageHoraireMission),
     });
   } catch (err) {
@@ -440,8 +499,369 @@ export const respondToMissionRenfordByEtablissement = async (
         });
       }
 
+      if (error instanceof Error && error.message === 'MISSION_ALREADY_STARTED') {
+        return res.status(400).json({
+          message: 'Cette candidature ne peut plus être refusée car la mission a déjà démarré',
+        });
+      }
+
       throw error;
     }
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const signContractByEtablissement = async (
+  req: Request<MissionRenfordIdParamsSchema, unknown, SignMissionDocumentSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+
+    const mission = await prisma.mission.findFirst({
+      where: {
+        id: req.params.missionId,
+        etablissement: {
+          profilEtablissement: {
+            utilisateurId: userId,
+          },
+        },
+      },
+      select: { id: true, statut: true },
+    });
+
+    if (!mission) {
+      return res.status(404).json({ message: 'Mission non trouvée' });
+    }
+
+    const missionRenford = await prisma.missionRenford.findUnique({
+      where: { id: req.params.missionRenfordId },
+    });
+
+    if (!missionRenford || missionRenford.missionId !== mission.id) {
+      return res.status(404).json({ message: 'Candidature non trouvée' });
+    }
+
+    if (missionRenford.statut !== 'contrat_signe') {
+      return res.status(400).json({
+        message: 'Le renford doit signer le contrat en premier',
+      });
+    }
+
+    await prisma.$transaction([
+      prisma.missionRenford.update({
+        where: { id: missionRenford.id },
+        data: {
+          statut: 'mission_en_cours',
+          signatureContratPrestationEtablissementChemin: await saveSignatureDataUrl(
+            req.body.signatureDataUrl,
+            'signatures/contrat-prestation',
+            `etablissement-${missionRenford.id}`,
+          ),
+        },
+      }),
+      prisma.mission.update({
+        where: { id: mission.id },
+        data: { statut: 'mission_en_cours' },
+      }),
+    ]);
+
+    return res.json({
+      missionRenfordId: missionRenford.id,
+      statut: 'mission_en_cours',
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const signAttestationByEtablissement = async (
+  req: Request<MissionRenfordIdParamsSchema, unknown, SignMissionDocumentSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+
+    const mission = await prisma.mission.findFirst({
+      where: {
+        id: req.params.missionId,
+        etablissement: {
+          profilEtablissement: {
+            utilisateurId: userId,
+          },
+        },
+      },
+      select: { id: true, statut: true, modeMission: true },
+    });
+
+    if (!mission) {
+      return res.status(404).json({ message: 'Mission non trouvée' });
+    }
+
+    if (mission.modeMission !== 'flex') {
+      return res.status(400).json({
+        message: "L'attestation de mission est uniquement disponible pour les missions Flex",
+      });
+    }
+
+    const missionRenford = await prisma.missionRenford.findUnique({
+      where: { id: req.params.missionRenfordId },
+    });
+
+    if (!missionRenford || missionRenford.missionId !== mission.id) {
+      return res.status(404).json({ message: 'Candidature non trouvée' });
+    }
+
+    if (mission.statut !== 'mission_terminee' || missionRenford.statut !== 'mission_terminee') {
+      return res.status(400).json({
+        message: "L'attestation de mission ne peut être signée qu'après la fin de mission",
+      });
+    }
+
+    const updated = await prisma.missionRenford.update({
+      where: { id: missionRenford.id },
+      data: {
+        signatureAttestationMissionEtablissementChemin: await saveSignatureDataUrl(
+          req.body.signatureDataUrl,
+          'signatures/attestation-mission',
+          `etablissement-${missionRenford.id}`,
+        ),
+      },
+      select: { id: true, statut: true, signatureAttestationMissionEtablissementChemin: true },
+    });
+
+    return res.json(updated);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const downloadMissionDocumentByEtablissement = async (
+  req: Request<MissionDocumentParamsSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+    const { missionId, missionRenfordId, documentType } = req.params;
+
+    const mission = await prisma.mission.findFirst({
+      where: {
+        id: missionId,
+        etablissement: {
+          profilEtablissement: {
+            utilisateurId: userId,
+          },
+        },
+      },
+      include: {
+        etablissement: {
+          include: {
+            profilEtablissement: true,
+          },
+        },
+        PlageHoraireMission: true,
+      },
+    });
+
+    if (!mission) {
+      return res.status(404).json({ message: 'Mission non trouvée' });
+    }
+
+    const missionRenford = await prisma.missionRenford.findFirst({
+      where: {
+        id: missionRenfordId,
+        missionId,
+      },
+      include: {
+        profilRenford: {
+          include: {
+            utilisateur: true,
+          },
+        },
+      },
+    });
+
+    if (!missionRenford) {
+      return res.status(404).json({ message: 'Mission Renford non trouvée' });
+    }
+
+    if (documentType === 'attestation_mission' && mission.modeMission !== 'flex') {
+      return res.status(400).json({
+        message: "L'attestation de mission est uniquement disponible pour les missions Flex",
+      });
+    }
+
+    const pdfBuffer = buildMissionDocumentPdf(documentType as MissionDocumentType, {
+      mission,
+      missionRenford,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${getMissionDocumentFilename(documentType as MissionDocumentType, missionId)}"`,
+    );
+
+    return res.send(pdfBuffer);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const markMissionAsTermineeByEtablissement = async (
+  req: Request<MissionIdParamsSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+
+    const mission = await prisma.mission.findFirst({
+      where: {
+        id: req.params.missionId,
+        etablissement: {
+          profilEtablissement: {
+            utilisateurId: userId,
+          },
+        },
+      },
+      select: { id: true, statut: true },
+    });
+
+    if (!mission) {
+      return res.status(404).json({ message: 'Mission non trouvée' });
+    }
+
+    if (!['mission_en_cours', 'remplacement_en_cours', 'en_litige'].includes(mission.statut)) {
+      return res.status(400).json({
+        message: 'Cette mission ne peut pas être marquée comme terminée dans son état actuel',
+      });
+    }
+
+    await prisma.$transaction([
+      prisma.mission.update({
+        where: { id: mission.id },
+        data: { statut: 'mission_terminee' },
+      }),
+      prisma.missionRenford.updateMany({
+        where: {
+          missionId: mission.id,
+          statut: { in: ['mission_en_cours', 'contrat_signe'] },
+        },
+        data: { statut: 'mission_terminee' },
+      }),
+    ]);
+
+    return res.json({ id: mission.id, statut: 'mission_terminee' });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const clotureMissionByEtablissement = async (
+  req: Request<MissionIdParamsSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+
+    const mission = await prisma.mission.findFirst({
+      where: {
+        id: req.params.missionId,
+        etablissement: {
+          profilEtablissement: {
+            utilisateurId: userId,
+          },
+        },
+      },
+      select: { id: true, statut: true },
+    });
+
+    if (!mission) {
+      return res.status(404).json({ message: 'Mission non trouvée' });
+    }
+
+    if (mission.statut !== 'mission_terminee') {
+      return res.status(400).json({
+        message: 'Seules les missions terminées peuvent être clôturées',
+      });
+    }
+
+    const updatedMission = await prisma.mission.update({
+      where: { id: mission.id },
+      data: { statut: 'archivee' },
+      select: { id: true, statut: true },
+    });
+
+    return res.json(updatedMission);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const cancelMissionByEtablissement = async (
+  req: Request<MissionIdParamsSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+
+    const mission = await prisma.mission.findFirst({
+      where: {
+        id: req.params.missionId,
+        etablissement: {
+          profilEtablissement: {
+            utilisateurId: userId,
+          },
+        },
+      },
+      select: { id: true, statut: true },
+    });
+
+    if (!mission) {
+      return res.status(404).json({ message: 'Mission non trouvée' });
+    }
+
+    if (
+      [
+        'mission_en_cours',
+        'remplacement_en_cours',
+        'en_litige',
+        'mission_terminee',
+        'archivee',
+      ].includes(mission.statut)
+    ) {
+      return res.status(400).json({
+        message: 'Cette mission ne peut plus être annulée dans son état actuel',
+      });
+    }
+
+    await prisma.$transaction([
+      prisma.mission.update({
+        where: { id: mission.id },
+        data: { statut: 'annulee' },
+      }),
+      prisma.missionRenford.updateMany({
+        where: {
+          missionId: mission.id,
+          statut: {
+            in: ['nouveau', 'vu', 'selection_en_cours', 'attente_de_signature', 'contrat_signe'],
+          },
+        },
+        data: {
+          statut: 'annule',
+          ordreShortlist: null,
+        },
+      }),
+    ]);
+
+    return res.json({ id: mission.id, statut: 'annulee' });
   } catch (err) {
     return next(err);
   }

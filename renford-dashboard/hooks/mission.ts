@@ -159,6 +159,75 @@ export const useRespondToMissionRenford = () => {
   });
 };
 
+export const useMarkMissionTermineeByEtablissement = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ missionId }: { missionId: string }) => {
+      return (await axios.post(`/etablissement/missions/${missionId}/terminer`))
+        .data as { id: string; statut: string };
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["etablissement-mission-details", variables.missionId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["etablissement-missions"] });
+      toast.success("Mission marquée comme terminée");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+export const useClotureMissionByEtablissement = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ missionId }: { missionId: string }) => {
+      return (await axios.post(`/etablissement/missions/${missionId}/cloturer`))
+        .data as { id: string; statut: string };
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["etablissement-mission-details", variables.missionId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["etablissement-missions"] });
+      toast.success("Mission clôturée");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+export const useCancelMissionByEtablissement = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ missionId }: { missionId: string }) => {
+      return (await axios.post(`/etablissement/missions/${missionId}/annuler`))
+        .data as { id: string; statut: string };
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["etablissement-mission-details", variables.missionId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["etablissement-missions"] });
+      toast.success("Mission annulée");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
 // ─── Renford missions hooks ─────────────────────────────────
 
 export const useRenfordMissions = (tab?: RenfordMissionsTab) => {
@@ -225,6 +294,222 @@ export const useRespondToMissionProposal = () => {
         variables.response === "selection_en_cours"
           ? "Candidature envoyée"
           : "Mission refusée",
+      );
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+// ─── Signature hooks ────────────────────────────────────────
+
+export const useSignContractByRenford = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      missionId,
+      signatureDataUrl,
+    }: {
+      missionId: string;
+      signatureDataUrl: string;
+    }) => {
+      return (
+        await axios.post(`/renford/missions/${missionId}/signature`, {
+          signatureDataUrl,
+        })
+      ).data as { id: string; statut: string; dateContratSigne: string };
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["renford-missions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["renford-mission-details", variables.missionId],
+      });
+      toast.success("Contrat signé avec succès");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+export const useSignContractByEtablissement = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      missionId,
+      missionRenfordId,
+      signatureDataUrl,
+    }: {
+      missionId: string;
+      missionRenfordId: string;
+      signatureDataUrl: string;
+    }) => {
+      return (
+        await axios.post(
+          `/etablissement/missions/${missionId}/renfords/${missionRenfordId}/signature`,
+          { signatureDataUrl },
+        )
+      ).data as { missionRenfordId: string; statut: string };
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["etablissement-mission-details", variables.missionId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["etablissement-missions"] });
+      toast.success("Contrat signé, la mission est maintenant en cours");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+export const useSignAttestationByRenford = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      missionId,
+      signatureDataUrl,
+    }: {
+      missionId: string;
+      signatureDataUrl: string;
+    }) => {
+      return (
+        await axios.post(
+          `/renford/missions/${missionId}/attestation/signature`,
+          {
+            signatureDataUrl,
+          },
+        )
+      ).data as { id: string; statut: string };
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["renford-missions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["renford-mission-details", variables.missionId],
+      });
+      toast.success("Attestation signée avec succès");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+export const useSignAttestationByEtablissement = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      missionId,
+      missionRenfordId,
+      signatureDataUrl,
+    }: {
+      missionId: string;
+      missionRenfordId: string;
+      signatureDataUrl: string;
+    }) => {
+      return (
+        await axios.post(
+          `/etablissement/missions/${missionId}/renfords/${missionRenfordId}/attestation/signature`,
+          { signatureDataUrl },
+        )
+      ).data as { id: string; statut: string };
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["etablissement-mission-details", variables.missionId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["etablissement-missions"] });
+      toast.success("Attestation signée avec succès");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+type MissionDocumentType =
+  | "facture_prestation"
+  | "facture_commission"
+  | "contrat_prestation"
+  | "attestation_mission";
+
+const downloadBlobAsFile = (blob: Blob, fallbackName: string) => {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fallbackName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+};
+
+export const useDownloadMissionDocumentByRenford = () => {
+  const axios = useAxios();
+
+  return useMutation({
+    mutationFn: async ({
+      missionId,
+      documentType,
+    }: {
+      missionId: string;
+      documentType: MissionDocumentType;
+    }) => {
+      const response = await axios.get(
+        `/renford/missions/${missionId}/documents/${documentType}/download`,
+        { responseType: "blob" },
+      );
+      return response.data as Blob;
+    },
+    onSuccess: (blob, variables) => {
+      downloadBlobAsFile(
+        blob,
+        `${variables.documentType}-${variables.missionId}.pdf`,
+      );
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+export const useDownloadMissionDocumentByEtablissement = () => {
+  const axios = useAxios();
+
+  return useMutation({
+    mutationFn: async ({
+      missionId,
+      missionRenfordId,
+      documentType,
+    }: {
+      missionId: string;
+      missionRenfordId: string;
+      documentType: MissionDocumentType;
+    }) => {
+      const response = await axios.get(
+        `/etablissement/missions/${missionId}/renfords/${missionRenfordId}/documents/${documentType}/download`,
+        { responseType: "blob" },
+      );
+      return response.data as Blob;
+    },
+    onSuccess: (blob, variables) => {
+      downloadBlobAsFile(
+        blob,
+        `${variables.documentType}-${variables.missionId}.pdf`,
       );
     },
     onError: (error: any) => {

@@ -1,17 +1,39 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Video, CalendarDays, Clock3, Ellipsis, MapPin } from "lucide-react";
 import DetailRow from "@/components/common/detail-row";
 import DocumentCategoryCard from "@/components/common/document-category-card";
 import MissionStatusBadge from "@/components/common/mission-status-badge";
+import SignatureContratDialog from "@/components/common/signature-contrat-dialog";
+import InviterFavoriDialog from "@/components/common/inviter-favori-dialog";
 import CenterState from "@/components/common/center-state";
+import TerminerMissionDialog from "./terminer-mission-dialog";
+import CloturerMissionDialog from "./cloturer-mission-dialog";
+import AnnulerMissionDialog from "./annuler-mission-dialog";
+import ConfirmRenfordResponseDialog from "./confirm-renford-response-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { H2 } from "@/components/ui/typography";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEtablissementMissionDetails } from "@/hooks/mission";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  useCancelMissionByEtablissement,
+  useClotureMissionByEtablissement,
+  useDownloadMissionDocumentByEtablissement,
+  useEtablissementMissionDetails,
+  useMarkMissionTermineeByEtablissement,
+  useRespondToMissionRenford,
+  useSignAttestationByEtablissement,
+  useSignContractByEtablissement,
+} from "@/hooks/mission";
 import { formatWeekdayDayMonth } from "@/lib/date";
 import {
   formatAmount,
@@ -39,8 +61,29 @@ function formatTimeRange(value: string, fallback = "-") {
 
 export default function EtablissementMissionDetailsPage() {
   const { missionId } = useParams<{ missionId: string }>();
+  const router = useRouter();
 
   const missionQuery = useEtablissementMissionDetails(missionId);
+  const respondMutation = useRespondToMissionRenford();
+  const cancelMutation = useCancelMissionByEtablissement();
+  const markTermineeMutation = useMarkMissionTermineeByEtablissement();
+  const clotureMutation = useClotureMissionByEtablissement();
+  const signMutation = useSignContractByEtablissement();
+  const signAttestationMutation = useSignAttestationByEtablissement();
+  const downloadDocumentMutation = useDownloadMissionDocumentByEtablissement();
+  const [signDialogOpen, setSignDialogOpen] = useState(false);
+  const [signAttestationDialogOpen, setSignAttestationDialogOpen] =
+    useState(false);
+  const [terminerDialogOpen, setTerminerDialogOpen] = useState(false);
+  const [cloturerDialogOpen, setCloturerDialogOpen] = useState(false);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [annulerDialogOpen, setAnnulerDialogOpen] = useState(false);
+  const [confirmRenfordDialogOpen, setConfirmRenfordDialogOpen] =
+    useState(false);
+  const [pendingRenfordAction, setPendingRenfordAction] = useState<{
+    missionRenfordId: string;
+    response: "attente_de_signature" | "refuse_par_etablissement";
+  } | null>(null);
   const mission = missionQuery.data;
 
   const isLoading = missionQuery.isLoading;
@@ -149,12 +192,12 @@ export default function EtablissementMissionDetailsPage() {
       title: "Factures",
       documents: [
         {
-          id: "invoice-service",
+          id: "facture_prestation",
           label: "Facture de la prestation",
           date: documentDate,
         },
         {
-          id: "invoice-platform",
+          id: "facture_commission",
           label: "Facture des frais de services Renford",
           date: documentDate,
         },
@@ -164,14 +207,23 @@ export default function EtablissementMissionDetailsPage() {
       title: "Contrat",
       documents: [
         {
-          id: "contract-service",
+          id: "contrat_prestation",
           label: "Contrat de prestation de services",
           date: documentDate,
         },
         {
-          id: "contract-certificate",
+          id: "attestation_mission",
           label: "Attestation de mission",
           date: documentDate,
+          disabled:
+            mission.modeMission !== "flex" ||
+            mission.statut !== "mission_terminee",
+          disabledReason:
+            mission.modeMission !== "flex"
+              ? "L’attestation de mission est uniquement pour les missions Flex"
+              : mission.statut !== "mission_terminee"
+                ? "Disponible une fois la mission terminée"
+                : undefined,
         },
       ],
     },
@@ -189,6 +241,38 @@ export default function EtablissementMissionDetailsPage() {
   const renfordStatusLabel = firstMissionRenford
     ? STATUT_MISSION_RENFORD_LABELS[firstMissionRenford.statut]
     : "";
+  const selectionAssignments = (mission.missionsRenford ?? []).filter(
+    (assignment) => assignment.statut === "selection_en_cours",
+  );
+  const displayedAssignments =
+    mission.modeMission === "coach" && selectionAssignments.length > 0
+      ? selectionAssignments
+      : firstMissionRenford
+        ? [firstMissionRenford]
+        : [];
+
+  const isMissionStarted = [
+    "mission_en_cours",
+    "remplacement_en_cours",
+    "en_litige",
+    "mission_terminee",
+    "archivee",
+  ].includes(mission.statut);
+
+  const canRequestVisio = !isMissionStarted && mission.modeMission !== "flex";
+  const canSignAttestation =
+    mission.modeMission === "flex" && mission.statut === "mission_terminee";
+  const filteredDocumentGroups = documentGroups
+    .map((group) => {
+      if (group.title !== "Contrat") return group;
+      return {
+        ...group,
+        documents: group.documents.filter(
+          (doc) => doc.id !== "attestation_mission" || canSignAttestation,
+        ),
+      };
+    })
+    .filter((group) => group.documents.length > 0);
 
   return (
     <main className="mt-8 space-y-6">
@@ -206,82 +290,197 @@ export default function EtablissementMissionDetailsPage() {
           </TabsList>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" className="px-5">
-              Inviter un Renford favori
-            </Button>
-            <Button variant="outline" className="px-5">
-              Annuler et Modifier
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full"
-              aria-label="Plus d'actions"
-            >
-              <Ellipsis className="h-4 w-4" />
-            </Button>
+            {!isMissionStarted && (
+              <Button
+                variant="outline"
+                className="px-5"
+                onClick={() => setInviteDialogOpen(true)}
+              >
+                Inviter un Renford favori
+              </Button>
+            )}
+            {!isMissionStarted && (
+              <Button
+                variant="outline"
+                className="px-5"
+                disabled={cancelMutation.isPending}
+                onClick={() => setAnnulerDialogOpen(true)}
+              >
+                Annuler et Modifier
+              </Button>
+            )}
+            {mission.statut === "mission_en_cours" && (
+              <Button
+                variant="dark"
+                className="px-5"
+                disabled={markTermineeMutation.isPending}
+                onClick={() => setTerminerDialogOpen(true)}
+              >
+                Terminer la mission
+              </Button>
+            )}
+            {mission.statut === "mission_terminee" && (
+              <Button
+                variant="dark"
+                className="px-5"
+                disabled={clotureMutation.isPending}
+                onClick={() => setCloturerDialogOpen(true)}
+              >
+                Clôturer la mission
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full"
+                  aria-label="Plus d'actions"
+                >
+                  <Ellipsis className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuItem
+                  onClick={() => router.push("/dashboard/support?tab=contact")}
+                >
+                  Signaler un problème
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    router.push("/dashboard/etablissement/missions/nouvelle")
+                  }
+                >
+                  Dupliquer la demande de mission
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
         <div className="bg-secondary-background m-1 min-h-[620px] rounded-3xl border p-4 md:p-6">
           <TabsContent value="details" className="space-y-4">
-            {firstMissionRenford ? (
-              <div className="rounded-full border border-border bg-white px-4 py-3">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <Avatar className="h-12 w-12 border border-input">
-                      <AvatarImage
-                        src={
-                          firstMissionRenford.profilRenford.avatarChemin
-                            ? getUrl(
-                                firstMissionRenford.profilRenford.avatarChemin,
-                              )
-                            : undefined
-                        }
-                        alt={renfordFullName}
-                      />
-                      <AvatarFallback>
-                        {getInitials(renfordFullName)}
-                      </AvatarFallback>
-                    </Avatar>
+            {displayedAssignments.map((assignment) => {
+              const assignmentFullName = [
+                assignment.profilRenford.utilisateur.prenom,
+                assignment.profilRenford.utilisateur.nom,
+              ]
+                .filter(Boolean)
+                .join(" ");
+              const assignmentStatusLabel =
+                STATUT_MISSION_RENFORD_LABELS[assignment.statut];
 
-                    <div className="min-w-0">
-                      <p className="truncate text-lg font-semibold text-foreground">
-                        {renfordFullName} {renfordStatusLabel}
-                      </p>
-                      <p className="truncate text-base text-muted-foreground">
-                        {firstMissionRenford.profilRenford.titreProfil ||
-                          missionTitle}
-                      </p>
+              return (
+                <div
+                  key={assignment.id}
+                  className="rounded-3xl border border-border bg-white px-4 py-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar className="h-12 w-12 border border-input">
+                        <AvatarImage
+                          src={
+                            assignment.profilRenford.avatarChemin
+                              ? getUrl(assignment.profilRenford.avatarChemin)
+                              : undefined
+                          }
+                          alt={assignmentFullName}
+                        />
+                        <AvatarFallback>
+                          {getInitials(assignmentFullName)}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="min-w-0">
+                        <p className="truncate text-lg font-semibold text-foreground">
+                          {assignmentFullName} {assignmentStatusLabel}
+                        </p>
+                        <p className="truncate text-base text-muted-foreground">
+                          {assignment.profilRenford.titreProfil || missionTitle}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button asChild variant="outline" className="px-5">
+                        <Link
+                          href={`/dashboard/etablissement/renfords/${assignment.profilRenford.id}`}
+                        >
+                          Voir le profil
+                        </Link>
+                      </Button>
+
+                      {canRequestVisio && (
+                        <Button variant="outline" className="px-5">
+                          <Video className="mr-2 h-4 w-4" />
+                          Demander une visio
+                        </Button>
+                      )}
+
+                      {[
+                        "selection_en_cours",
+                        "attente_de_signature",
+                      ].includes(assignment.statut) && (
+                        <>
+                          <Button
+                            variant="outline"
+                            className="px-5"
+                            disabled={respondMutation.isPending}
+                            onClick={() => {
+                              setPendingRenfordAction({
+                                missionRenfordId: assignment.id,
+                                response: "refuse_par_etablissement",
+                              });
+                              setConfirmRenfordDialogOpen(true);
+                            }}
+                          >
+                            Refuser
+                          </Button>
+
+                          {assignment.statut === "selection_en_cours" && (
+                            <Button
+                              variant="dark"
+                              className="px-5"
+                              disabled={respondMutation.isPending}
+                              onClick={() => {
+                                setPendingRenfordAction({
+                                  missionRenfordId: assignment.id,
+                                  response: "attente_de_signature",
+                                });
+                                setConfirmRenfordDialogOpen(true);
+                              }}
+                            >
+                              Accepter
+                            </Button>
+                          )}
+                        </>
+                      )}
+
+                      {assignment.statut === "contrat_signe" && (
+                        <Button
+                          variant="dark"
+                          className="px-8"
+                          onClick={() => setSignDialogOpen(true)}
+                        >
+                          Signer le contrat
+                        </Button>
+                      )}
+
+                      {canSignAttestation &&
+                        assignment.id === firstMissionRenford?.id && (
+                          <Button
+                            variant="outline"
+                            className="px-5"
+                            onClick={() => setSignAttestationDialogOpen(true)}
+                          >
+                            Signer l'attestation de mission
+                          </Button>
+                        )}
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button asChild variant="outline" className="px-5">
-                      <Link
-                        href={`/dashboard/etablissement/renfords/${firstMissionRenford.profilRenford.id}`}
-                      >
-                        Voir le profil
-                      </Link>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="px-5"
-                      disabled={mission.modeMission === "flex"}
-                    >
-                      <Video className="mr-2 h-4 w-4" />
-                      Demander une visio
-                    </Button>
-                    <Button variant="outline" className="px-5">
-                      Refuser
-                    </Button>
-                    <Button variant="dark" className="px-5">
-                      Accepter
-                    </Button>
-                  </div>
                 </div>
-              </div>
-            ) : null}
+              );
+            })}
 
             <section className="rounded-3xl border border-border bg-white px-4 py-4 md:px-5 md:py-5">
               <div className="mb-5 space-y-2">
@@ -381,16 +580,152 @@ export default function EtablissementMissionDetailsPage() {
           </TabsContent>
 
           <TabsContent value="documents" className="space-y-4">
-            {documentGroups.map((group) => (
+            {filteredDocumentGroups.map((group) => (
               <DocumentCategoryCard
                 key={group.title}
                 title={group.title}
                 documents={group.documents}
+                onDownload={(documentId) => {
+                  if (!firstMissionRenford) return;
+                  downloadDocumentMutation.mutate({
+                    missionId: mission.id,
+                    missionRenfordId: firstMissionRenford.id,
+                    documentType: documentId as
+                      | "facture_prestation"
+                      | "facture_commission"
+                      | "contrat_prestation"
+                      | "attestation_mission",
+                  });
+                }}
+                isDownloading={downloadDocumentMutation.isPending}
               />
             ))}
           </TabsContent>
         </div>
       </Tabs>
+
+      {firstMissionRenford?.statut === "contrat_signe" && (
+        <SignatureContratDialog
+          open={signDialogOpen}
+          onOpenChange={setSignDialogOpen}
+          signerRole="etablissement"
+          contractData={{
+            missionTitle: missionTitle,
+            discipline: mission.discipline,
+            dateDebut: mission.dateDebut,
+            dateFin: mission.dateFin,
+            methodeTarification: mission.methodeTarification,
+            tarif: mission.tarif,
+            totalHours,
+            horaires,
+            etablissementNom: mission.etablissement?.nom ?? "-",
+            etablissementAdresse: mission.etablissement
+              ? `${mission.etablissement.adresse}, ${mission.etablissement.codePostal} ${mission.etablissement.ville}`
+              : "-",
+            renfordNom: renfordFullName,
+            description: mission.description,
+          }}
+          onSign={(signatureDataUrl) => {
+            signMutation.mutate(
+              {
+                missionId: mission.id,
+                missionRenfordId: firstMissionRenford.id,
+                signatureDataUrl,
+              },
+              { onSuccess: () => setSignDialogOpen(false) },
+            );
+          }}
+          isPending={signMutation.isPending}
+        />
+      )}
+
+      {firstMissionRenford &&
+        mission.modeMission === "flex" &&
+        mission.statut === "mission_terminee" && (
+          <SignatureContratDialog
+            open={signAttestationDialogOpen}
+            onOpenChange={setSignAttestationDialogOpen}
+            dialogTitle="Attestation de mission"
+            signButtonText="Signer l'attestation"
+            signerRole="etablissement"
+            contractData={{
+              missionTitle: missionTitle,
+              discipline: mission.discipline,
+              dateDebut: mission.dateDebut,
+              dateFin: mission.dateFin,
+              methodeTarification: mission.methodeTarification,
+              tarif: mission.tarif,
+              totalHours,
+              horaires,
+              etablissementNom: mission.etablissement?.nom ?? "-",
+              etablissementAdresse: mission.etablissement
+                ? `${mission.etablissement.adresse}, ${mission.etablissement.codePostal} ${mission.etablissement.ville}`
+                : "-",
+              renfordNom: renfordFullName,
+              description: mission.description,
+            }}
+            onSign={(signatureDataUrl) => {
+              signAttestationMutation.mutate(
+                {
+                  missionId: mission.id,
+                  missionRenfordId: firstMissionRenford.id,
+                  signatureDataUrl,
+                },
+                { onSuccess: () => setSignAttestationDialogOpen(false) },
+              );
+            }}
+            isPending={signAttestationMutation.isPending}
+          />
+        )}
+
+      {!isMissionStarted && (
+        <InviterFavoriDialog
+          open={inviteDialogOpen}
+          onOpenChange={setInviteDialogOpen}
+          missionId={missionId}
+        />
+      )}
+
+      <TerminerMissionDialog
+        open={terminerDialogOpen}
+        onOpenChange={setTerminerDialogOpen}
+        onConfirm={() => markTermineeMutation.mutate({ missionId: mission.id })}
+        isPending={markTermineeMutation.isPending}
+      />
+
+      <CloturerMissionDialog
+        open={cloturerDialogOpen}
+        onOpenChange={setCloturerDialogOpen}
+        onConfirm={() => clotureMutation.mutate({ missionId: mission.id })}
+        isPending={clotureMutation.isPending}
+      />
+
+      <AnnulerMissionDialog
+        open={annulerDialogOpen}
+        onOpenChange={setAnnulerDialogOpen}
+        onConfirm={() => cancelMutation.mutate({ missionId: mission.id })}
+        isPending={cancelMutation.isPending}
+      />
+
+      <ConfirmRenfordResponseDialog
+        open={confirmRenfordDialogOpen && !!pendingRenfordAction}
+        onOpenChange={(open) => {
+          setConfirmRenfordDialogOpen(open);
+          if (!open) {
+            setPendingRenfordAction(null);
+          }
+        }}
+        action={pendingRenfordAction?.response ?? "attente_de_signature"}
+        onConfirm={() => {
+          if (!pendingRenfordAction) return;
+          respondMutation.mutate({
+            missionId: mission.id,
+            missionRenfordId: pendingRenfordAction.missionRenfordId,
+            response: pendingRenfordAction.response,
+          });
+        }}
+        isPending={respondMutation.isPending}
+      />
     </main>
   );
 }

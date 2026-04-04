@@ -37,6 +37,10 @@ export type MissionRenford = {
   dateVisio: Date | string | null;
   visioEffectuee: boolean;
   tarifNegocie: number | string | null;
+  signatureContratPrestationRenfordChemin: string | null;
+  signatureContratPrestationEtablissementChemin: string | null;
+  signatureAttestationMissionRenfordChemin: string | null;
+  signatureAttestationMissionEtablissementChemin: string | null;
   dateCreation: Date | string;
   dateMiseAJour: Date | string;
   profilRenford: ProfilRenfordMissionSimple;
@@ -47,8 +51,8 @@ export type RenfordMissionsTab = (typeof RENFORD_MISSIONS_TAB)[number];
 // Établissement simplifié retourné avec les missions renford
 export type EtablissementMissionRenford = Pick<
   Etablissement,
-  "id" | "nom" | "avatarChemin" | "adresse" | "codePostal" | "ville"
->;
+  "id" | "nom" | "adresse" | "codePostal" | "ville"
+> & { avatarChemin: string | null };
 
 // Mission imbriquée dans la réponse getRenfordMissions
 export type MissionForRenford = {
@@ -85,6 +89,10 @@ export type MissionRenfordListItem = {
   dateReponse: Date | string | null;
   dateContratSigne: Date | string | null;
   tarifNegocie: number | string | null;
+  signatureContratPrestationRenfordChemin: string | null;
+  signatureContratPrestationEtablissementChemin: string | null;
+  signatureAttestationMissionRenfordChemin: string | null;
+  signatureAttestationMissionEtablissementChemin: string | null;
   dateCreation: Date | string;
   dateMiseAJour: Date | string;
   mission: MissionForRenford;

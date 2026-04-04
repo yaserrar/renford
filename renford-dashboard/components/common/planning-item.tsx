@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn, getUrl } from "@/lib/utils";
 import { CalendarDays, Clock3, List, MapPin } from "lucide-react";
 import Image from "next/image";
 
@@ -50,7 +50,7 @@ export default function PlanningItem({
         >
           {logoSrc ? (
             <Image
-              src={logoSrc}
+              src={getUrl(logoSrc)}
               alt={title}
               width={80}
               height={80}

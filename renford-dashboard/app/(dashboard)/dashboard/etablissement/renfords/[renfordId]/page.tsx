@@ -5,6 +5,14 @@ import CenterState from "@/components/common/center-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { H2 } from "@/components/ui/typography";
 import { usePublicProfilRenford } from "@/hooks/profil-renford";
 import {
@@ -12,14 +20,23 @@ import {
   useCheckFavori,
   useRemoveFavori,
 } from "@/hooks/favoris-renford";
-import { formatDate } from "@/lib/date";
-import { formatAmount, getInitials, getUrl } from "@/lib/utils";
 import {
+  formatAmount,
+  formatFrenchDate,
+  formatYear,
+  getInitials,
+  getUrl,
+} from "@/lib/utils";
+import {
+  CRENEAUX_DISPONIBILITE,
+  CRENEAUX_DISPONIBILITE_LABELS,
   DIPLOME_LABELS,
+  JOUR_SEMAINE,
+  JOUR_SEMAINE_LABELS,
   NIVEAU_EXPERIENCE_LABELS,
   TYPE_MISSION_LABELS,
 } from "@/validations/profil-renford";
-import { Heart, MapPin, Star } from "lucide-react";
+import { Award, Eye, Heart, MapPin, Star } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import ProposerMissionDialog from "../proposer-mission-dialog";
@@ -74,43 +91,41 @@ export default function EtablissementPublicRenfordProfilePage() {
   const fullName = [profil.utilisateur.prenom, profil.utilisateur.nom]
     .filter(Boolean)
     .join(" ");
-  const missionLabels = profil.typeMission.map(
-    (mission) => TYPE_MISSION_LABELS[mission] ?? mission,
-  );
-  const diplomeLabels = profil.renfordDiplomes.map((diplome) => ({
-    id: diplome.id,
-    label: DIPLOME_LABELS[diplome.typeDiplome] ?? diplome.typeDiplome,
-    year: diplome.anneeObtention,
-    school: diplome.etablissementFormation,
-  }));
-  const availabilityRange =
-    !profil.dureeIllimitee && (profil.dateDebut || profil.dateFin)
-      ? `Disponible du ${formatDate(profil.dateDebut ?? undefined)} au ${formatDate(
-          profil.dateFin ?? undefined,
-        )}`
-      : "Disponible sans limite de durée";
+
+  const disponibilites = {
+    lundi: profil.disponibilitesLundi ?? [],
+    mardi: profil.disponibilitesMardi ?? [],
+    mercredi: profil.disponibilitesMercredi ?? [],
+    jeudi: profil.disponibilitesJeudi ?? [],
+    vendredi: profil.disponibilitesVendredi ?? [],
+    samedi: profil.disponibilitesSamedi ?? [],
+    dimanche: profil.disponibilitesDimanche ?? [],
+  } as const;
 
   return (
     <main className="mt-8 space-y-6">
       <H2>Profil Renford</H2>
 
       <div className="bg-secondary-background rounded-3xl border m-1 p-6 h-full">
-        <div className="space-y-6">
-          <section className="rounded-3xl border overflow-hidden border-input bg-white">
-            <div className="relative h-64 w-full bg-muted">
+        <div className="space-y-4">
+          {/* ─── Hero ─── */}
+          <div className="bg-white rounded-3xl border border-input overflow-hidden">
+            <div className="relative h-72 w-full bg-gray-100 overflow-hidden">
               {profil.imageCouvertureChemin ? (
                 <Image
                   src={getUrl(profil.imageCouvertureChemin)}
                   alt={`Couverture de ${fullName}`}
-                  fill
-                  className="object-cover"
+                  className="object-cover w-full"
+                  height={300}
+                  width={1300}
+                  quality={100}
                 />
               ) : null}
             </div>
 
-            <div className="flex flex-wrap items-end justify-between gap-6 border-t border-input px-6 py-6">
+            <div className="p-6 border-b border-input flex flex-wrap items-end justify-between gap-6 -mt-10">
               <div className="flex items-end gap-4">
-                <Avatar className="-mt-20 h-28 w-28 border-4 border-white shadow-sm">
+                <Avatar className="h-26 w-26 border-4 border-white shadow-sm">
                   <AvatarImage
                     src={
                       profil.avatarChemin
@@ -124,20 +139,20 @@ export default function EtablissementPublicRenfordProfilePage() {
                   </AvatarFallback>
                 </Avatar>
 
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-2xl font-semibold text-foreground">
-                      {fullName}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {profil.titreProfil || "Profil Renford"}
-                    </p>
-                  </div>
-
+                <div>
+                  <p className="text-2xl font-semibold">{fullName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {profil.titreProfil || "Profil Renford"} ·{" "}
+                    {profil.niveauExperience
+                      ? NIVEAU_EXPERIENCE_LABELS[profil.niveauExperience]
+                      : "-"}
+                  </p>
                   <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
-                      {profil.ville || "Localisation non renseignée"}
+                      {[profil.adresse, profil.codePostal, profil.ville]
+                        .filter(Boolean)
+                        .join(" ") || "Localisation non renseignée"}
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <Star className="h-4 w-4" />
@@ -149,207 +164,322 @@ export default function EtablissementPublicRenfordProfilePage() {
                 </div>
               </div>
 
-              <div className="min-w-[220px] rounded-2xl border border-input p-4 text-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">Expérience</span>
-                  <span className="font-medium text-foreground">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0 rounded-full"
+                  onClick={() =>
+                    isFavori
+                      ? removeFavoriMutation.mutate(profil.id)
+                      : addFavoriMutation.mutate(profil.id)
+                  }
+                  disabled={
+                    addFavoriMutation.isPending ||
+                    removeFavoriMutation.isPending
+                  }
+                >
+                  <Heart
+                    className={`h-4 w-4 ${isFavori ? "fill-current" : ""}`}
+                  />
+                </Button>
+                <Button
+                  variant="dark"
+                  className="rounded-full"
+                  onClick={() => setDialogOpen(true)}
+                >
+                  Proposer une mission
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* ─── 2-column grid ─── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* ─── Left column ─── */}
+            <div className="space-y-4">
+              {/* Disponibilités */}
+              <div className="bg-white rounded-3xl border border-input p-6 space-y-4">
+                <h3 className="text-xl font-semibold">Disponibilités</h3>
+
+                <div className="rounded-xl border border-input p-4 text-sm flex items-center justify-between">
+                  <p className="text-muted-foreground">Mobilité</p>
+                  <p className="font-semibold">
+                    {profil.zoneDeplacement
+                      ? `${profil.zoneDeplacement} km`
+                      : "Non renseignée"}
+                  </p>
+                </div>
+
+                <p className="font-medium">Semaine type</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr>
+                        <th className="text-left py-2"></th>
+                        {CRENEAUX_DISPONIBILITE.map((creneau) => (
+                          <th
+                            key={creneau}
+                            className="text-center py-2 font-medium"
+                          >
+                            {CRENEAUX_DISPONIBILITE_LABELS[creneau]}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {JOUR_SEMAINE.map((jour) => (
+                        <tr key={jour}>
+                          <td className="py-2 font-medium">
+                            {JOUR_SEMAINE_LABELS[jour]}
+                          </td>
+                          {CRENEAUX_DISPONIBILITE.map((creneau) => (
+                            <td key={creneau} className="text-center py-2">
+                              <Checkbox
+                                checked={disponibilites[jour].includes(creneau)}
+                                disabled
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="rounded-xl border border-input p-4 space-y-2">
+                  {profil.dureeIllimitee ? (
+                    <p className="text-sm font-medium">
+                      Disponible pour une durée illimitée
+                    </p>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          À partir de
+                        </span>
+                        <span className="font-medium">
+                          {formatFrenchDate(profil.dateDebut, "-", "numeric")}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          Jusqu&apos;au
+                        </span>
+                        <span className="font-medium">
+                          {formatFrenchDate(profil.dateFin, "-", "numeric")}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Qualifications */}
+              <div className="bg-white rounded-3xl border border-input p-6 space-y-4">
+                <h3 className="text-xl font-semibold">Qualifications</h3>
+
+                <div className="rounded-xl border border-input p-4 flex items-center justify-between">
+                  <p className="text-muted-foreground text-sm">
+                    Niveau d&apos;expérience
+                  </p>
+                  <p className="font-semibold text-sm">
                     {profil.niveauExperience
                       ? NIVEAU_EXPERIENCE_LABELS[profil.niveauExperience]
                       : "-"}
-                  </span>
+                  </p>
                 </div>
-                <div className="mt-3 flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">Tarif horaire</span>
-                  <span className="font-medium text-foreground">
-                    {formatAmount(profil.tarifHoraire)}
-                  </span>
-                </div>
-                <div className="mt-4 flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="shrink-0 rounded-full"
-                    onClick={() =>
-                      isFavori
-                        ? removeFavoriMutation.mutate(profil.id)
-                        : addFavoriMutation.mutate(profil.id)
-                    }
-                    disabled={
-                      addFavoriMutation.isPending ||
-                      removeFavoriMutation.isPending
-                    }
-                  >
-                    <Heart
-                      className={`h-4 w-4 ${isFavori ? "fill-current" : ""}`}
-                    />
-                  </Button>
-                  <Button
-                    variant="dark"
-                    className="flex-1 rounded-full"
-                    onClick={() => setDialogOpen(true)}
-                  >
-                    Proposer une mission
-                  </Button>
+
+                <div className="rounded-xl border border-input p-4 space-y-2">
+                  <p className="text-sm font-semibold">Tarification</p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Tarif horaire</span>
+                    <span className="font-medium">
+                      {formatAmount(profil.tarifHoraire)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Tarif journée</span>
+                    <span className="font-medium">
+                      {profil.proposeJournee
+                        ? formatAmount(profil.tarifJournee)
+                        : "Non proposé"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      Tarif demi-journée
+                    </span>
+                    <span className="font-medium">
+                      {profil.proposeDemiJournee
+                        ? formatAmount(profil.tarifDemiJournee)
+                        : "Non proposé"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </section>
 
-          <section className="rounded-3xl border border-input bg-white p-6">
-            <h3 className="text-xl font-semibold text-foreground">
-              Expertises
-            </h3>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {missionLabels.length > 0 ? (
-                missionLabels.map((label) => <Badge key={label}>{label}</Badge>)
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Aucune expertise renseignée
+            {/* ─── Right column ─── */}
+            <div className="space-y-4">
+              {/* Expertises */}
+              <div className="bg-white rounded-3xl border border-input p-6 space-y-3">
+                <h3 className="text-xl font-semibold">Expertises</h3>
+                <div className="flex flex-wrap gap-2">
+                  {profil.typeMission.length > 0 ? (
+                    profil.typeMission.map((mission) => (
+                      <Badge key={mission}>
+                        {TYPE_MISSION_LABELS[mission] ?? mission}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">-</p>
+                  )}
+                </div>
+              </div>
+
+              {/* À propos */}
+              <div className="bg-white rounded-3xl border border-input p-6 space-y-3">
+                <h3 className="text-xl font-semibold">À propos</h3>
+                <p className="text-sm text-muted-foreground whitespace-pre-line">
+                  {profil.descriptionProfil || "-"}
                 </p>
-              )}
-            </div>
-          </section>
+              </div>
 
-          <section className="rounded-3xl border border-input bg-white p-6">
-            <h3 className="text-xl font-semibold text-foreground">À propos</h3>
-            <p className="mt-4 whitespace-pre-line text-sm leading-6 text-muted-foreground">
-              {profil.descriptionProfil || "Aucune description renseignée."}
-            </p>
-          </section>
-
-          <section className="rounded-3xl border border-input bg-white p-6">
-            <h3 className="text-xl font-semibold text-foreground">
-              Expériences
-            </h3>
-            <div className="mt-4 space-y-4">
-              {profil.experiencesProfessionnelles.length > 0 ? (
-                profil.experiencesProfessionnelles.map((experience) => (
-                  <article
-                    key={experience.id}
-                    className="rounded-2xl border border-input p-4"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-foreground">
-                          {experience.nom}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
+              {/* Expériences */}
+              <div className="bg-white rounded-3xl border border-input p-6 space-y-4">
+                <h3 className="text-2xl font-semibold">
+                  Expériences Professionnelles
+                </h3>
+                {profil.experiencesProfessionnelles.length > 0 ? (
+                  <div className="space-y-3">
+                    {profil.experiencesProfessionnelles.map((experience) => (
+                      <div
+                        key={experience.id}
+                        className="rounded-xl border border-input p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="font-semibold text-base">
+                            {experience.nom}
+                          </p>
+                          <p className="text-xs font-medium text-secondary whitespace-nowrap">
+                            {formatYear(experience.dateDebut)} -{" "}
+                            {formatYear(experience.dateFin) !== "-"
+                              ? formatYear(experience.dateFin)
+                              : "Présent"}
+                          </p>
+                        </div>
+                        <p className="text-sm font-semibold text-muted-foreground mt-1">
                           {experience.etablissement}
                         </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {experience.missions}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(experience.dateDebut)}
-                        {experience.dateFin
-                          ? ` - ${formatDate(experience.dateFin)}`
-                          : " - Aujourd'hui"}
-                      </p>
-                    </div>
-                    <p className="mt-3 whitespace-pre-line text-sm leading-6 text-muted-foreground">
-                      {experience.missions}
-                    </p>
-                  </article>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Aucune expérience renseignée
-                </p>
-              )}
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-input bg-white p-6">
-            <h3 className="text-xl font-semibold text-foreground">
-              Tarifs & Disponibilité
-            </h3>
-            <div className="mt-4 space-y-3 text-sm">
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-input p-4">
-                <span className="text-muted-foreground">Tarif journée</span>
-                <span className="font-medium text-foreground">
-                  {profil.proposeJournee
-                    ? formatAmount(profil.tarifJournee)
-                    : "Non proposé"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-input p-4">
-                <span className="text-muted-foreground">
-                  Tarif demi-journée
-                </span>
-                <span className="font-medium text-foreground">
-                  {profil.proposeDemiJournee
-                    ? formatAmount(profil.tarifDemiJournee)
-                    : "Non proposé"}
-                </span>
-              </div>
-              <div className="rounded-2xl border border-input p-4">
-                <p className="text-muted-foreground">Zone de déplacement</p>
-                <p className="mt-1 font-medium text-foreground">
-                  {profil.zoneDeplacement
-                    ? `${profil.zoneDeplacement} km`
-                    : "Non renseignée"}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-input p-4">
-                <p className="text-muted-foreground">Disponibilité</p>
-                <p className="mt-1 font-medium text-foreground">
-                  {availabilityRange}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-input bg-white p-6">
-            <h3 className="text-xl font-semibold text-foreground">Diplômes</h3>
-            <div className="mt-4 space-y-3">
-              {diplomeLabels.length > 0 ? (
-                diplomeLabels.map((diplome) => (
-                  <article
-                    key={diplome.id}
-                    className="rounded-2xl border border-input p-4"
-                  >
-                    <p className="font-medium text-foreground">
-                      {diplome.label}
-                    </p>
-                    {diplome.year || diplome.school ? (
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {[diplome.year, diplome.school]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                    ) : null}
-                  </article>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Aucun diplôme renseigné
-                </p>
-              )}
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-input bg-white p-6">
-            <h3 className="text-xl font-semibold text-foreground">Portfolio</h3>
-            {profil.portfolio.length > 0 ? (
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {profil.portfolio.map((imagePath) => (
-                  <div
-                    key={imagePath}
-                    className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted"
-                  >
-                    <Image
-                      src={getUrl(imagePath)}
-                      alt="Portfolio Renford"
-                      fill
-                      className="object-cover"
-                    />
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <p className="text-sm text-muted-foreground">-</p>
+                )}
               </div>
-            ) : (
-              <p className="mt-4 text-sm text-muted-foreground">
-                Aucun élément de portfolio
-              </p>
-            )}
-          </section>
+
+              {/* Certifications & Formations */}
+              <div className="bg-white rounded-3xl border border-input p-6 space-y-4">
+                <h3 className="text-2xl font-semibold">
+                  Certifications & Formations
+                </h3>
+                {profil.renfordDiplomes.length > 0 ? (
+                  <div className="space-y-3">
+                    {profil.renfordDiplomes.map((diplome) => (
+                      <a
+                        key={diplome.id}
+                        href={
+                          diplome.justificatifDiplomeChemin
+                            ? getUrl(diplome.justificatifDiplomeChemin)
+                            : undefined
+                        }
+                        target={
+                          diplome.justificatifDiplomeChemin
+                            ? "_blank"
+                            : undefined
+                        }
+                        rel={
+                          diplome.justificatifDiplomeChemin
+                            ? "noopener noreferrer"
+                            : undefined
+                        }
+                        className="rounded-2xl border border-input p-4 flex items-center justify-between gap-3"
+                        aria-disabled={!diplome.justificatifDiplomeChemin}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <Award className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm truncate">
+                              {DIPLOME_LABELS[diplome.typeDiplome] ??
+                                diplome.typeDiplome}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {[
+                                diplome.anneeObtention
+                                  ? `Obtenu en ${diplome.anneeObtention}`
+                                  : null,
+                                diplome.etablissementFormation,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ") || "Année non renseignée"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {diplome.justificatifDiplomeChemin && (
+                          <Eye className="h-4 w-4 text-muted-foreground shrink-0" />
+                        )}
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">-</p>
+                )}
+              </div>
+
+              {/* Portfolio */}
+              <div className="bg-white rounded-3xl border border-input p-6 space-y-4">
+                <h3 className="text-2xl font-semibold">
+                  Portfolio & réalisations
+                </h3>
+                {profil.portfolio.length > 0 ? (
+                  <div className="px-8">
+                    <Carousel opts={{ loop: true }}>
+                      <CarouselContent>
+                        {profil.portfolio.map((imagePath, index) => (
+                          <CarouselItem
+                            key={`${imagePath}-${index}`}
+                            className="basis-full"
+                          >
+                            <div className="relative w-full max-w-xl mx-auto aspect-[4/3] overflow-hidden rounded-2xl border border-input bg-muted/30">
+                              <Image
+                                src={getUrl(imagePath)}
+                                alt={`Portfolio ${index + 1}`}
+                                fill
+                                sizes="(max-width: 768px) 90vw, 640px"
+                                className="object-cover"
+                              />
+                            </div>
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious className="left-0" />
+                      <CarouselNext className="right-0" />
+                    </Carousel>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">-</p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

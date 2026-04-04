@@ -64,6 +64,7 @@ export const formatAmount = (
 export const formatFrenchDate = (
   value: Date | string | null | undefined,
   fallback = "-",
+  year: "2-digit" | "numeric" = "2-digit",
 ) => {
   if (!value) return fallback;
 
@@ -73,8 +74,20 @@ export const formatFrenchDate = (
   return new Intl.DateTimeFormat("fr-FR", {
     day: "2-digit",
     month: "2-digit",
-    year: "2-digit",
+    year,
   }).format(date);
+};
+
+export const formatYear = (
+  value: Date | string | null | undefined,
+  fallback = "-",
+) => {
+  if (!value) return fallback;
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+
+  return date.getFullYear().toString();
 };
 
 export const formatDurationHours = (

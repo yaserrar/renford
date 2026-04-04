@@ -66,7 +66,14 @@ export type Mission = {
 export type MissionEtablissement = Mission & {
   PlageHoraireMission?: PlageHoraireMission[];
   etablissement?: Etablissement;
-
+  renfordAssigne?: {
+    id: string;
+    avatarChemin: string | null;
+    titreProfil: string | null;
+    noteMoyenne: number | null;
+    nom: string;
+    prenom: string;
+  } | null;
   totalHours?: number;
 };
 

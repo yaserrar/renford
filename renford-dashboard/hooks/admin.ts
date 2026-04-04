@@ -7,6 +7,10 @@ import type {
   ContactMessage,
 } from "@/types/admin";
 import type {
+  NotificationsPaginatedResponse,
+  UnreadNotificationsCountResponse,
+} from "@/types/notification";
+import type {
   CreateAdminSchema,
   UpdateAdminPasswordSchema,
   UpdateAdminSchema,
@@ -206,6 +210,74 @@ export const useMarkContactMessageTraite = () => {
       qc.invalidateQueries({ queryKey: ["admin-contact-messages"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
       toast.success("Message marqué comme traité");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+};
+
+// ─── Admin notifications ───────────────────────────────────
+
+export const useAdminNotifications = (page = 1, limit = 10) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["admin-notifications", page, limit],
+    queryFn: async () => {
+      return (
+        await axios.get("/admin/notifications", { params: { page, limit } })
+      ).data as NotificationsPaginatedResponse;
+    },
+    staleTime: 1000 * 20,
+  });
+};
+
+export const useAdminUnreadNotificationsCount = () => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["admin-notifications-unread-count"],
+    queryFn: async () => {
+      return (await axios.get("/admin/notifications/unread-count"))
+        .data as UnreadNotificationsCountResponse;
+    },
+    staleTime: 1000 * 15,
+    refetchInterval: 1000 * 30,
+  });
+};
+
+export const useMarkAdminNotificationRead = () => {
+  const axios = useAxios();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (notificationId: string) => {
+      return (await axios.patch(`/admin/notifications/${notificationId}/read`))
+        .data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-notifications"] });
+      qc.invalidateQueries({ queryKey: ["admin-notifications-unread-count"] });
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+};
+
+export const useMarkAllAdminNotificationsRead = () => {
+  const axios = useAxios();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      return (await axios.patch("/admin/notifications/read-all")).data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-notifications"] });
+      qc.invalidateQueries({ queryKey: ["admin-notifications-unread-count"] });
+      toast.success("Notifications marquées comme lues");
     },
     onError: (error) => {
       toast.error(getErrorMessage(error));

@@ -5,8 +5,9 @@ import { useAdmins } from "@/hooks/admin";
 import { useCurrentUser } from "@/hooks/utilisateur";
 import { formatDate, formatTime } from "@/lib/date";
 import type { AdminListItem } from "@/types/admin";
-import { KeyRound, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import CenterState from "@/components/common/center-state";
 import CreateAdminDialog from "./create-admin-dialog";
 import DeleteAdminDialog from "./delete-admin-dialog";
 import EditAdminDialog from "./edit-admin-dialog";
@@ -37,15 +38,18 @@ export default function AdminsPage() {
 
         {/* Table */}
         {isLoading ? (
-          <div className="flex h-[300px] items-center justify-center rounded-2xl bg-white">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
+          <CenterState
+            title="Chargement"
+            description="Nous récupérons la liste des administrateurs."
+            isLoading
+            className="min-h-[300px] rounded-2xl"
+          />
         ) : admins.length === 0 ? (
-          <div className="flex h-[300px] items-center justify-center rounded-2xl bg-white">
-            <p className="text-sm text-muted-foreground">
-              Aucun administrateur
-            </p>
-          </div>
+          <CenterState
+            title="Aucun administrateur"
+            description="Ajoutez un administrateur pour commencer."
+            className="min-h-[300px] rounded-2xl"
+          />
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-border bg-white">
             <table className="w-full">

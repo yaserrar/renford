@@ -1,8 +1,9 @@
 "use client";
 
-import { CalendarDays, Clock3, User } from "lucide-react";
+import { CalendarDays, Clock3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import MissionStatusBadge from "@/components/common/mission-status-badge";
 import { MissionEtablissement, StatutMission } from "@/types/mission";
 import {
@@ -11,10 +12,11 @@ import {
   METHODE_TARIFICATION_SUFFIXES,
 } from "@/validations/mission";
 import {
-  cn,
   formatAmount,
   formatDurationHours,
   formatFrenchDate,
+  getInitials,
+  getUrl,
 } from "@/lib/utils";
 
 type EtablissementMissionCardProps = {
@@ -34,6 +36,18 @@ export default function EtablissementMissionCard({
     DISCIPLINE_MISSION_LABELS[mission.discipline] ?? "Mission";
   const isEnRecherche = EN_RECHERCHE_STATUSES.includes(mission.statut);
   const horaires = mission.PlageHoraireMission ?? [];
+
+  // Avatar logic: show renford avatar if assigned, otherwise etablissement avatar
+  const renford = mission.renfordAssigne;
+  const avatarSrc = renford
+    ? getUrl(renford.avatarChemin)
+    : getUrl(mission.etablissement?.avatarChemin);
+  const avatarInitials = renford
+    ? getInitials(`${renford.prenom} ${renford.nom}`)
+    : getInitials(mission.etablissement?.nom);
+  const avatarSubtext = renford
+    ? `${renford.prenom} ${renford.nom}`
+    : "Aucun renford assigné";
 
   const computedTotalHours = horaires.reduce((acc, slot) => {
     const [startHour, startMinute] = slot.heureDebut.split(":").map(Number);
@@ -74,25 +88,18 @@ export default function EtablissementMissionCard({
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="">
           <div className="flex min-w-0 items-center gap-3">
-            <div
-              className={cn(
-                "mt-0.5 inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-sm font-medium",
-                isEnRecherche
-                  ? "bg-muted text-muted-foreground"
-                  : "bg-secondary/10 text-secondary-dark",
-              )}
-              aria-hidden
-            >
-              <User className="h-6 w-6" />
-            </div>
+            <Avatar className="h-16 w-16 shrink-0">
+              <AvatarImage src={avatarSrc} alt={avatarSubtext} />
+              <AvatarFallback className="bg-secondary/10 text-secondary-dark text-sm font-medium">
+                {avatarInitials}
+              </AvatarFallback>
+            </Avatar>
 
             <div className="min-w-0 space-y-1">
               <p className="text-xl leading-tight font-semibold text-foreground">
                 {missionTitle}
               </p>
-              <p className="text-base text-muted-foreground">
-                {isEnRecherche ? "Aucun renford assigné" : "Renford assigné"}
-              </p>
+              <p className="text-base text-muted-foreground">{avatarSubtext}</p>
             </div>
           </div>
           <div className="pt-2 text-sm text-gray-600">
