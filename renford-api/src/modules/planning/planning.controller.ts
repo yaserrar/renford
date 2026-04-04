@@ -5,7 +5,11 @@ import type { RepetitionIndisponibilite } from '@prisma/client';
 export const getEtablissementPlanning = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.userId!;
-    const { from, to, etablissementId } = req.query;
+    const { from, to, etablissementId } = req.query as {
+      from?: string;
+      to?: string;
+      etablissementId?: string;
+    };
 
     const profilEtablissement = await prisma.profilEtablissement.findUnique({
       where: { utilisateurId: userId },
@@ -165,7 +169,7 @@ const getMissionTotalHours = (slots: Array<{ heureDebut: string; heureFin: strin
 export const getRenfordPlanning = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.userId!;
-    const { from, to } = req.query;
+    const { from, to } = req.query as { from?: string; to?: string };
 
     const profilRenford = await prisma.profilRenford.findUnique({
       where: { utilisateurId: userId },
@@ -312,7 +316,7 @@ export const createIndisponibilite = async (req: Request, res: Response, next: N
 export const deleteIndisponibilite = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.userId!;
-    const { indisponibiliteId } = req.params;
+    const { indisponibiliteId } = req.params as { indisponibiliteId: string };
 
     const profilRenford = await prisma.profilRenford.findUnique({
       where: { utilisateurId: userId },

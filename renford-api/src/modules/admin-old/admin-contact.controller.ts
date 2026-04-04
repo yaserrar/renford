@@ -28,7 +28,7 @@ export const getContactMessages = async (_req: Request, res: Response, next: Nex
 // PUT /admin/contact-messages/:messageId/traiter - Marquer un message comme traité
 export const markContactMessageTraite = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { messageId } = req.params;
+    const { messageId } = req.params as { messageId: string };
 
     const message = await prisma.messageContact.findUnique({ where: { id: messageId } });
     if (!message) {
