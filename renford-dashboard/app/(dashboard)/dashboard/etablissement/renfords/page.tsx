@@ -98,13 +98,14 @@ export default function MesRenfordsPage() {
               />
             )}
 
-            {!dernieresMissionsQuery.isLoading && derniersRenfords.length === 0 && (
-              <CenterState
-                className="border-0"
-                title="Aucun renford récent"
-                description="Vous verrez ici les renfords avec lesquels vous avez terminé des missions."
-              />
-            )}
+            {!dernieresMissionsQuery.isLoading &&
+              derniersRenfords.length === 0 && (
+                <CenterState
+                  className="border-0"
+                  title="Aucun renford récent"
+                  description="Vous verrez ici les renfords avec lesquels vous avez terminé des missions."
+                />
+              )}
 
             {derniersRenfords.length > 0 && (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -118,7 +119,9 @@ export default function MesRenfordsPage() {
                       key={renford.id}
                       className="flex flex-col items-center rounded-2xl border border-input bg-white px-6 py-6"
                     >
-                      <Link href={`/dashboard/etablissement/renfords/${renford.id}`}>
+                      <Link
+                        href={`/dashboard/etablissement/renfords/${renford.id}`}
+                      >
                         <Avatar className="h-20 w-20 border-2 border-input">
                           <AvatarImage
                             src={
@@ -134,7 +137,9 @@ export default function MesRenfordsPage() {
                         </Avatar>
                       </Link>
 
-                      <Link href={`/dashboard/etablissement/renfords/${renford.id}`}>
+                      <Link
+                        href={`/dashboard/etablissement/renfords/${renford.id}`}
+                      >
                         <p className="mt-3 text-base font-semibold text-foreground">
                           {fullName}
                         </p>
@@ -149,8 +154,14 @@ export default function MesRenfordsPage() {
                         </p>
                       )}
 
-                      <Button asChild variant="secondary" className="mt-4 rounded-full w-full">
-                        <Link href={`/dashboard/etablissement/renfords/${renford.id}`}>
+                      <Button
+                        asChild
+                        variant="secondary"
+                        className="mt-4 rounded-full w-full"
+                      >
+                        <Link
+                          href={`/dashboard/etablissement/renfords/${renford.id}`}
+                        >
                           Voir le profil
                         </Link>
                       </Button>
@@ -201,7 +212,9 @@ export default function MesRenfordsPage() {
                         key={filleul.id}
                         className="flex flex-col items-center rounded-2xl border border-input bg-white px-6 py-6"
                       >
-                        <Link href={`/dashboard/etablissement/renfords/${profil.id}`}>
+                        <Link
+                          href={`/dashboard/etablissement/renfords/${profil.id}`}
+                        >
                           <Avatar className="h-20 w-20 border-2 border-input">
                             <AvatarImage
                               src={
@@ -234,7 +247,9 @@ export default function MesRenfordsPage() {
                           variant="secondary"
                           className="mt-4 rounded-full w-full"
                         >
-                          <Link href={`/dashboard/etablissement/renfords/${profil.id}`}>
+                          <Link
+                            href={`/dashboard/etablissement/renfords/${profil.id}`}
+                          >
                             Voir le profil
                           </Link>
                         </Button>
