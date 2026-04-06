@@ -403,13 +403,6 @@ export const updateRenfordQualificationsSchema = z
 
 export type UpdateRenfordQualificationsSchema = z.infer<typeof updateRenfordQualificationsSchema>;
 
-// Schéma pour les infos bancaires Renford (étape 6)
-export const updateRenfordBancaireSchema = z.object({
-  iban: z.string().min(14, 'IBAN invalide').max(34, 'IBAN invalide'),
-});
-
-export type UpdateRenfordBancaireSchema = z.infer<typeof updateRenfordBancaireSchema>;
-
 const CRENEAUX_DISPONIBILITE = ['matin', 'midi', 'apres_midi', 'soir'] as const;
 const disponibilitesJourSchema = z.array(z.enum(CRENEAUX_DISPONIBILITE));
 

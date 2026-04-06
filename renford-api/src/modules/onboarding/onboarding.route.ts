@@ -25,7 +25,6 @@ import {
   updateRenfordIdentiteSchema,
   updateRenfordProfilSchema,
   updateRenfordQualificationsSchema,
-  updateRenfordBancaireSchema,
   updateRenfordDisponibilitesSchema,
 } from './onboarding.schema';
 
@@ -88,12 +87,8 @@ router.put(
   updateRenfordQualifications,
 );
 
-// PUT /onboarding/renford/bancaire - Étape 6: Infos bancaires Renford
-router.put(
-  '/renford/bancaire',
-  validateResource(updateRenfordBancaireSchema),
-  updateRenfordBancaire,
-);
+// PUT /onboarding/renford/bancaire - Étape 6: Configuration Stripe Connect
+router.put('/renford/bancaire', updateRenfordBancaire);
 
 // PUT /onboarding/renford/disponibilites - Étape 7: Disponibilités Renford
 router.put(

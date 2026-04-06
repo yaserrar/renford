@@ -145,6 +145,9 @@ model ProfilEtablissement {
     codePostalSiege        String?
     villeSiege             String?
 
+    // Stripe Customer
+    stripeCustomerId String? @unique
+
     // Métadonnées
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
@@ -297,8 +300,9 @@ model ProfilRenford {
     proposeDemiJournee Boolean  @default(false)
     tarifDemiJournee   Decimal? @db.Decimal(8, 2)
 
-    // Informations bancaires (étape 6)
-    iban String?
+    // Stripe Connect
+    stripeConnectAccountId          String?  @unique
+    stripeConnectOnboardingComplete Boolean  @default(false)
 
     // Disponibilité (étape 7)
     disponibilitesLundi    CreneauDisponibilite[] @default([])
@@ -565,38 +569,18 @@ model Mission {
 
     methodeTarification MethodeTarification @default(horaire)
     tarif               Decimal?            @db.Decimal(10, 2) // Tarif horaire, journalier ou demi-journalier selon la méthode de tarification
+    montantHT           Decimal?            @db.Decimal(10, 2) // Montant HT stocké au moment de la création
+    montantFraisService Decimal?            @db.Decimal(10, 2) // Frais de service Renford
+    montantTTC          Decimal?            @db.Decimal(10, 2) // Total facturé à l'établissement (HT + frais)
 
     pourcentageVariationTarif Decimal? @db.Decimal(5, 2) // Pourcentage de variation du tarif en fonction de l'expérience du Renford (ex: +20% pour un expert)
-
-    //-----------------------------------
-
-    typePaiement TypePaiement @default(carte_bancaire)
-
-    //---------
-
-    titulaireCarteBancaire String? // Nom du titulaire de la carte bancaire (pour paiement par carte)
-    numeroCarteBancaire    String? // Numéro de la carte bancaire (pour paiement par carte)
-    dateExpirationCarte    String? // Date d'expiration de la carte bancaire (MM/AA) (pour paiement par carte)
-    cvvCarte               String? // CVV de la carte bancaire (pour paiement par carte)
-
-    autorisationDebit     Boolean   @default(false) // Autorisation de débiter la carte bancaire (pour paiement par carte)
-    dateAutorisationDebit DateTime? // Date à laquelle la carte bancaire a été autorisée pour le débit (pour paiement par carte)
-
-    //---------
-
-    titulaireCompteBancaire String? // Nom du titulaire du compte bancaire (pour paiement par prélèvement SEPA)
-    IBANCompteBancaire      String? // IBAN du compte bancaire (pour paiement par prélèvement SEPA)
-    BICCompteBancaire       String? // BIC du compte bancaire (pour paiement par prélèvement SEPA)
-
-    autorisationPrelevement     Boolean   @default(false) // Autorisation de prélèvement SEPA (pour paiement par prélèvement SEPA)
-    dateAutorisationPrelevement DateTime? // Date à laquelle le prélèvement SEPA a été autorisé (pour paiement par prélèvement SEPA)
-
 
    // Métadonnées
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt 
 
     missionsRenford MissionRenford[]
+    paiements       Paiement[]
 
     @@index([etablissementId])
     @@index([statut])
@@ -654,11 +638,6 @@ enum MethodeTarification {
     horaire
     journee
     demi_journee
-}
-
-enum TypePaiement {
-    carte_bancaire
-    prelevement_sepa
 }
 
 // ============================================================================
@@ -1090,6 +1069,56 @@ enum SourceNotification {
 //     absence_non_prevue
 //     autre
 // }
+
+// ============================================================================
+// TABLE: Paiements (Stripe Connect)
+// ============================================================================
+
+model Paiement {
+    id        String @id @default(uuid())
+    reference String @unique @default(uuid())
+
+    missionId String
+    mission   Mission @relation(fields: [missionId], references: [id])
+
+    // Montants
+    montantHT         Decimal @db.Decimal(10, 2)
+    montantTVA        Decimal @db.Decimal(10, 2)
+    montantTTC        Decimal @db.Decimal(10, 2)
+    montantCommission Decimal @db.Decimal(10, 2)
+    montantNetRenford Decimal @db.Decimal(10, 2)
+
+    statut StatutPaiement @default(en_attente)
+
+    // Intégration Stripe
+    stripePaymentIntentId  String? @unique
+    stripeCheckoutSessionId String? @unique
+    stripeChargeId         String?
+    stripeTransferId       String? // Transfer vers le compte Connect du Renford
+
+    // Dates
+    dateCreation   DateTime  @default(now())
+    dateCapture    DateTime? // Quand les fonds sont capturés
+    dateLiberation DateTime? // Quand les fonds sont transférés au Renford
+
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([missionId])
+    @@index([statut])
+    @@index([stripePaymentIntentId])
+    @@index([stripeCheckoutSessionId])
+    @@map("paiements")
+}
+
+enum StatutPaiement {
+    en_attente
+    en_cours
+    bloque // Fonds bloqués en attente de validation
+    libere // Fonds libérés au Renford
+    rembourse
+    echoue
+    conteste
+}
 
 // enum MotifAjustementDuree {
 //     retard_demarrage

@@ -2,11 +2,11 @@ import { Router } from 'express';
 import { authenticateToken } from '../../middleware/auth.middleware';
 import { validateResource } from '../../middleware/validate.resource';
 import {
+  activatePendingMissions,
   cancelMissionByEtablissement,
   clotureMissionByEtablissement,
   createMission,
   downloadMissionDocumentByEtablissement,
-  finalizeMissionPayment,
   getEtablissementMissionDetails,
   getEtablissementMissions,
   getEtablissementPendingMissionsCount,
@@ -17,7 +17,6 @@ import {
 } from './missions.controller';
 import {
   createMissionSchema,
-  finalizeMissionPaymentSchema,
   getEtablissementMissionsQuerySchema,
   missionDocumentParamsSchema,
   missionIdParamsSchema,
@@ -32,6 +31,12 @@ router.get(
   '/etablissement/missions/pending-count',
   authenticateToken(['etablissement']),
   getEtablissementPendingMissionsCount,
+);
+
+router.post(
+  '/etablissement/missions/activate-pending',
+  authenticateToken(['etablissement']),
+  activatePendingMissions,
 );
 
 router.get(
@@ -74,13 +79,6 @@ router.post(
   authenticateToken(['etablissement']),
   validateResource(createMissionSchema),
   createMission,
-);
-
-router.post(
-  '/etablissement/missions/:missionId/paiement',
-  authenticateToken(['etablissement']),
-  validateResource({ params: missionIdParamsSchema, body: finalizeMissionPaymentSchema }),
-  finalizeMissionPayment,
 );
 
 router.post(

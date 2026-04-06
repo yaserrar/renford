@@ -19,6 +19,11 @@ const EnvSchema = z.object({
   EMAIL_HOST_PASSWORD: z.string().optional(),
   RESEND_API_KEY: z.string({ required_error: 'RESEND_API_KEY is required' }),
   PLATFORM_URL: z.string().url().default('https://test.renford.store'),
+
+  // Stripe
+  STRIPE_SECRET_KEY: z.string({ required_error: 'STRIPE_SECRET_KEY is required' }),
+  STRIPE_WEBHOOK_SECRET: z.string({ required_error: 'STRIPE_WEBHOOK_SECRET is required' }),
+  STRIPE_COMMISSION_PERCENT: z.coerce.number().min(0).max(100).default(15),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

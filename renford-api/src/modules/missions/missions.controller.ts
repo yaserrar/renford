@@ -6,6 +6,7 @@ import { env } from '../../config/env';
 import { logger } from '../../config/logger';
 import { getMissionDemandeConfirmeeEmail } from '../../config/email-templates';
 import { saveSignatureDataUrl } from '../../utils/signature-storage';
+import { computeMissionPricing } from '../../lib/mission-pricing';
 import {
   registerEtablissementMissionRenfordResponse,
   syncMissionMatches,
@@ -19,7 +20,6 @@ import { getTypeMissionLabel } from './missions.schema';
 import type {
   CreateMissionSchema,
   EtablissementMissionsTab,
-  FinalizeMissionPaymentSchema,
   GetEtablissementMissionsQuerySchema,
   MissionDocumentParamsSchema,
   MissionIdParamsSchema,
@@ -276,6 +276,7 @@ export const createMission = async (
       where: { utilisateurId: userId },
       select: {
         id: true,
+        stripeCustomerId: true,
         etablissements: {
           select: {
             id: true,
@@ -303,9 +304,20 @@ export const createMission = async (
       return res.status(400).json({ message: 'Le tarif ne peut pas dépasser 99 999 999,99' });
     }
 
+    const missionStatut = profilEtablissement.stripeCustomerId
+      ? 'en_recherche'
+      : 'ajouter_mode_paiement';
+
+    const pricing = computeMissionPricing({
+      plagesHoraires: req.body.plagesHoraires,
+      methodeTarification: req.body.methodeTarification,
+      tarif: normalizedTarif,
+      commissionPercent: env.STRIPE_COMMISSION_PERCENT,
+    });
+
     const mission = await prisma.mission.create({
       data: {
-        statut: 'en_recherche',
+        statut: missionStatut,
         modeMission: req.body.modeMission,
         discipline: req.body.discipline,
         specialitePrincipale: req.body.specialitePrincipale,
@@ -319,6 +331,9 @@ export const createMission = async (
         dateFin: req.body.dateFin,
         methodeTarification: req.body.methodeTarification,
         tarif: normalizedTarif,
+        montantHT: pricing.montantHT,
+        montantFraisService: pricing.montantFraisService,
+        montantTTC: pricing.montantTTC,
         pourcentageVariationTarif: req.body.pourcentageVariationTarif,
         PlageHoraireMission: {
           createMany: {
@@ -367,7 +382,9 @@ export const createMission = async (
     }
 
     try {
-      await syncMissionMatches(mission.id);
+      if (missionStatut === 'en_recherche') {
+        await syncMissionMatches(mission.id);
+      }
     } catch (matchingError) {
       logger.error(
         { err: matchingError, missionId: mission.id },
@@ -381,80 +398,89 @@ export const createMission = async (
   }
 };
 
-export const finalizeMissionPayment = async (
-  req: Request<MissionIdParamsSchema, unknown, FinalizeMissionPaymentSchema>,
-  res: Response,
-  next: NextFunction,
-) => {
+// ─── Établissement: Activate missions pending payment setup ──────────────────
+
+export const activatePendingMissions = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.userId!;
 
-    const mission = await prisma.mission.findFirst({
-      where: {
-        id: req.params.missionId,
-        etablissement: {
-          profilEtablissement: {
-            utilisateurId: userId,
-          },
-        },
-      },
-    });
-
-    if (!mission) {
-      return res.status(404).json({ message: 'Mission non trouvée' });
-    }
-
-    if (mission.statut === 'annulee' || mission.statut === 'archivee') {
-      return res.status(400).json({ message: 'Cette mission ne peut plus être payée' });
-    }
-
-    const now = new Date();
-
-    const paymentData =
-      req.body.typePaiement === 'carte_bancaire'
-        ? {
-            typePaiement: 'carte_bancaire' as const,
-            titulaireCarteBancaire: req.body.titulaireCarteBancaire,
-            numeroCarteBancaire: req.body.numeroCarteBancaire,
-            dateExpirationCarte: req.body.dateExpirationCarte,
-            cvvCarte: req.body.cvvCarte,
-            autorisationDebit: true,
-            dateAutorisationDebit: now,
-            titulaireCompteBancaire: null,
-            IBANCompteBancaire: null,
-            BICCompteBancaire: null,
-            autorisationPrelevement: false,
-            dateAutorisationPrelevement: null,
-          }
-        : {
-            typePaiement: 'prelevement_sepa' as const,
-            titulaireCompteBancaire: req.body.titulaireCompteBancaire,
-            IBANCompteBancaire: req.body.IBANCompteBancaire,
-            BICCompteBancaire: req.body.BICCompteBancaire,
-            autorisationPrelevement: true,
-            dateAutorisationPrelevement: now,
-            titulaireCarteBancaire: null,
-            numeroCarteBancaire: null,
-            dateExpirationCarte: null,
-            cvvCarte: null,
-            autorisationDebit: false,
-            dateAutorisationDebit: null,
-          };
-
-    const updatedMission = await prisma.mission.update({
-      where: { id: mission.id },
-      data: {
-        ...paymentData,
-        statut: 'en_recherche',
-      },
+    const profilEtablissement = await prisma.profilEtablissement.findUnique({
+      where: { utilisateurId: userId },
       select: {
         id: true,
-        statut: true,
-        typePaiement: true,
+        stripeCustomerId: true,
+        raisonSociale: true,
+        utilisateur: { select: { email: true, nom: true, prenom: true } },
+        etablissements: { select: { id: true } },
       },
     });
 
-    return res.json(updatedMission);
+    if (!profilEtablissement) {
+      return res.status(404).json({ message: 'Profil établissement non trouvé' });
+    }
+
+    // Create Stripe Customer if it doesn't exist
+    if (!profilEtablissement.stripeCustomerId) {
+      const { stripe } = await import('../../config/stripe.js');
+      const user = profilEtablissement.utilisateur;
+
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: profilEtablissement.raisonSociale || `${user.prenom} ${user.nom}`.trim(),
+        metadata: {
+          profilEtablissementId: profilEtablissement.id,
+          utilisateurId: userId,
+        },
+      });
+
+      await prisma.profilEtablissement.update({
+        where: { id: profilEtablissement.id },
+        data: { stripeCustomerId: customer.id },
+      });
+    }
+
+    // Find all missions in ajouter_mode_paiement for this établissement
+    const etablissementIds = profilEtablissement.etablissements.map((e) => e.id);
+
+    const pendingMissions = await prisma.mission.findMany({
+      where: {
+        etablissementId: { in: etablissementIds },
+        statut: 'ajouter_mode_paiement',
+      },
+      select: { id: true },
+    });
+
+    if (pendingMissions.length === 0) {
+      return res.json({ activated: 0 });
+    }
+
+    // Transition all to en_recherche
+    await prisma.mission.updateMany({
+      where: {
+        id: { in: pendingMissions.map((m) => m.id) },
+        statut: 'ajouter_mode_paiement',
+      },
+      data: { statut: 'en_recherche' },
+    });
+
+    // Sync matches for each activated mission
+    for (const mission of pendingMissions) {
+      try {
+        await syncMissionMatches(mission.id);
+      } catch (matchingError) {
+        logger.error(
+          { err: matchingError, missionId: mission.id },
+          'Échec du matching après activation de mission',
+        );
+      }
+    }
+
+    logger.info(
+      { userId, count: pendingMissions.length },
+      'Missions activées après configuration paiement',
+    );
+
+    return res.json({ activated: pendingMissions.length });
   } catch (err) {
     return next(err);
   }

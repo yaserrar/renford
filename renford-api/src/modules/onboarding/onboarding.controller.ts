@@ -17,7 +17,6 @@ import type {
   UpdateRenfordIdentiteSchema,
   UpdateRenfordProfilSchema,
   UpdateRenfordQualificationsSchema,
-  UpdateRenfordBancaireSchema,
   UpdateRenfordDisponibilitesSchema,
 } from './onboarding.schema';
 
@@ -677,12 +676,8 @@ export const updateRenfordQualifications = async (
   }
 };
 
-// PUT /onboarding/renford/bancaire - Étape 6: Infos bancaires Renford
-export const updateRenfordBancaire = async (
-  req: Request<unknown, unknown, UpdateRenfordBancaireSchema>,
-  res: Response,
-  next: NextFunction,
-) => {
+// PUT /onboarding/renford/bancaire - Étape 6: Configuration Stripe Connect
+export const updateRenfordBancaire = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.userId;
 
@@ -690,16 +685,8 @@ export const updateRenfordBancaire = async (
       return res.status(401).json({ message: 'Utilisateur non authentifié' });
     }
 
-    const { iban } = req.body;
-
-    const profilRenford = await prisma.profilRenford.update({
-      where: { utilisateurId: userId },
-      data: {
-        iban,
-      },
-    });
-
-    // Mettre à jour l'étape d'onboarding
+    // Simply advance the onboarding step — Stripe Connect
+    // onboarding is handled via the /paiement/connect/onboarding endpoint
     await prisma.utilisateur.update({
       where: { id: userId },
       data: {
@@ -707,7 +694,7 @@ export const updateRenfordBancaire = async (
       },
     });
 
-    return res.json(profilRenford);
+    return res.json({ message: 'Étape 6 validée' });
   } catch (err) {
     return next(err);
   }

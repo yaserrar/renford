@@ -15,6 +15,7 @@ import parrainageRouter from '../modules/parrainage/parrainage.route';
 import planningRouter from '../modules/planning/planning.route';
 import contactRouter from '../modules/contact/contact.route';
 import notificationsRouter from '../modules/notifications/notifications.route';
+import paiementRouter from '../modules/paiement/paiement.route';
 import adminAdministrateursRouter from '../modules-admin/administrateurs/admin.route';
 import adminUtilisateursRouter from '../modules-admin/utilisateurs/utilisateur.route';
 import adminStatistiquesRouter from '../modules-admin/statistiques/statistiques.route';
@@ -38,6 +39,7 @@ router.use('/', parrainageRouter);
 router.use('/', planningRouter);
 router.use('/', contactRouter);
 router.use('/', notificationsRouter);
+router.use('/', paiementRouter);
 
 // ── Admin modules ───────────────────────────────────────────
 router.use('/', adminAdministrateursRouter);
