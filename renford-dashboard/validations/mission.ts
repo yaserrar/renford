@@ -82,16 +82,6 @@ export const METHODE_TARIFICATION_SUFFIXES: Record<
   demi_journee: "/demi-jour",
 };
 
-export const TYPE_PAIEMENT = ["carte_bancaire", "prelevement_sepa"] as const;
-
-export const TYPE_PAIEMENT_LABELS: Record<
-  (typeof TYPE_PAIEMENT)[number],
-  string
-> = {
-  carte_bancaire: "Carte Bancaire (Empreinte)",
-  prelevement_sepa: "Prélèvement SEPA",
-};
-
 export const DISCIPLINE_MISSION = [
   "pilates",
   "yoga",
@@ -512,51 +502,6 @@ export const createMissionPayloadSchema = createMissionFormSchema.transform(
   }),
 );
 
-const cardPaymentSchema = z.object({
-  typePaiement: z.literal("carte_bancaire"),
-  titulaireCarteBancaire: z
-    .string({ required_error: "Le titulaire de la carte est requis" })
-    .min(2, "Le titulaire de la carte est requis"),
-  numeroCarteBancaire: z
-    .string({ required_error: "Le numéro de carte est requis" })
-    .regex(
-      /^\d{13,19}$/,
-      "Le numéro de carte doit contenir entre 13 et 19 chiffres",
-    ),
-  dateExpirationCarte: z
-    .string({ required_error: "La date d'expiration est requise" })
-    .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Format attendu: MM/AA"),
-  cvvCarte: z
-    .string({ required_error: "Le CVC est requis" })
-    .regex(/^\d{3,4}$/, "Le CVC doit contenir 3 ou 4 chiffres"),
-  autorisationDebit: z.literal(true, {
-    errorMap: () => ({ message: "Veuillez autoriser le débit pour continuer" }),
-  }),
-});
-
-const sepaPaymentSchema = z.object({
-  typePaiement: z.literal("prelevement_sepa"),
-  titulaireCompteBancaire: z
-    .string({ required_error: "Le titulaire du compte est requis" })
-    .min(2, "Le titulaire du compte est requis"),
-  IBANCompteBancaire: z
-    .string({ required_error: "L'IBAN est requis" })
-    .regex(/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/, "IBAN invalide"),
-  BICCompteBancaire: z
-    .string({ required_error: "Le BIC/SWIFT est requis" })
-    .regex(/^[A-Z0-9]{8,11}$/, "BIC/SWIFT invalide"),
-  autorisationPrelevement: z.literal(true, {
-    errorMap: () => ({
-      message: "Veuillez autoriser le prélèvement pour continuer",
-    }),
-  }),
-});
-
-export const finalizeMissionPaymentSchema = z.discriminatedUnion(
-  "typePaiement",
-  [cardPaymentSchema, sepaPaymentSchema],
-);
-
 export const getSpecialitesOptionsByDiscipline = (
   discipline: (typeof DISCIPLINE_MISSION)[number] | undefined,
 ) => {
@@ -574,7 +519,4 @@ export type CreateMissionStep3Schema = z.infer<typeof createMissionStep3Schema>;
 export type CreateMissionFormSchema = z.infer<typeof createMissionFormSchema>;
 export type CreateMissionPayloadSchema = z.infer<
   typeof createMissionPayloadSchema
->;
-export type FinalizeMissionPaymentSchema = z.infer<
-  typeof finalizeMissionPaymentSchema
 >;

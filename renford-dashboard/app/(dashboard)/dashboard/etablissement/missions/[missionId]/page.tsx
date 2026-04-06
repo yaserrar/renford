@@ -1,9 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { Video, CalendarDays, Clock3, Ellipsis, MapPin } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+  Video,
+  CalendarDays,
+  Clock3,
+  Ellipsis,
+  MapPin,
+  CreditCard,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
 import DetailRow from "@/components/common/detail-row";
 import DocumentCategoryCard from "@/components/common/document-category-card";
 import MissionStatusBadge from "@/components/common/mission-status-badge";
@@ -25,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  useActivatePendingMissions,
   useCancelMissionByEtablissement,
   useClotureMissionByEtablissement,
   useDownloadMissionDocumentByEtablissement,
@@ -34,6 +44,11 @@ import {
   useSignAttestationByEtablissement,
   useSignContractByEtablissement,
 } from "@/hooks/mission";
+import {
+  useCreateCheckoutSession,
+  useMissionPaymentStatus,
+} from "@/hooks/paiement";
+import { STATUT_PAIEMENT_LABELS } from "@/validations/paiement";
 import { formatWeekdayDayMonth } from "@/lib/date";
 import {
   formatAmount,
@@ -47,8 +62,11 @@ import {
   MATERIELS_MISSION_LABELS,
   METHODE_TARIFICATION_SUFFIXES,
   NIVEAU_EXPERIENCE_MISSION_LABELS,
+  SPECIALITES_BY_DISCIPLINE,
 } from "@/validations/mission";
 import { STATUT_MISSION_RENFORD_LABELS } from "@/validations/mission-renford";
+import { PLATFORM_COMMISSION_PERCENT } from "@/lib/env";
+import { TYPE_MISSION_LABELS } from "@/validations/profil-renford";
 
 function formatTimeRange(value: string, fallback = "-") {
   const [hours, minutes] = value.split(":").map(Number);
@@ -62,15 +80,19 @@ function formatTimeRange(value: string, fallback = "-") {
 export default function EtablissementMissionDetailsPage() {
   const { missionId } = useParams<{ missionId: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const missionQuery = useEtablissementMissionDetails(missionId);
   const respondMutation = useRespondToMissionRenford();
+  const activateMutation = useActivatePendingMissions();
   const cancelMutation = useCancelMissionByEtablissement();
   const markTermineeMutation = useMarkMissionTermineeByEtablissement();
   const clotureMutation = useClotureMissionByEtablissement();
   const signMutation = useSignContractByEtablissement();
   const signAttestationMutation = useSignAttestationByEtablissement();
   const downloadDocumentMutation = useDownloadMissionDocumentByEtablissement();
+  const checkoutMutation = useCreateCheckoutSession();
+  const paymentStatusQuery = useMissionPaymentStatus(missionId);
   const [signDialogOpen, setSignDialogOpen] = useState(false);
   const [signAttestationDialogOpen, setSignAttestationDialogOpen] =
     useState(false);
@@ -85,6 +107,14 @@ export default function EtablissementMissionDetailsPage() {
     response: "attente_de_signature" | "refuse_par_etablissement";
   } | null>(null);
   const mission = missionQuery.data;
+
+  useEffect(() => {
+    if (searchParams.get("paiement") === "requis") {
+      toast.info(
+        "Configurez votre mode de paiement pour activer la recherche de Renfords",
+      );
+    }
+  }, [searchParams]);
 
   const isLoading = missionQuery.isLoading;
   const isError = missionQuery.isError;
@@ -128,6 +158,9 @@ export default function EtablissementMissionDetailsPage() {
 
   const missionTitle =
     DISCIPLINE_MISSION_LABELS[mission.discipline] ?? "Mission";
+  const missionSubtitle =
+    TYPE_MISSION_LABELS[mission.specialitePrincipale] ?? "Mission";
+
   const firstMissionRenford = mission.missionsRenford?.[0];
   const totalHours =
     typeof mission.totalHours === "number" && mission.totalHours > 0
@@ -154,17 +187,9 @@ export default function EtablissementMissionDetailsPage() {
           return acc + (end - start) / 60;
         }, 0);
 
-  const tarifNumeric =
-    typeof mission.tarif === "string" ? Number(mission.tarif) : mission.tarif;
-  const hasHourlyRate =
-    mission.methodeTarification === "horaire" && Number.isFinite(tarifNumeric);
-
-  const totalHt =
-    hasHourlyRate && totalHours > 0
-      ? (tarifNumeric as number) * totalHours
-      : (tarifNumeric ?? 0);
-  const serviceFees = totalHt * 0.03;
-  const totalTtc = totalHt + serviceFees;
+  const totalHt = Number(mission.montantHT ?? 0);
+  const serviceFees = Number(mission.montantFraisService ?? 0);
+  const totalTtc = Number(mission.montantTTC ?? 0);
 
   const horaires = (mission.PlageHoraireMission ?? []).map((slot) => {
     const weekdayDate = formatWeekdayDayMonth(slot.date);
@@ -278,6 +303,38 @@ export default function EtablissementMissionDetailsPage() {
     <main className="mt-8 space-y-6">
       <H2>Détail de la mission</H2>
 
+      {mission.statut === "ajouter_mode_paiement" && (
+        <div className="flex flex-col items-start gap-4 rounded-xl border border-amber-200 bg-amber-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <CreditCard className="mt-0.5 h-6 w-6 shrink-0 text-amber-600" />
+            <div>
+              <p className="font-semibold text-amber-800">
+                Mode de paiement requis
+              </p>
+              <p className="mt-1 text-sm text-amber-700">
+                La recherche de Renfords est en pause. Configurez votre mode de
+                paiement pour activer cette mission et lancer la recherche.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="dark"
+            className="shrink-0 px-5"
+            disabled={activateMutation.isPending}
+            onClick={() => activateMutation.mutate()}
+          >
+            {activateMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Activation...
+              </>
+            ) : (
+              "Configurer le paiement"
+            )}
+          </Button>
+        </div>
+      )}
+
       <Tabs defaultValue="details" className="w-full">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <TabsList>
@@ -290,25 +347,27 @@ export default function EtablissementMissionDetailsPage() {
           </TabsList>
 
           <div className="flex flex-wrap items-center gap-2">
-            {!isMissionStarted && (
-              <Button
-                variant="outline"
-                className="px-5"
-                onClick={() => setInviteDialogOpen(true)}
-              >
-                Inviter un Renford favori
-              </Button>
-            )}
-            {!isMissionStarted && (
-              <Button
-                variant="outline"
-                className="px-5"
-                disabled={cancelMutation.isPending}
-                onClick={() => setAnnulerDialogOpen(true)}
-              >
-                Annuler et Modifier
-              </Button>
-            )}
+            {!isMissionStarted &&
+              mission.statut !== "ajouter_mode_paiement" && (
+                <Button
+                  variant="outline"
+                  className="px-5"
+                  onClick={() => setInviteDialogOpen(true)}
+                >
+                  Inviter un Renford favori
+                </Button>
+              )}
+            {!isMissionStarted &&
+              mission.statut !== "ajouter_mode_paiement" && (
+                <Button
+                  variant="outline"
+                  className="px-5"
+                  disabled={cancelMutation.isPending}
+                  onClick={() => setAnnulerDialogOpen(true)}
+                >
+                  Annuler et Modifier
+                </Button>
+              )}
             {mission.statut === "mission_en_cours" && (
               <Button
                 variant="dark"
@@ -329,6 +388,32 @@ export default function EtablissementMissionDetailsPage() {
                 Clôturer la mission
               </Button>
             )}
+            {mission.statut === "mission_terminee" &&
+              !paymentStatusQuery.data?.hasPaiement && (
+                <Button
+                  variant="dark"
+                  className="px-5"
+                  disabled={checkoutMutation.isPending}
+                  onClick={() => checkoutMutation.mutate(mission.id)}
+                >
+                  {checkoutMutation.isPending
+                    ? "Redirection..."
+                    : "Procéder au paiement"}
+                </Button>
+              )}
+            {paymentStatusQuery.data?.hasPaiement &&
+              paymentStatusQuery.data.paiement && (
+                <div className="flex items-center gap-2 rounded-lg border bg-white px-4 py-2 text-sm">
+                  <span className="text-muted-foreground">Paiement :</span>
+                  <span className="font-medium">
+                    {
+                      STATUT_PAIEMENT_LABELS[
+                        paymentStatusQuery.data.paiement.statut
+                      ]
+                    }
+                  </span>
+                </div>
+              )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -417,10 +502,9 @@ export default function EtablissementMissionDetailsPage() {
                         </Button>
                       )}
 
-                      {[
-                        "selection_en_cours",
-                        "attente_de_signature",
-                      ].includes(assignment.statut) && (
+                      {["selection_en_cours", "attente_de_signature"].includes(
+                        assignment.statut,
+                      ) && (
                         <>
                           <Button
                             variant="outline"
@@ -483,11 +567,14 @@ export default function EtablissementMissionDetailsPage() {
             })}
 
             <section className="rounded-3xl border border-border bg-white px-4 py-4 md:px-5 md:py-5">
-              <div className="mb-5 space-y-2">
+              <div className="mb-5">
                 <MissionStatusBadge status={mission.statut} />
                 <h3 className="text-2xl font-semibold text-foreground">
                   {missionTitle}
                 </h3>
+                <h4 className="text-base text-muted-foreground mb-2">
+                  {missionSubtitle}
+                </h4>
                 <p className="flex items-center gap-2 text-base text-muted-foreground">
                   <CalendarDays className="h-4 w-4" />
                   Du {formatFrenchDate(mission.dateDebut)} au{" "}
@@ -567,7 +654,10 @@ export default function EtablissementMissionDetailsPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-muted-foreground">
-                    <span>frais de service inclus HT</span>
+                    <span>
+                      Frais de service inclus HT ({PLATFORM_COMMISSION_PERCENT}
+                      %)
+                    </span>
                     <span>{formatAmount(serviceFees)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-muted-foreground">
@@ -585,18 +675,20 @@ export default function EtablissementMissionDetailsPage() {
                 key={group.title}
                 title={group.title}
                 documents={group.documents}
-                onDownload={(documentId) => {
-                  if (!firstMissionRenford) return;
-                  downloadDocumentMutation.mutate({
-                    missionId: mission.id,
-                    missionRenfordId: firstMissionRenford.id,
-                    documentType: documentId as
-                      | "facture_prestation"
-                      | "facture_commission"
-                      | "contrat_prestation"
-                      | "attestation_mission",
-                  });
+                onDownload={() => {
+                  toast.error(
+                    "Merci de nous fournir le modèle de ce document au format PDF ou Word.",
+                  );
                 }}
+                //      onDownload={(documentId) => {
+                // downloadDocumentMutation.mutate({
+                //   missionId: mission.id,
+                //   documentType: documentId as
+                //     | "facture_prestation"
+                //     | "facture_commission"
+                //     | "contrat_prestation"
+                //     | "attestation_mission",
+                // });
                 isDownloading={downloadDocumentMutation.isPending}
               />
             ))}

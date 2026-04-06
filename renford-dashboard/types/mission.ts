@@ -5,7 +5,6 @@ import {
   MODE_MISSION,
   NIVEAU_EXPERIENCE_MISSION,
   STATUT_MISSION,
-  TYPE_PAIEMENT,
 } from "@/validations/mission";
 import { TYPE_MISSION } from "@/validations/profil-renford";
 import { Etablissement } from "@/types/etablissement";
@@ -19,7 +18,6 @@ export type NiveauExperienceMission =
   (typeof NIVEAU_EXPERIENCE_MISSION)[number];
 export type MaterielMission = (typeof MATERIELS_MISSION)[number];
 export type MethodeTarificationMission = (typeof METHODE_TARIFICATION)[number];
-export type TypePaiementMission = (typeof TYPE_PAIEMENT)[number];
 
 export type PlageHoraireMission = {
   id: string;
@@ -46,19 +44,10 @@ export type Mission = {
   dateFin: Date | string;
   methodeTarification: MethodeTarificationMission;
   tarif: number | string | null;
+  montantHT: number | string | null;
+  montantFraisService: number | string | null;
+  montantTTC: number | string | null;
   pourcentageVariationTarif: number | string | null;
-  typePaiement: TypePaiementMission;
-  titulaireCarteBancaire: string | null;
-  numeroCarteBancaire: string | null;
-  dateExpirationCarte: string | null;
-  cvvCarte: string | null;
-  autorisationDebit: boolean;
-  dateAutorisationDebit: Date | string | null;
-  titulaireCompteBancaire: string | null;
-  IBANCompteBancaire: string | null;
-  BICCompteBancaire: string | null;
-  autorisationPrelevement: boolean;
-  dateAutorisationPrelevement: Date | string | null;
   dateCreation?: Date | string;
   dateMiseAJour?: Date | string;
 };

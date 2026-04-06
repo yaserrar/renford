@@ -12,10 +12,7 @@ import {
   MissionRenfordListItem,
   RenfordMissionsTab,
 } from "@/types/mission-renford";
-import {
-  CreateMissionPayloadSchema,
-  FinalizeMissionPaymentSchema,
-} from "@/validations/mission";
+import { CreateMissionPayloadSchema } from "@/validations/mission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import useAxios from "./axios";
@@ -24,12 +21,6 @@ import { useCurrentUser } from "./utilisateur";
 type CreateMissionResponse = {
   id: string;
   statut: string;
-};
-
-type FinalizeMissionPaymentResponse = {
-  id: string;
-  statut: string;
-  typePaiement: string;
 };
 
 export const useCreateMission = () => {
@@ -41,10 +32,16 @@ export const useCreateMission = () => {
       return (await axios.post("/etablissement/missions", data))
         .data as CreateMissionResponse;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
       queryClient.invalidateQueries({ queryKey: ["etablissement-missions"] });
-      toast.success("Mission créée et mise en recherche");
+      if (data.statut === "ajouter_mode_paiement") {
+        toast.info(
+          "Mission créée — configurez votre mode de paiement pour lancer la recherche",
+        );
+      } else {
+        toast.success("Mission créée et mise en recherche");
+      }
     },
     onError: (error: any) => {
       const message = getErrorMessage(error?.response?.data?.message);
@@ -53,26 +50,26 @@ export const useCreateMission = () => {
   });
 };
 
-export const useFinalizeMissionPayment = () => {
+export const useActivatePendingMissions = () => {
   const axios = useAxios();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      missionId,
-      data,
-    }: {
-      missionId: string;
-      data: FinalizeMissionPaymentSchema;
-    }) => {
-      return (
-        await axios.post(`/etablissement/missions/${missionId}/paiement`, data)
-      ).data as FinalizeMissionPaymentResponse;
+    mutationFn: async () => {
+      return (await axios.post("/etablissement/missions/activate-pending"))
+        .data as { activated: number };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
       queryClient.invalidateQueries({ queryKey: ["etablissement-missions"] });
-      toast.success("Mode de paiement enregistré et mission mise en recherche");
+      queryClient.invalidateQueries({
+        queryKey: ["etablissement-mission-details"],
+      });
+      if (data.activated > 0) {
+        toast.success(
+          `${data.activated} mission${data.activated > 1 ? "s" : ""} activée${data.activated > 1 ? "s" : ""} et mise${data.activated > 1 ? "s" : ""} en recherche`,
+        );
+      }
     },
     onError: (error: any) => {
       const message = getErrorMessage(error?.response?.data?.message);

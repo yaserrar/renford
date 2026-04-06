@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { CalendarDays, Clock3, MapPin } from "lucide-react";
+import { toast } from "sonner";
 import DetailRow from "@/components/common/detail-row";
 import DocumentCategoryCard from "@/components/common/document-category-card";
 import MissionRenfordStatusBadge from "@/components/common/mission-renford-status-badge";
@@ -34,6 +35,8 @@ import {
   NIVEAU_EXPERIENCE_MISSION_LABELS,
 } from "@/validations/mission";
 import type { StatutMissionRenford } from "@/types/mission-renford";
+import { PLATFORM_COMMISSION_PERCENT } from "@/lib/env";
+import { TYPE_MISSION_LABELS } from "@/validations/profil-renford";
 
 function formatTimeRange(value: string, fallback = "-") {
   const [hours, minutes] = value.split(":").map(Number);
@@ -104,6 +107,8 @@ export default function RenfordMissionDetailsPage() {
   const etablissement = mission.etablissement;
   const missionTitle =
     DISCIPLINE_MISSION_LABELS[mission.discipline] ?? "Mission";
+  const missionSubtitle =
+    TYPE_MISSION_LABELS[mission.specialitePrincipale] ?? "Mission";
 
   const totalHours =
     typeof mission.totalHours === "number" && mission.totalHours > 0
@@ -130,17 +135,9 @@ export default function RenfordMissionDetailsPage() {
           return acc + (end - start) / 60;
         }, 0);
 
-  const tarifNumeric =
-    typeof mission.tarif === "string" ? Number(mission.tarif) : mission.tarif;
-  const hasHourlyRate =
-    mission.methodeTarification === "horaire" && Number.isFinite(tarifNumeric);
-
-  const totalHt =
-    hasHourlyRate && totalHours > 0
-      ? (tarifNumeric as number) * totalHours
-      : (tarifNumeric ?? 0);
-  const serviceFees = totalHt * 0.03;
-  const totalTtc = totalHt + serviceFees;
+  const totalHt = Number(mission.montantHT ?? 0);
+  const serviceFees = Number(mission.montantFraisService ?? 0);
+  const totalTtc = Number(mission.montantTTC ?? 0);
 
   const horaires = (mission.PlageHoraireMission ?? []).map((slot) => {
     const weekdayDate = formatWeekdayDayMonth(slot.date);
@@ -167,9 +164,16 @@ export default function RenfordMissionDetailsPage() {
   const documentDate = formatFrenchDate(mission.dateCreation, "01/01/2025");
   const isOpportunite = OPPORTUNITE_STATUSES.includes(missionRenford.statut);
   const isSignable = SIGNABLE_STATUSES.includes(missionRenford.statut);
+  const hasRenfordSignedAttestation = Boolean(
+    missionRenford.signatureAttestationMissionRenfordChemin,
+  );
+  const isMissionEligibleForAttestation =
+    mission.statut === "mission_terminee" || mission.statut === "archivee";
   const canSignAttestation =
     mission.modeMission === "flex" &&
-    missionRenford.statut === "mission_terminee";
+    missionRenford.statut === "mission_terminee" &&
+    isMissionEligibleForAttestation &&
+    !hasRenfordSignedAttestation;
 
   const documentGroups = [
     {
@@ -325,11 +329,14 @@ export default function RenfordMissionDetailsPage() {
             </div>
 
             <section className="rounded-3xl border border-border bg-white px-4 py-4 md:px-5 md:py-5">
-              <div className="mb-5 space-y-2">
+              <div className="mb-5">
                 <MissionRenfordStatusBadge status={missionRenford.statut} />
                 <h3 className="text-2xl font-semibold text-foreground">
                   {missionTitle}
                 </h3>
+                <h4 className="text-base text-muted-foreground mb-2">
+                  {missionSubtitle}
+                </h4>
                 <p className="flex items-center gap-2 text-base text-muted-foreground">
                   <CalendarDays className="h-4 w-4" />
                   Du {formatFrenchDate(mission.dateDebut)} au{" "}
@@ -409,7 +416,10 @@ export default function RenfordMissionDetailsPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-muted-foreground">
-                    <span>frais de service inclus HT</span>
+                    <span>
+                      Frais de service inclus HT ({PLATFORM_COMMISSION_PERCENT}
+                      %)
+                    </span>
                     <span>{formatAmount(serviceFees)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-muted-foreground">
@@ -427,16 +437,20 @@ export default function RenfordMissionDetailsPage() {
                 key={group.title}
                 title={group.title}
                 documents={group.documents}
-                onDownload={(documentId) => {
-                  downloadDocumentMutation.mutate({
-                    missionId: mission.id,
-                    documentType: documentId as
-                      | "facture_prestation"
-                      | "facture_commission"
-                      | "contrat_prestation"
-                      | "attestation_mission",
-                  });
+                onDownload={() => {
+                  toast.error(
+                    "Merci de nous fournir le modèle de ce document au format PDF ou Word.",
+                  );
                 }}
+                //      onDownload={(documentId) => {
+                // downloadDocumentMutation.mutate({
+                //   missionId: mission.id,
+                //   documentType: documentId as
+                //     | "facture_prestation"
+                //     | "facture_commission"
+                //     | "contrat_prestation"
+                //     | "attestation_mission",
+                // });
                 isDownloading={downloadDocumentMutation.isPending}
               />
             ))}
@@ -475,39 +489,38 @@ export default function RenfordMissionDetailsPage() {
         />
       )}
 
-      {mission.modeMission === "flex" &&
-        missionRenford.statut === "mission_terminee" && (
-          <SignatureContratDialog
-            open={signAttestationDialogOpen}
-            onOpenChange={setSignAttestationDialogOpen}
-            dialogTitle="Attestation de mission"
-            signButtonText="Signer l'attestation"
-            signerRole="renford"
-            contractData={{
-              missionTitle: missionTitle,
-              discipline: mission.discipline,
-              dateDebut: mission.dateDebut,
-              dateFin: mission.dateFin,
-              methodeTarification: mission.methodeTarification,
-              tarif: mission.tarif,
-              totalHours,
-              horaires,
-              etablissementNom: etablissementName,
-              etablissementAdresse: etablissement
-                ? `${etablissement.adresse}, ${etablissement.codePostal} ${etablissement.ville}`
-                : "-",
-              renfordNom: "Votre nom",
-              description: mission.description,
-            }}
-            onSign={(signatureDataUrl) => {
-              signAttestationMutation.mutate(
-                { missionId: mission.id, signatureDataUrl },
-                { onSuccess: () => setSignAttestationDialogOpen(false) },
-              );
-            }}
-            isPending={signAttestationMutation.isPending}
-          />
-        )}
+      {canSignAttestation && (
+        <SignatureContratDialog
+          open={signAttestationDialogOpen}
+          onOpenChange={setSignAttestationDialogOpen}
+          dialogTitle="Attestation de mission"
+          signButtonText="Signer l'attestation"
+          signerRole="renford"
+          contractData={{
+            missionTitle: missionTitle,
+            discipline: mission.discipline,
+            dateDebut: mission.dateDebut,
+            dateFin: mission.dateFin,
+            methodeTarification: mission.methodeTarification,
+            tarif: mission.tarif,
+            totalHours,
+            horaires,
+            etablissementNom: etablissementName,
+            etablissementAdresse: etablissement
+              ? `${etablissement.adresse}, ${etablissement.codePostal} ${etablissement.ville}`
+              : "-",
+            renfordNom: "Votre nom",
+            description: mission.description,
+          }}
+          onSign={(signatureDataUrl) => {
+            signAttestationMutation.mutate(
+              { missionId: mission.id, signatureDataUrl },
+              { onSuccess: () => setSignAttestationDialogOpen(false) },
+            );
+          }}
+          isPending={signAttestationMutation.isPending}
+        />
+      )}
     </main>
   );
 }

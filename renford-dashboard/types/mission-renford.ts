@@ -71,6 +71,9 @@ export type MissionForRenford = {
   dateFin: Date | string;
   methodeTarification: MethodeTarificationMission;
   tarif: number | string | null;
+  montantHT: number | string | null;
+  montantFraisService: number | string | null;
+  montantTTC: number | string | null;
   pourcentageVariationTarif: number | string | null;
   dateCreation: Date | string;
   etablissement: EtablissementMissionRenford;

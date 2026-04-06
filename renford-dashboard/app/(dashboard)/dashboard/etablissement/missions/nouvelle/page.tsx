@@ -25,6 +25,7 @@ import {
 import { MissionEtablissement } from "@/types/mission";
 import { useCurrentUser } from "@/hooks/utilisateur";
 import { cn } from "@/lib/utils";
+import { computeMissionPricing } from "@/lib/mission-pricing";
 import {
   createMissionFormSchema,
   createMissionPayloadSchema,
@@ -40,9 +41,11 @@ import {
 } from "@/validations/mission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  AlertCircle,
   Calendar,
   CircleHelp,
   Clock3,
+  CreditCard,
   Lightbulb,
   MapPin,
   Plus,
@@ -53,6 +56,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
+import { PLATFORM_COMMISSION_PERCENT } from "@/lib/env";
 
 const LAST_STEP = 4;
 
@@ -124,13 +128,6 @@ function formatFrenchDate(value: Date | undefined): string {
     month: "2-digit",
     year: "numeric",
   }).format(value);
-}
-
-function parseTimeToMinutes(timeValue: string): number {
-  const [hours, minutes] = timeValue.split(":").map(Number);
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) return 0;
-
-  return hours * 60 + minutes;
 }
 
 function normalizeDate(value: unknown): Date | undefined {
@@ -362,41 +359,15 @@ export default function NouvelleMissionPage() {
         ? "demi-journée"
         : "horaire";
 
-  const hourlyUnits = (selectedPlagesHoraires || []).reduce((total, plage) => {
-    const startMinutes = parseTimeToMinutes(plage.heureDebut);
-    const endMinutes = parseTimeToMinutes(plage.heureFin);
-    const diffMinutes = Math.max(endMinutes - startMinutes, 0);
-    return total + diffMinutes / 60;
-  }, 0);
+  const pricing = computeMissionPricing({
+    plagesHoraires: selectedPlagesHoraires || [],
+    methodeTarification: selectedMethodeTarification ?? "horaire",
+    tarif: hasValidTarif ? selectedTarif : 0,
+  });
 
-  const uniquePlageDatesCount = new Set(
-    (selectedPlagesHoraires || [])
-      .map((plage) => normalizeDate(plage.date)?.toDateString())
-      .filter((value): value is string => Boolean(value)),
-  ).size;
-
-  const fallbackDayCount =
-    selectedDateDebut && selectedDateFin
-      ? Math.max(
-          1,
-          Math.floor(
-            (selectedDateFin.getTime() - selectedDateDebut.getTime()) /
-              (1000 * 60 * 60 * 24),
-          ) + 1,
-        )
-      : 1;
-
-  const pricingUnits =
-    selectedMethodeTarification === "horaire"
-      ? Math.max(hourlyUnits, 1)
-      : selectedMethodeTarification === "journee"
-        ? Math.max(uniquePlageDatesCount, fallbackDayCount)
-        : Math.max((selectedPlagesHoraires || []).length, 1);
-
-  const missionSubtotalHT = hasValidTarif ? selectedTarif * pricingUnits : 0;
-  const serviceFeesHT = missionSubtotalHT > 0 ? 100 : 0;
-  const totalHT = missionSubtotalHT + serviceFeesHT;
-  const totalTTC = totalHT * 1.2;
+  const totalHT = pricing.montantHT;
+  const serviceFeesHT = pricing.montantFraisService;
+  const totalTTC = pricing.montantTTC;
 
   useEffect(() => {
     if (!initializedHistoryRef.current) {
@@ -435,9 +406,16 @@ export default function NouvelleMissionPage() {
       getValues(),
     ) as CreateMissionPayloadSchema;
 
-    await createMissionMutation.mutateAsync(payload);
+    const mission = await createMissionMutation.mutateAsync(payload);
     await missionsHistoryQuery.refetch();
-    router.push("/dashboard/etablissement/missions");
+
+    if (mission.statut === "ajouter_mode_paiement") {
+      router.push(
+        `/dashboard/etablissement/missions/${mission.id}?paiement=requis`,
+      );
+    } else {
+      router.push("/dashboard/etablissement/missions");
+    }
   };
 
   const handleNext = async () => {
@@ -1350,6 +1328,23 @@ export default function NouvelleMissionPage() {
                 Vérifiez les informations avant envoi
               </h4>
 
+              {!user?.profilEtablissement?.stripeCustomerId && (
+                <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                  <div className="space-y-1">
+                    <p className="text-base font-medium text-amber-800">
+                      Aucun mode de paiement configuré
+                    </p>
+                    <p className="text-sm text-amber-700">
+                      Votre mission sera créée mais restera en attente
+                      jusqu&apos;à ce que vous configuriez un mode de paiement.
+                      Les Renfords ne pourront pas encore y postuler.
+                    </p>
+                  </div>
+                  <CreditCard className="ml-auto mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                </div>
+              )}
+
               <div className="border-t border-input pt-4 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-[300px_1fr_auto] gap-3 items-start border-b border-input pb-4">
                   <p className="font-semibold">
@@ -1507,7 +1502,8 @@ export default function NouvelleMissionPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="text-muted-foreground">
-                        frais de service inclus HT
+                        Frais de service inclus HT (
+                        {PLATFORM_COMMISSION_PERCENT}%)
                       </p>
                       <p className="text-muted-foreground">
                         {formatEuroAmount(serviceFeesHT)}
@@ -1557,7 +1553,7 @@ export default function NouvelleMissionPage() {
                 disabled={createMissionMutation.isPending}
                 className="w-full md:w-auto"
               >
-                Créer la mission
+                Envoyer la demande
               </Button>
             )}
           </div>
