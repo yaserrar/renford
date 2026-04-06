@@ -357,10 +357,17 @@ export const signAttestationByRenford = async (
 
     if (
       missionRenford.statut !== 'mission_terminee' ||
-      missionRenford.mission.statut !== 'mission_terminee'
+      (missionRenford.mission.statut !== 'mission_terminee' &&
+        missionRenford.mission.statut !== 'archivee')
     ) {
       return res.status(400).json({
         message: "L'attestation de mission ne peut être signée qu'après la fin de mission",
+      });
+    }
+
+    if (missionRenford.signatureAttestationMissionRenfordChemin) {
+      return res.status(400).json({
+        message: "L'attestation de mission a déjà été signée",
       });
     }
 

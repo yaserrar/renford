@@ -7,6 +7,7 @@ import type {
 import prisma from '../config/prisma';
 import { logger } from '../config/logger';
 import { createNotification, createNotifications } from '../config/notification';
+import { getTypeMissionLabel } from '../modules/missions/missions.schema';
 
 const MATCH_QUEUE_LIMIT = 50;
 
@@ -278,9 +279,18 @@ const getRenfordTarifForMission = (
   }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const getFavoriteRenfordIdsForMission = async (_mission: MatchMission): Promise<Set<string>> => {
-  return new Set();
+const getFavoriteRenfordIdsForMission = async (mission: MatchMission): Promise<Set<string>> => {
+  const profilEtablissementId = mission.etablissement.profilEtablissementId;
+  if (!profilEtablissementId) {
+    return new Set();
+  }
+
+  const favoris = await prisma.favorisRenford.findMany({
+    where: { profilEtablissementId },
+    select: { profilRenfordId: true },
+  });
+
+  return new Set(favoris.map((favori) => favori.profilRenfordId));
 };
 
 const evaluateRenfordMatch = async (
@@ -595,6 +605,15 @@ export const syncMissionMatches = async (
       return;
     }
 
+    if (
+      (assignment.statut === 'nouveau' || assignment.statut === 'vu') &&
+      favoriteRenfordIds.has(assignment.profilRenfordId)
+    ) {
+      // Preserve manually proposed favorite opportunities even when they are
+      // outside the latest ranked top-N.
+      return;
+    }
+
     // Only delete unconfirmed proposals ('nouveau' or 'vu') that are no longer matched
     if (assignment.statut === 'nouveau' || assignment.statut === 'vu') {
       writes.push(
@@ -647,7 +666,7 @@ export const syncMissionMatches = async (
         source: 'mission_renfords',
         sourceId: assignment.id,
         titre: 'Nouvelle mission disponible',
-        description: `Une mission ${mission.discipline} chez ${mission.etablissement.nom} correspond à votre profil.`,
+        description: `Une mission ${getTypeMissionLabel(mission.specialitePrincipale)} chez ${mission.etablissement.nom} correspond à votre profil.`,
       })),
     );
   }
@@ -770,7 +789,7 @@ export const registerMissionRenfordResponse = async (params: {
       where: { id: missionRenford.missionId },
       select: {
         id: true,
-        discipline: true,
+        specialitePrincipale: true,
         etablissement: {
           select: {
             profilEtablissement: {
@@ -789,7 +808,7 @@ export const registerMissionRenfordResponse = async (params: {
         source: 'missions',
         sourceId: missionOwner.id,
         titre: 'Un Renford a accepté votre mission',
-        description: `Un candidat a accepté votre mission ${missionOwner.discipline}.`,
+        description: `Un candidat a accepté votre mission ${getTypeMissionLabel(missionOwner.specialitePrincipale)}.`,
       });
     }
   } else {
