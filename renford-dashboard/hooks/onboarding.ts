@@ -7,7 +7,6 @@ import {
   OnboardingRenfordIdentiteSchema,
   OnboardingRenfordProfilSchema,
   OnboardingRenfordQualificationsSchema,
-  OnboardingRenfordBancaireSchema,
   OnboardingRenfordDisponibilitesSchema,
 } from "@/validations/onboarding";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -195,14 +194,14 @@ export const useUpdateRenfordQualifications = () => {
   });
 };
 
-// Hook pour mettre à jour les infos bancaires Renford (étape 6)
+// Hook pour valider l'étape 6 Renford (Stripe Connect)
 export const useUpdateRenfordBancaire = () => {
   const axios = useAxios();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: OnboardingRenfordBancaireSchema) => {
-      return (await axios.put("/onboarding/renford/bancaire", data)).data;
+    mutationFn: async () => {
+      return (await axios.put("/onboarding/renford/bancaire")).data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });

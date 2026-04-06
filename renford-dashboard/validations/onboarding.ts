@@ -309,14 +309,10 @@ export type OnboardingRenfordQualificationsSchema = z.infer<
   typeof onboardingRenfordQualificationsSchema
 >;
 
-// Étape 6 Renford: Informations bancaires
-export const onboardingRenfordBancaireSchema = z.object({
-  iban: z.string().min(14, "L'IBAN doit contenir au moins 14 caractères"),
-});
+// Étape 6 Renford: Configuration Stripe Connect (no form validation needed)
+// The step is handled by redirecting to Stripe Connect onboarding
 
-export type OnboardingRenfordBancaireSchema = z.infer<
-  typeof onboardingRenfordBancaireSchema
->;
+export type OnboardingRenfordBancaireSchema = Record<string, never>;
 
 const disponibilitesJourSchema = z.array(z.enum(CRENEAUX_DISPONIBILITE));
 

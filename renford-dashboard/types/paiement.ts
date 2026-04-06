@@ -22,25 +22,3 @@ export type Paiement = {
   dateLiberation: Date | null;
   dateMiseAJour: Date;
 };
-
-// Informations bancaires
-export type InformationsBancaires = {
-  id: string;
-  profilEtablissementId: string;
-  nomTitulaireCompte: string;
-  iban: string;
-  bic: string | null;
-  nomFacturation: string | null;
-  adresseFacturation: string | null;
-  adresseFacturation2: string | null;
-  codePostalFacturation: string | null;
-  villeFacturation: string | null;
-  paysFacturation: string | null;
-  siretFacturation: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  stripeCustomerId: string | null;
-  stripePaymentMethodId: string | null;
-  dateCreation: Date;
-  dateMiseAJour: Date;
-};

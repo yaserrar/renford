@@ -69,8 +69,7 @@ export type AdminUserDetail = AdminUserListItem & {
     ville: string | null;
     siret: string | null;
     siretEnCoursObtention: boolean;
-    iban: string | null;
-    bic: string | null;
+    stripeConnectOnboardingComplete: boolean;
     renfordDiplomes: Array<{
       id: string;
       intitule: string;

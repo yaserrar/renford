@@ -1,43 +1,47 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import ErrorMessage from "@/components/ui/error-message";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   useUpdateRenfordBancaire,
   useSkipRenfordStep,
 } from "@/hooks/onboarding";
-import { useCurrentUser } from "@/hooks/utilisateur";
 import {
-  onboardingRenfordBancaireSchema,
-  OnboardingRenfordBancaireSchema,
-} from "@/validations/onboarding";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+  useCreateConnectOnboarding,
+  useConnectAccountStatus,
+} from "@/hooks/paiement";
+import { CheckCircle, ExternalLink, Loader2, AlertCircle } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { OnboardingCard } from "../-components";
+import { toast } from "sonner";
 
 export default function Etape6RenfordPage() {
   const router = useRouter();
-  const { data: user } = useCurrentUser();
-  const { mutate, isPending } = useUpdateRenfordBancaire();
+  const searchParams = useSearchParams();
+  const stripeOnboarding = searchParams.get("stripe_onboarding");
+  const stripeRefresh = searchParams.get("stripe_refresh");
+
+  const { mutate: advanceStep, isPending: isAdvancing } =
+    useUpdateRenfordBancaire();
   const { mutate: skipStep, isPending: isSkipping } = useSkipRenfordStep();
+  const onboardingMutation = useCreateConnectOnboarding();
+  const statusQuery = useConnectAccountStatus();
+  const status = statusQuery.data;
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isDirty },
-  } = useForm<OnboardingRenfordBancaireSchema>({
-    resolver: zodResolver(onboardingRenfordBancaireSchema),
-    defaultValues: {
-      iban: user?.profilRenford?.iban || "",
-    },
-  });
+  useEffect(() => {
+    if (stripeOnboarding === "complete") {
+      toast.success("Configuration Stripe terminée !");
+      statusQuery.refetch();
+    }
+    if (stripeRefresh === "true") {
+      toast.info("Session expirée. Veuillez relancer la configuration Stripe.");
+    }
+  }, [stripeOnboarding, stripeRefresh]);
 
-  const onSubmit = (data: OnboardingRenfordBancaireSchema) => {
-    mutate(data, {
+  const isOnboardingComplete = status?.hasAccount && status?.onboardingComplete;
+
+  const handleContinue = () => {
+    advanceStep(undefined, {
       onSuccess: () => {
         router.push("/onboarding/etape-7-renford");
       },
@@ -52,61 +56,117 @@ export default function Etape6RenfordPage() {
     });
   };
 
+  const handleStartStripeOnboarding = () => {
+    onboardingMutation.mutate({ returnUrl: "onboarding" });
+  };
+
   return (
     <>
       <OnboardingCard
         currentStep={6}
         totalSteps={8}
-        title="Informations bancaires"
+        title="Configuration du paiement"
         subtitle="Pour recevoir vos paiements"
-        description="Renford s’appuie sur Stripe pour la gestion, la sécurisation et la
-          vérification de vos informations bancaires. Vos données (IBAN)
-          sont transmises de manière chiffrée à Stripe, qui les traite
-          conformément aux obligations légales (KYC) et
-          aux normes de sécurité internationales. Renford n’accède jamais à vos
-          données bancaires. En continuant, vous acceptez le
-          traitement de ces informations par Stripe conformément à sa politique
-          de confidentialité."
+        description="Renford utilise Stripe pour la gestion sécurisée de vos paiements. Vous allez être redirigé vers Stripe pour configurer votre compte de réception des paiements. Vos données bancaires sont gérées exclusivement par Stripe — Renford n'y a jamais accès."
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div>
-            <Label htmlFor="iban">IBAN*</Label>
-            <Input
-              id="iban"
-              placeholder="FR76 1234 5678 9012 3456 7890 123"
-              {...register("iban")}
-            />
-            <ErrorMessage>{errors.iban?.message}</ErrorMessage>
-          </div>
-
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 pt-4">
+        <div className="space-y-5">
+          {statusQuery.isLoading ? (
+            <div className="flex items-center gap-3 rounded-lg border p-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Vérification du statut...
+              </p>
+            </div>
+          ) : isOnboardingComplete ? (
+            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <div>
+                <p className="font-medium text-green-800">
+                  Compte Stripe configuré
+                </p>
+                <p className="text-xs text-green-600">
+                  Votre compte est prêt à recevoir des paiements.
+                </p>
+              </div>
+            </div>
+          ) : status?.hasAccount ? (
+            <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <AlertCircle className="h-5 w-5 text-amber-600" />
+              <div>
+                <p className="font-medium text-amber-800">
+                  Configuration incomplète
+                </p>
+                <p className="text-xs text-amber-600">
+                  Veuillez compléter la configuration de votre compte Stripe.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 rounded-lg border border-secondary/60 bg-secondary/5 p-4">
+              <ExternalLink className="h-5 w-5 text-secondary" />
+              <div>
+                <p className="font-medium text-secondary-dark">
+                  Configuration requise
+                </p>
+                <p className="text-xs text-secondary">
+                  Cliquez ci-dessous pour configurer votre compte de paiement
+                  via Stripe.
+                </p>
+              </div>
+            </div>
+          )}
+          {!isOnboardingComplete && (
+            <Button
+              type="button"
+              variant="dark"
+              className="w-full"
+              disabled={onboardingMutation.isPending}
+              onClick={handleStartStripeOnboarding}
+            >
+              {onboardingMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Redirection vers Stripe...
+                </>
+              ) : status?.hasAccount ? (
+                "Compléter la configuration Stripe"
+              ) : (
+                "Configurer mon compte Stripe"
+              )}
+            </Button>
+          )}
+          <div className="flex flex-col gap-3 pt-4 md:flex-row md:items-center md:justify-between">
             <Button
               type="button"
               variant="link"
               onClick={handleSkip}
-              disabled={isPending || isSkipping}
+              disabled={isAdvancing || isSkipping}
               className="text-gray-500"
             >
-              {isSkipping && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
+              {isSkipping && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Passer cette étape
             </Button>
 
-            <div className="flex flex-col md:flex-row md:justify-end gap-3">
+            <div className="flex flex-col gap-3 md:flex-row md:justify-end">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
-                disabled={isPending || isSkipping}
+                disabled={isAdvancing || isSkipping}
               >
                 Retour
               </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="animate-spin" />}
+              <Button
+                type="button"
+                disabled={!isOnboardingComplete || isAdvancing}
+                onClick={handleContinue}
+              >
+                {isAdvancing && <Loader2 className="mr-2 animate-spin" />}
                 Suivant
               </Button>
             </div>
           </div>
-        </form>
+        </div>
       </OnboardingCard>
     </>
   );

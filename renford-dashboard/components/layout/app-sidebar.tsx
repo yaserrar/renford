@@ -38,7 +38,7 @@ const RENFORD_MAIN_LINKS = [
   { title: "Planning", url: "/dashboard/renford/planning", icon: CalendarDays },
   {
     title: "Facture & Paiements",
-    url: "#",
+    url: "/dashboard/renford/paiement",
     icon: ScrollText,
   },
 ];
@@ -62,7 +62,7 @@ const ETABLISSEMENT_MAIN_LINKS = [
   },
   {
     title: "Facture & Paiements",
-    url: "#",
+    url: "/dashboard/etablissement/paiement",
     icon: ScrollText,
   },
   // {

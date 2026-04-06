@@ -57,8 +57,9 @@ export type ProfilRenford = {
   tarifJournee: number | null;
   proposeDemiJournee: boolean;
   tarifDemiJournee: number | null;
-  // Informations bancaires (étape 6)
-  iban: string | null;
+  // Stripe Connect (étape 6)
+  stripeConnectAccountId: string | null;
+  stripeConnectOnboardingComplete: boolean;
   // Disponibilité (étape 7)
   disponibilitesLundi: CreneauDisponibilite[];
   disponibilitesMardi: CreneauDisponibilite[];

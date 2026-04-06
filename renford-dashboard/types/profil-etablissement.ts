@@ -18,6 +18,7 @@ export type ProfilEtablissement = {
   adresseSiege: string | null;
   codePostalSiege: string | null;
   villeSiege: string | null;
+  stripeCustomerId: string | null;
   etablissements: Etablissement[];
   dateCreation: Date;
   dateMiseAJour: Date;
