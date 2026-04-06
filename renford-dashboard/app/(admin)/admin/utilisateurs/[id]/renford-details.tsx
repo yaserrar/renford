@@ -59,8 +59,14 @@ export default function RenfordDetails({ user }: Props) {
                   label="SIRET en cours"
                   value={profil.siretEnCoursObtention ? "Oui" : "Non"}
                 />
-                <InfoRow label="IBAN" value={profil.iban} />
-                <InfoRow label="BIC" value={profil.bic} />
+                <InfoRow
+                  label="Stripe Connect"
+                  value={
+                    profil.stripeConnectOnboardingComplete
+                      ? "Configuré"
+                      : "Non configuré"
+                  }
+                />
               </div>
             </div>
           </div>

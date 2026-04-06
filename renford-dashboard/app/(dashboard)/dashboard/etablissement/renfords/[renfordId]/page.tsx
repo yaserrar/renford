@@ -348,7 +348,7 @@ export default function EtablissementPublicRenfordProfilePage() {
 
               {/* Expériences */}
               <div className="bg-white rounded-3xl border border-input p-6 space-y-4">
-                <h3 className="text-2xl font-semibold">
+                <h3 className="text-xl font-semibold">
                   Expériences Professionnelles
                 </h3>
                 {profil.experiencesProfessionnelles.length > 0 ? (
@@ -385,7 +385,7 @@ export default function EtablissementPublicRenfordProfilePage() {
 
               {/* Certifications & Formations */}
               <div className="bg-white rounded-3xl border border-input p-6 space-y-4">
-                <h3 className="text-2xl font-semibold">
+                <h3 className="text-xl font-semibold">
                   Certifications & Formations
                 </h3>
                 {profil.renfordDiplomes.length > 0 ? (
@@ -446,7 +446,7 @@ export default function EtablissementPublicRenfordProfilePage() {
 
               {/* Portfolio */}
               <div className="bg-white rounded-3xl border border-input p-6 space-y-4">
-                <h3 className="text-2xl font-semibold">
+                <h3 className="text-xl font-semibold">
                   Portfolio & réalisations
                 </h3>
                 {profil.portfolio.length > 0 ? (

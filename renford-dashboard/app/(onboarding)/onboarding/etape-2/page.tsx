@@ -18,7 +18,7 @@ const typeOptions = [
   {
     value: "etablissement" as const,
     label: "Un Établissement",
-    description: "(je cherche du renfort)",
+    description: "(je cherche du renford)",
     icon: Building2,
   },
   {

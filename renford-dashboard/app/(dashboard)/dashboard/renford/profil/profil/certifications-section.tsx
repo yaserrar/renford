@@ -26,9 +26,7 @@ export default function CertificationsSection({
 
       <div className="bg-white rounded-3xl border border-input p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-semibold">
-            Certifications & Formations
-          </h3>
+          <h3 className="text-xl font-semibold">Certifications & Formations</h3>
           <Button
             type="button"
             variant="outline"

@@ -21,7 +21,7 @@ export default function ExperiencesSection({ me }: ExperiencesSectionProps) {
 
       <div className="bg-white rounded-3xl border border-input p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-semibold">
+          <h3 className="text-xl font-semibold">
             Expériences Professionnelles
           </h3>
           <Button
