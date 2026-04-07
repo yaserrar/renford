@@ -32,7 +32,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -65,6 +65,8 @@ interface DataTableProps<TData, TValue> {
   onClearSelection?: () => void;
   isLoading?: boolean;
   enableFilters?: boolean;
+  showGlobalFilter?: boolean;
+  toolbarLeft?: ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -78,6 +80,8 @@ export function DataTable<TData, TValue>({
   onClearSelection = () => {},
   isLoading = false,
   enableFilters = true,
+  showGlobalFilter = true,
+  toolbarLeft,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -176,19 +180,24 @@ export function DataTable<TData, TValue>({
     <div className="space-y-6">
       {/* Actions Row */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <GlobalFilterInput
-          value={globalFilter ?? ""}
-          onChange={(value) => setGlobalFilter(String(value))}
-          placeholder="Rechercher..."
-        />
+        {toolbarLeft ??
+          (showGlobalFilter ? (
+            <GlobalFilterInput
+              value={globalFilter ?? ""}
+              onChange={(value) => setGlobalFilter(String(value))}
+              placeholder="Rechercher..."
+            />
+          ) : (
+            <div className="hidden md:block" />
+          ))}
         <div className="flex gap-3">
           <Button
-            variant="default"
-            size="icon"
-            className="h-11 w-11"
+            variant="outline"
+            className="h-11 gap-2 px-4 bg-white"
             onClick={exportToExcel}
           >
             <Download size={18} />
+            Télécharger
           </Button>
           {enableFilters && (
             <Popover open={showFilters} onOpenChange={setShowFilters}>
@@ -260,14 +269,14 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border bg-white overflow-hidden flex flex-col">
-        <div className="flex-1 overflow-hidden">
+      <div className="rounded-t-3xl border bg-secondary-background  p-4 md:p-6 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-hidden rounded-t-3xl border bg-white">
           <Table className={classNames?.table}>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
                   key={headerGroup.id}
-                  className="bg-secondary-background hover:bg-secondary-background"
+                  className="bg-white hover:bg-white border-b"
                 >
                   {headerGroup.headers.map((header) => {
                     return (
@@ -335,12 +344,13 @@ export function DataTable<TData, TValue>({
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-center gap-2 py-4 border-t">
+        <div className="flex items-center justify-between gap-2 px-4 py-4 border-b border-l border-r rounded-b-3xl bg-white">
           {/* Previous Button */}
           <Button
             variant="outline"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
+            className="rounded-full px-5"
           >
             <ChevronLeft size={16} />
             Précédent
@@ -359,9 +369,9 @@ export function DataTable<TData, TValue>({
               ) : (
                 <Button
                   key={page}
-                  variant={currentPage === page ? "default" : "outline"}
+                  variant="outline"
                   className={cn(
-                    currentPage === page && "bg-primary text-white",
+                    currentPage === page && "border-foreground text-foreground",
                   )}
                   onClick={() => table.setPageIndex(page)}
                   size="icon"
@@ -377,6 +387,7 @@ export function DataTable<TData, TValue>({
             variant="outline"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
+            className="rounded-full px-5"
           >
             Suivant
             <ChevronRight size={16} />

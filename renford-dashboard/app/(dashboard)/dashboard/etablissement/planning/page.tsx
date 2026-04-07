@@ -18,6 +18,7 @@ import { useMemo, useState } from "react";
 import CenterState from "@/components/common/center-state";
 import RenfordCard from "./renford-card";
 import RenfordRow from "./renford-row";
+import { Button } from "@/components/ui/button";
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -27,7 +28,7 @@ function getMonday(date: Date) {
 
 function formatWeekRange(monday: Date) {
   const sunday = addDays(monday, 6);
-  return `Semaine ${format(monday, "dd/MM/yyyy")} – ${format(sunday, "dd/MM/yyyy")}`;
+  return `${format(monday, "dd/MM/yyyy")} – ${format(sunday, "dd/MM/yyyy")}`;
 }
 
 const DAY_ABBR = ["Lun.", "Mar.", "Mer.", "Jeu.", "Ven.", "Sam.", "Dim."];
@@ -83,24 +84,26 @@ export default function EtablissementPlanningPage() {
         {/* Controls */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           {/* Week navigator */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2">
-            <button
-              type="button"
+          <div className="inline-flex items-center rounded-full border bg-white p-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
               onClick={goToPrevWeek}
-              className="text-muted-foreground hover:text-foreground"
             >
-              <ChevronLeft className="size-5" />
-            </button>
-            <span className="text-sm font-medium">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="px-3 text-sm font-medium">
               {formatWeekRange(currentMonday)}
             </span>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
               onClick={goToNextWeek}
-              className="text-muted-foreground hover:text-foreground"
             >
-              <ChevronRight className="size-5" />
-            </button>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Établissement filter */}

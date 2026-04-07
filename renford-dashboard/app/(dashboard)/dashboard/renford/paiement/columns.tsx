@@ -10,12 +10,16 @@ import { formatFrenchDate, formatAmount } from "@/lib/utils";
 import { STATUT_PAIEMENT_LABELS } from "@/validations/paiement";
 import type { PaiementWithMission } from "@/hooks/paiement";
 import type { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
+import { Calendar } from "lucide-react";
 
 export const renfordColumns: ColumnDef<PaiementWithMission>[] = [
   {
     accessorKey: "reference",
-    id: "Référence",
-    header: ({ column }) => <ColumnHeader column={column} header="Référence" />,
+    id: "Numéro de facture",
+    header: ({ column }) => (
+      <ColumnHeader column={column} header="Numéro de facture" />
+    ),
     cell: ({ row: { original } }) => (
       <span className="font-mono text-sm">
         {original.reference.slice(0, 8)}
@@ -27,15 +31,29 @@ export const renfordColumns: ColumnDef<PaiementWithMission>[] = [
     id: "Mission",
     header: ({ column }) => <ColumnHeader column={column} header="Mission" />,
     cell: ({ row: { original } }) => (
-      <div className="flex flex-col">
-        <span className="font-medium">
-          {original.mission.specialitePrincipale.replaceAll("_", " ")}
-        </span>
-        <span className="text-sm text-muted-foreground">
+      <Link
+        href={`/dashboard/renford/missions/${original.mission.id}`}
+        className="group flex flex-col"
+      >
+        <span className="font-medium underline-offset-4 group-hover:underline">
+          {original.mission.specialitePrincipale.replaceAll("_", " ")} -{" "}
           {original.mission.etablissement.nom}
         </span>
-      </div>
+        <span className="text-sm text-muted-foreground flex items-center gap-1">
+          <Calendar size={16} /> Mission du{" "}
+          {formatFrenchDate(original.mission.dateDebut)} au{" "}
+          {formatFrenchDate(original.mission.dateFin)}
+        </span>
+      </Link>
     ),
+  },
+  {
+    accessorKey: "dateCreation",
+    id: "Date",
+    header: ({ column }) => <ColumnHeader column={column} header="Date" />,
+    cell: ({ row: { original } }) => formatFrenchDate(original.dateCreation),
+    filterFn: dateFilterFn,
+    meta: { dataType: { type: "date" } },
   },
   {
     accessorKey: "montantNetRenford",
@@ -66,7 +84,9 @@ export const renfordColumns: ColumnDef<PaiementWithMission>[] = [
     id: "Statut",
     header: ({ column }) => <ColumnHeader column={column} header="Statut" />,
     cell: ({ row: { original } }) => (
-      <PaiementStatusBadge status={original.statut} />
+      <span className="font-semibold">
+        {STATUT_PAIEMENT_LABELS[original.statut]}
+      </span>
     ),
     filterFn: selectFilterFn,
     meta: {
@@ -80,13 +100,5 @@ export const renfordColumns: ColumnDef<PaiementWithMission>[] = [
         ),
       },
     },
-  },
-  {
-    accessorKey: "dateCreation",
-    id: "Date",
-    header: ({ column }) => <ColumnHeader column={column} header="Date" />,
-    cell: ({ row: { original } }) => formatFrenchDate(original.dateCreation),
-    filterFn: dateFilterFn,
-    meta: { dataType: { type: "date" } },
   },
 ];
