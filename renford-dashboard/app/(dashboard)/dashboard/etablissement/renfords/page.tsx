@@ -1,23 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { SlidersHorizontal, Star } from "lucide-react";
+import { Heart, SlidersHorizontal, Star } from "lucide-react";
 import { H2 } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CenterState from "@/components/common/center-state";
 import InviterRenfordDialog from "@/components/common/inviter-renford-dialog";
-import { useFavorisRenford } from "@/hooks/favoris-renford";
+import { useAddFavori, useFavorisRenford } from "@/hooks/favoris-renford";
 import { useGteEtablissementMissionsByTab } from "@/hooks/mission";
 import { useFilleuls } from "@/hooks/parrainage";
-import { getInitials, getUrl } from "@/lib/utils";
+import { cn, getInitials, getUrl } from "@/lib/utils";
 import RenfordFavoriCard from "./renford-favori-card";
+import ProposerMissionDialog from "./proposer-mission-dialog";
 import Link from "next/link";
 
 export default function MesRenfordsPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [filleulDialogOpen, setFilleulDialogOpen] = useState(false);
+  const [selectedFilleul, setSelectedFilleul] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const favorisQuery = useFavorisRenford();
+  const addFavoriMutation = useAddFavori();
   const dernieresMissionsQuery = useGteEtablissementMissionsByTab("terminees");
   const filleulsQuery = useFilleuls();
   const favoris = favorisQuery.data ?? [];
@@ -32,6 +39,9 @@ export default function MesRenfordsPage() {
           return [renford.id, renford] as const;
         }),
     ).values(),
+  );
+  const favoriRenfordIds = new Set(
+    favoris.map((favori) => favori.profilRenfordId),
   );
 
   return (
@@ -155,15 +165,19 @@ export default function MesRenfordsPage() {
                       )}
 
                       <Button
-                        asChild
+                        type="button"
                         variant="secondary"
-                        className="mt-4 rounded-full w-full"
+                        className="mt-4 w-full rounded-full"
+                        disabled={
+                          addFavoriMutation.isPending ||
+                          favoriRenfordIds.has(renford.id)
+                        }
+                        onClick={() => addFavoriMutation.mutate(renford.id)}
                       >
-                        <Link
-                          href={`/dashboard/etablissement/renfords/${renford.id}`}
-                        >
-                          Voir le profil
-                        </Link>
+                        <Heart className="mr-2 h-4 w-4" />
+                        {favoriRenfordIds.has(renford.id)
+                          ? "Déjà en favoris"
+                          : "Ajouter au favoris"}
                       </Button>
                     </article>
                   );
@@ -242,17 +256,41 @@ export default function MesRenfordsPage() {
                           </p>
                         )}
 
-                        <Button
-                          asChild
-                          variant="secondary"
-                          className="mt-4 rounded-full w-full"
-                        >
-                          <Link
-                            href={`/dashboard/etablissement/renfords/${profil.id}`}
+                        <div className="mt-4 flex w-full items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="shrink-0 rounded-full"
+                            disabled={
+                              addFavoriMutation.isPending ||
+                              favoriRenfordIds.has(profil.id)
+                            }
+                            onClick={() => addFavoriMutation.mutate(profil.id)}
                           >
-                            Voir le profil
-                          </Link>
-                        </Button>
+                            <Heart
+                              className={cn(
+                                "h-4 w-4",
+                                favoriRenfordIds.has(profil.id) && "fill-current",
+                              )}
+                            />
+                          </Button>
+
+                          <Button
+                            type="button"
+                            variant="dark"
+                            className="flex-1 rounded-full"
+                            onClick={() => {
+                              setSelectedFilleul({
+                                id: profil.id,
+                                name: fullName,
+                              });
+                              setFilleulDialogOpen(true);
+                            }}
+                          >
+                            Proposer une mission
+                          </Button>
+                        </div>
                       </article>
                     );
                   })}
@@ -264,6 +302,20 @@ export default function MesRenfordsPage() {
       </Tabs>
 
       <InviterRenfordDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+
+      {selectedFilleul && (
+        <ProposerMissionDialog
+          open={filleulDialogOpen}
+          onOpenChange={(open) => {
+            setFilleulDialogOpen(open);
+            if (!open) {
+              setSelectedFilleul(null);
+            }
+          }}
+          profilRenfordId={selectedFilleul.id}
+          renfordName={selectedFilleul.name}
+        />
+      )}
     </main>
   );
 }
