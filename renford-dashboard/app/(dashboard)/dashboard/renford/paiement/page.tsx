@@ -167,6 +167,7 @@ export default function RenfordPaiementPage() {
         columns={renfordColumns}
         data={payments}
         isLoading={historyQuery.isLoading}
+        enableFilters={false}
         title="Historique des paiements"
         description="Retrouvez ici l'ensemble de vos paiements reçus."
         exportFileName="paiements-renford"

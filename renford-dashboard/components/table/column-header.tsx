@@ -28,7 +28,7 @@ const ColumnHeader = <TData,>({
               variant="ghost"
               className={cn(
                 "my-1 flex items-center gap-1 px-0 rounded-md focus-visible:ring-0",
-                "cursor-pointer"
+                "cursor-pointer hover:bg-transparent",
               )}
             >
               {header}

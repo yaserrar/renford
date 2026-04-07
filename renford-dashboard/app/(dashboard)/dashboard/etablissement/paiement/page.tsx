@@ -17,6 +17,7 @@ export default function EtablissementPaiementPage() {
         columns={etablissementColumns}
         data={payments}
         isLoading={historyQuery.isLoading}
+        enableFilters={false}
         title="Historique des paiements"
         description="Retrouvez ici l'ensemble de vos paiements effectués."
         exportFileName="paiements-etablissement"

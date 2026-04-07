@@ -64,6 +64,7 @@ interface DataTableProps<TData, TValue> {
   selected?: string[];
   onClearSelection?: () => void;
   isLoading?: boolean;
+  enableFilters?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -76,6 +77,7 @@ export function DataTable<TData, TValue>({
   selected = [],
   onClearSelection = () => {},
   isLoading = false,
+  enableFilters = true,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -98,6 +100,7 @@ export function DataTable<TData, TValue>({
       sorting,
       columnVisibility,
     },
+    enableColumnFilters: enableFilters,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
@@ -152,7 +155,7 @@ export function DataTable<TData, TValue>({
           pageCount - 4,
           pageCount - 3,
           pageCount - 2,
-          pageCount - 1
+          pageCount - 1,
         );
       } else {
         pages.push(
@@ -162,7 +165,7 @@ export function DataTable<TData, TValue>({
           currentPage,
           currentPage + 1,
           "...",
-          pageCount - 1
+          pageCount - 1,
         );
       }
     }
@@ -187,70 +190,72 @@ export function DataTable<TData, TValue>({
           >
             <Download size={18} />
           </Button>
-          <Popover open={showFilters} onOpenChange={setShowFilters}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="h-11 gap-2 px-4 bg-white">
-                <SlidersHorizontal size={18} />
-                Filtrer
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[500px]" align="end">
-              <div className="flex flex-wrap gap-3">
-                <div className="flex gap-2 w-full">
-                  <Button
-                    variant="default"
-                    className="h-10 flex-1"
-                    onClick={() => setShowFilters(false)}
-                  >
-                    <Check />
-                    Appliquer
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-10 flex-1"
-                    onClick={() => {
-                      table.resetColumnFilters();
-                    }}
-                  >
-                    <X />
-                    Effacer les filtres
-                  </Button>
+          {enableFilters && (
+            <Popover open={showFilters} onOpenChange={setShowFilters}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-11 gap-2 px-4 bg-white">
+                  <SlidersHorizontal size={18} />
+                  Filtrer
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[500px]" align="end">
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex gap-2 w-full">
+                    <Button
+                      variant="default"
+                      className="h-10 flex-1"
+                      onClick={() => setShowFilters(false)}
+                    >
+                      <Check />
+                      Appliquer
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-10 flex-1"
+                      onClick={() => {
+                        table.resetColumnFilters();
+                      }}
+                    >
+                      <X />
+                      Effacer les filtres
+                    </Button>
+                  </div>
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanFilter())
+                    .map((column) => (
+                      <div key={column.id}>
+                        <Select
+                          onValueChange={(value) =>
+                            column.setFilterValue(
+                              value === "all" ? undefined : value,
+                            )
+                          }
+                          value={(column.getFilterValue() as string) || "all"}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={column.id} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">{column.id}</SelectItem>
+                            {Array.from(column.getFacetedUniqueValues().keys())
+                              .slice(0, 100)
+                              .map((value) => (
+                                <SelectItem
+                                  key={String(value)}
+                                  value={String(value)}
+                                >
+                                  {String(value)}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
                 </div>
-                {table
-                  .getAllColumns()
-                  .filter((column) => column.getCanFilter())
-                  .map((column) => (
-                    <div key={column.id}>
-                      <Select
-                        onValueChange={(value) =>
-                          column.setFilterValue(
-                            value === "all" ? undefined : value
-                          )
-                        }
-                        value={(column.getFilterValue() as string) || "all"}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={column.id} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{column.id}</SelectItem>
-                          {Array.from(column.getFacetedUniqueValues().keys())
-                            .slice(0, 100)
-                            .map((value) => (
-                              <SelectItem
-                                key={String(value)}
-                                value={String(value)}
-                              >
-                                {String(value)}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  ))}
-              </div>
-            </PopoverContent>
-          </Popover>
+              </PopoverContent>
+            </Popover>
+          )}
         </div>
       </div>
 
@@ -262,19 +267,19 @@ export function DataTable<TData, TValue>({
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
                   key={headerGroup.id}
-                  className="bg-primary-background hover:bg-primary-background/90"
+                  className="bg-secondary-background hover:bg-secondary-background"
                 >
                   {headerGroup.headers.map((header) => {
                     return (
                       <TableHead
                         key={header.id}
-                        className="px-4 py-3 text-primary/70 font-semibold"
+                        className="px-4 py-3 text-foreground font-semibold"
                       >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </TableHead>
                     );
@@ -295,12 +300,12 @@ export function DataTable<TData, TValue>({
                         key={cell.id}
                         className={cn(
                           "px-4 py-3 whitespace-nowrap",
-                          classNames?.tableCell
+                          classNames?.tableCell,
                         )}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -356,14 +361,14 @@ export function DataTable<TData, TValue>({
                   key={page}
                   variant={currentPage === page ? "default" : "outline"}
                   className={cn(
-                    currentPage === page && "bg-primary text-white"
+                    currentPage === page && "bg-primary text-white",
                   )}
                   onClick={() => table.setPageIndex(page)}
                   size="icon"
                 >
                   {page + 1}
                 </Button>
-              )
+              ),
             )}
           </div>
 
