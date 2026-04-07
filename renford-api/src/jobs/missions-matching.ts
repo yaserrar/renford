@@ -544,6 +544,11 @@ export const syncMissionMatches = async (
     '[🤝 matching] mission details',
   );
 
+  await prisma.mission.update({
+    where: { id: mission.id },
+    data: { dateDerniereRechercheRenford: new Date() },
+  });
+
   const favoriteRenfordIds = await getFavoriteRenfordIdsForMission(mission);
   const existingAssignments = new Map(
     mission.missionsRenford.map((missionRenford) => [

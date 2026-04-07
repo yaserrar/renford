@@ -43,6 +43,7 @@ import {
   useRespondToMissionRenford,
   useSignAttestationByEtablissement,
   useSignContractByEtablissement,
+  useTriggerManualMissionSearchByEtablissement,
 } from "@/hooks/mission";
 import {
   useCreateCheckoutSession,
@@ -84,6 +85,7 @@ export default function EtablissementMissionDetailsPage() {
 
   const missionQuery = useEtablissementMissionDetails(missionId);
   const respondMutation = useRespondToMissionRenford();
+  const manualSearchMutation = useTriggerManualMissionSearchByEtablissement();
   const activateMutation = useActivatePendingMissions();
   const cancelMutation = useCancelMissionByEtablissement();
   const markTermineeMutation = useMarkMissionTermineeByEtablissement();
@@ -106,6 +108,7 @@ export default function EtablissementMissionDetailsPage() {
     missionRenfordId: string;
     response: "attente_de_signature" | "refuse_par_etablissement";
   } | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const mission = missionQuery.data;
 
   useEffect(() => {
@@ -115,6 +118,16 @@ export default function EtablissementMissionDetailsPage() {
       );
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, []);
 
   const isLoading = missionQuery.isLoading;
   const isError = missionQuery.isError;
@@ -161,7 +174,17 @@ export default function EtablissementMissionDetailsPage() {
   const missionSubtitle =
     TYPE_MISSION_LABELS[mission.specialitePrincipale] ?? "Mission";
 
-  const firstMissionRenford = mission.missionsRenford?.[0];
+  const prioritizedMissionRenford = (mission.missionsRenford ?? []).find(
+    (assignment) =>
+      [
+        "attente_de_signature",
+        "contrat_signe",
+        "mission_en_cours",
+        "mission_terminee",
+      ].includes(assignment.statut),
+  );
+  const firstMissionRenford =
+    prioritizedMissionRenford ?? mission.missionsRenford?.[0];
   const totalHours =
     typeof mission.totalHours === "number" && mission.totalHours > 0
       ? mission.totalHours
@@ -269,12 +292,22 @@ export default function EtablissementMissionDetailsPage() {
   const selectionAssignments = (mission.missionsRenford ?? []).filter(
     (assignment) => assignment.statut === "selection_en_cours",
   );
+  const activeAssignment = (mission.missionsRenford ?? []).find((assignment) =>
+    [
+      "attente_de_signature",
+      "contrat_signe",
+      "mission_en_cours",
+      "mission_terminee",
+    ].includes(assignment.statut),
+  );
   const displayedAssignments =
-    mission.modeMission === "coach" && selectionAssignments.length > 0
-      ? selectionAssignments
-      : firstMissionRenford
-        ? [firstMissionRenford]
-        : [];
+    mission.modeMission === "coach" && activeAssignment
+      ? [activeAssignment]
+      : mission.modeMission === "coach" && selectionAssignments.length > 0
+        ? selectionAssignments
+        : firstMissionRenford
+          ? [firstMissionRenford]
+          : [];
 
   const isMissionStarted = [
     "mission_en_cours",
@@ -285,6 +318,24 @@ export default function EtablissementMissionDetailsPage() {
   ].includes(mission.statut);
 
   const canRequestVisio = !isMissionStarted && mission.modeMission !== "flex";
+  const canRunManualSearch = mission.statut === "en_recherche";
+  const lastSearchMs = mission.dateDerniereRechercheRenford
+    ? new Date(mission.dateDerniereRechercheRenford).getTime()
+    : null;
+  const cooldownRemainingMs = lastSearchMs
+    ? Math.max(0, 60_000 - (nowMs - lastSearchMs))
+    : 0;
+  const cooldownRemainingSeconds = Math.ceil(cooldownRemainingMs / 1000);
+  const manualSearchDisabled =
+    !canRunManualSearch ||
+    manualSearchMutation.isPending ||
+    cooldownRemainingMs > 0;
+  const isMissionPaid = paymentStatusQuery.data?.paiement?.statut === "libere";
+  const canContinuePayment =
+    mission.statut === "mission_terminee" &&
+    ["en_attente", "echoue"].includes(
+      paymentStatusQuery.data?.paiement?.statut ?? "",
+    );
   const canSignAttestation =
     mission.modeMission === "flex" && mission.statut === "mission_terminee";
   const filteredDocumentGroups = documentGroups
@@ -378,7 +429,7 @@ export default function EtablissementMissionDetailsPage() {
                 Terminer la mission
               </Button>
             )}
-            {mission.statut === "mission_terminee" && (
+            {mission.statut === "mission_terminee" && isMissionPaid && (
               <Button
                 variant="dark"
                 className="px-5"
@@ -401,6 +452,20 @@ export default function EtablissementMissionDetailsPage() {
                     : "Procéder au paiement"}
                 </Button>
               )}
+            {canContinuePayment && (
+              <Button
+                variant="dark"
+                className="px-5"
+                disabled={checkoutMutation.isPending}
+                onClick={() => checkoutMutation.mutate(mission.id)}
+              >
+                {checkoutMutation.isPending
+                  ? "Redirection..."
+                  : paymentStatusQuery.data?.paiement?.statut === "echoue"
+                    ? "Réessayer le paiement"
+                    : "Continuer le paiement"}
+              </Button>
+            )}
             {paymentStatusQuery.data?.hasPaiement &&
               paymentStatusQuery.data.paiement && (
                 <div className="flex items-center gap-2 rounded-lg border bg-white px-4 py-2 text-sm">
@@ -478,7 +543,8 @@ export default function EtablissementMissionDetailsPage() {
 
                       <div className="min-w-0">
                         <p className="truncate text-lg font-semibold text-foreground">
-                          {assignmentFullName} {assignmentStatusLabel}
+                          {assignmentFullName}
+                          {/* {assignmentStatusLabel} */}
                         </p>
                         <p className="truncate text-base text-muted-foreground">
                           {assignment.profilRenford.titreProfil || missionTitle}
@@ -502,9 +568,7 @@ export default function EtablissementMissionDetailsPage() {
                         </Button>
                       )}
 
-                      {["selection_en_cours", "attente_de_signature"].includes(
-                        assignment.statut,
-                      ) && (
+                      {assignment.statut === "selection_en_cours" && (
                         <>
                           <Button
                             variant="outline"
@@ -521,22 +585,20 @@ export default function EtablissementMissionDetailsPage() {
                             Refuser
                           </Button>
 
-                          {assignment.statut === "selection_en_cours" && (
-                            <Button
-                              variant="dark"
-                              className="px-5"
-                              disabled={respondMutation.isPending}
-                              onClick={() => {
-                                setPendingRenfordAction({
-                                  missionRenfordId: assignment.id,
-                                  response: "attente_de_signature",
-                                });
-                                setConfirmRenfordDialogOpen(true);
-                              }}
-                            >
-                              Accepter
-                            </Button>
-                          )}
+                          <Button
+                            variant="dark"
+                            className="px-5"
+                            disabled={respondMutation.isPending}
+                            onClick={() => {
+                              setPendingRenfordAction({
+                                missionRenfordId: assignment.id,
+                                response: "attente_de_signature",
+                              });
+                              setConfirmRenfordDialogOpen(true);
+                            }}
+                          >
+                            Accepter
+                          </Button>
                         </>
                       )}
 
@@ -567,19 +629,37 @@ export default function EtablissementMissionDetailsPage() {
             })}
 
             <section className="rounded-3xl border border-border bg-white px-4 py-4 md:px-5 md:py-5">
-              <div className="mb-5">
-                <MissionStatusBadge status={mission.statut} />
-                <h3 className="text-2xl font-semibold text-foreground">
-                  {missionTitle}
-                </h3>
-                <h4 className="text-base text-muted-foreground mb-2">
-                  {missionSubtitle}
-                </h4>
-                <p className="flex items-center gap-2 text-base text-muted-foreground">
-                  <CalendarDays className="h-4 w-4" />
-                  Du {formatFrenchDate(mission.dateDebut)} au{" "}
-                  {formatFrenchDate(mission.dateFin)}
-                </p>
+              <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <MissionStatusBadge status={mission.statut} />
+                  <h3 className="text-2xl font-semibold text-foreground">
+                    {missionTitle}
+                  </h3>
+                  <h4 className="text-base text-muted-foreground mb-2">
+                    {missionSubtitle}
+                  </h4>
+                  <p className="flex items-center gap-2 text-base text-muted-foreground">
+                    <CalendarDays className="h-4 w-4" />
+                    Du {formatFrenchDate(mission.dateDebut)} au{" "}
+                    {formatFrenchDate(mission.dateFin)}
+                  </p>
+                </div>
+                {canRunManualSearch && (
+                  <Button
+                    variant="outline"
+                    className="px-5"
+                    disabled={manualSearchDisabled}
+                    onClick={() =>
+                      manualSearchMutation.mutate({ missionId: mission.id })
+                    }
+                  >
+                    {manualSearchMutation.isPending
+                      ? "Recherche..."
+                      : cooldownRemainingMs > 0
+                        ? `Nouvelle recherche dans ${cooldownRemainingSeconds}s`
+                        : "Relancer la recherche"}
+                  </Button>
+                )}
               </div>
 
               <DetailRow

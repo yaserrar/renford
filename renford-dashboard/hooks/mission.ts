@@ -156,6 +156,37 @@ export const useRespondToMissionRenford = () => {
   });
 };
 
+export const useTriggerManualMissionSearchByEtablissement = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ missionId }: { missionId: string }) => {
+      return (
+        await axios.post(`/etablissement/missions/${missionId}/rechercher-renfords`)
+      ).data as {
+        missionId: string;
+        totalEligible: number;
+        queued: number;
+        proposed: number;
+        dateDerniereRechercheRenford: string;
+        source: "manuel";
+      };
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["etablissement-missions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["etablissement-mission-details", variables.missionId],
+      });
+      toast.success("Recherche manuelle lancée avec succès");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
 export const useMarkMissionTermineeByEtablissement = () => {
   const axios = useAxios();
   const queryClient = useQueryClient();

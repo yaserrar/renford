@@ -572,6 +572,7 @@ model Mission {
     montantHT           Decimal?            @db.Decimal(10, 2) // Montant HT stocké au moment de la création
     montantFraisService Decimal?            @db.Decimal(10, 2) // Frais de service Renford
     montantTTC          Decimal?            @db.Decimal(10, 2) // Total facturé à l'établissement (HT + frais)
+    dateDerniereRechercheRenford DateTime? // Dernière exécution de recherche de Renfords
 
     pourcentageVariationTarif Decimal? @db.Decimal(5, 2) // Pourcentage de variation du tarif en fonction de l'expérience du Renford (ex: +20% pour un expert)
 
@@ -587,6 +588,7 @@ model Mission {
     @@index([modeMission])
     @@index([dateDebut])
     @@index([dateFin])
+    @@index([dateDerniereRechercheRenford])
     @@map("missions")
 }
 

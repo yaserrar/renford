@@ -251,16 +251,47 @@ export const createCheckoutSession = async (
       });
     }
 
-    // Check if payment already exists
+    // Check the latest payment to decide whether we can resume/retry or must block.
     const existingPayment = await prisma.paiement.findFirst({
-      where: {
-        missionId: mission.id,
-        statut: { in: ['en_attente', 'en_cours', 'bloque', 'libere'] },
-      },
+      where: { missionId: mission.id },
+      orderBy: { dateCreation: 'desc' },
     });
 
-    if (existingPayment) {
-      return res.status(400).json({ message: 'Un paiement est déjà en cours pour cette mission' });
+    if (existingPayment?.statut === 'libere') {
+      return res.status(400).json({ message: 'Cette mission a déjà été payée' });
+    }
+
+    if (existingPayment?.statut === 'bloque') {
+      return res.status(400).json({
+        message: 'Le paiement est bloqué. Contactez le support pour débloquer la situation.',
+      });
+    }
+
+    if (existingPayment?.statut === 'en_cours') {
+      return res.status(400).json({
+        message: 'Un paiement est déjà en cours de traitement pour cette mission',
+      });
+    }
+
+    if (existingPayment?.statut === 'en_attente' && existingPayment.stripeCheckoutSessionId) {
+      const currentSession = await stripe.checkout.sessions.retrieve(
+        existingPayment.stripeCheckoutSessionId,
+      );
+
+      if (currentSession.status === 'open' && currentSession.url) {
+        return res.json({ url: currentSession.url });
+      }
+
+      if (currentSession.status === 'complete') {
+        return res.status(400).json({
+          message: 'Ce paiement a déjà été validé. Rafraîchissez la page.',
+        });
+      }
+
+      await prisma.paiement.update({
+        where: { id: existingPayment.id },
+        data: { statut: 'echoue' },
+      });
     }
 
     const missionRenford = mission.missionsRenford[0];
@@ -354,19 +385,39 @@ export const createCheckoutSession = async (
       },
     });
 
-    // Create payment record
-    await prisma.paiement.create({
-      data: {
-        missionId: mission.id,
-        montantHT,
-        montantTVA,
-        montantTTC,
-        montantCommission,
-        montantNetRenford,
-        statut: 'en_attente',
-        stripeCheckoutSessionId: session.id,
-      },
-    });
+    // Reuse the latest failed/pending payment row when possible, otherwise create one.
+    if (existingPayment && ['en_attente', 'echoue'].includes(existingPayment.statut)) {
+      await prisma.paiement.update({
+        where: { id: existingPayment.id },
+        data: {
+          montantHT,
+          montantTVA,
+          montantTTC,
+          montantCommission,
+          montantNetRenford,
+          statut: 'en_attente',
+          stripeCheckoutSessionId: session.id,
+          stripePaymentIntentId: null,
+          stripeChargeId: null,
+          stripeTransferId: null,
+          dateCapture: null,
+          dateLiberation: null,
+        },
+      });
+    } else {
+      await prisma.paiement.create({
+        data: {
+          missionId: mission.id,
+          montantHT,
+          montantTVA,
+          montantTTC,
+          montantCommission,
+          montantNetRenford,
+          statut: 'en_attente',
+          stripeCheckoutSessionId: session.id,
+        },
+      });
+    }
 
     return res.json({ url: session.url });
   } catch (err) {

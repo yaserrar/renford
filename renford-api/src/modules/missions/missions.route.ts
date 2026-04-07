@@ -14,6 +14,7 @@ import {
   respondToMissionRenfordByEtablissement,
   signAttestationByEtablissement,
   signContractByEtablissement,
+  triggerManualMissionSearchByEtablissement,
 } from './missions.controller';
 import {
   createMissionSchema,
@@ -58,6 +59,13 @@ router.post(
   authenticateToken(['etablissement']),
   validateResource({ params: missionIdParamsSchema }),
   markMissionAsTermineeByEtablissement,
+);
+
+router.post(
+  '/etablissement/missions/:missionId/rechercher-renfords',
+  authenticateToken(['etablissement']),
+  validateResource({ params: missionIdParamsSchema }),
+  triggerManualMissionSearchByEtablissement,
 );
 
 router.post(

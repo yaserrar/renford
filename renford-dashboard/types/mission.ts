@@ -47,6 +47,7 @@ export type Mission = {
   montantHT: number | string | null;
   montantFraisService: number | string | null;
   montantTTC: number | string | null;
+  dateDerniereRechercheRenford: Date | string | null;
   pourcentageVariationTarif: number | string | null;
   dateCreation?: Date | string;
   dateMiseAJour?: Date | string;
