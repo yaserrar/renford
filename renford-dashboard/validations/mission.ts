@@ -495,11 +495,27 @@ export const createMissionFormSchema = createMissionStep1Schema
   .and(createMissionStep2Schema)
   .and(createMissionStep3Schema);
 
+const toUtcNoonFromCalendarDate = (value: Date): Date =>
+  new Date(
+    Date.UTC(value.getFullYear(), value.getMonth(), value.getDate(), 12, 0, 0, 0),
+  );
+
 export const createMissionPayloadSchema = createMissionFormSchema.transform(
-  (values) => ({
-    ...values,
-    description: values.detailMission?.trim() ? values.detailMission : null,
-  }),
+  (values) => {
+    const normalizedDateDebut = toUtcNoonFromCalendarDate(values.dateDebut);
+    const normalizedDateFin = toUtcNoonFromCalendarDate(values.dateFin);
+
+    return {
+      ...values,
+      dateDebut: normalizedDateDebut,
+      dateFin: normalizedDateFin,
+      plagesHoraires: values.plagesHoraires.map((slot) => ({
+        ...slot,
+        date: toUtcNoonFromCalendarDate(slot.date),
+      })),
+      description: values.detailMission?.trim() ? values.detailMission : null,
+    };
+  },
 );
 
 export const getSpecialitesOptionsByDiscipline = (
