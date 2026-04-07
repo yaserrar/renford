@@ -83,49 +83,47 @@ export default function RenfordMissionCard({ item }: RenfordMissionCardProps) {
       aria-label="Voir le détail de la mission"
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="">
-          <div className="flex min-w-0 items-center gap-3">
-            <Avatar
-              className={cn(
-                "mt-0.5 h-20 w-20 shrink-0 border border-input rounded-md",
-              )}
-            >
-              <AvatarImage
-                src={
-                  etablissement?.avatarChemin
-                    ? getUrl(etablissement.avatarChemin)
-                    : undefined
-                }
-                alt={etablissement?.nom ?? "Établissement"}
-                className="rounded-md"
-              />
-              <AvatarFallback className="text-sm font-medium rounded-md">
-                {getInitials(etablissement?.nom)}
-              </AvatarFallback>
-            </Avatar>
+        <div className="flex min-w-0 gap-3">
+          <Avatar
+            className={cn(
+              "mt-0.5 md:h-30 md:w-30 h-16 w-16 shrink-0 md:rounded-xl rounded-sm",
+            )}
+          >
+            <AvatarImage
+              src={
+                etablissement?.avatarChemin
+                  ? getUrl(etablissement.avatarChemin)
+                  : undefined
+              }
+              alt={etablissement?.nom ?? "Établissement"}
+              className="rounded-md"
+            />
+            <AvatarFallback className="text-sm font-medium rounded-md">
+              {getInitials(etablissement?.nom)}
+            </AvatarFallback>
+          </Avatar>
 
-            <div className="min-w-0 space-y-1">
-              <p className="text-xl leading-tight font-semibold text-foreground">
-                {missionTitle}
+          <div className="min-w-0 space-y-1">
+            <p className="text-xl leading-tight font-semibold text-foreground">
+              {missionTitle}
+            </p>
+            {etablissement && (
+              <p className="flex items-center gap-1.5 text-base text-muted-foreground">
+                <MapPin className="h-4 w-4 shrink-0" />
+                {etablissement.adresse}, {etablissement.codePostal}{" "}
+                {etablissement.ville}
               </p>
-              {etablissement && (
-                <p className="flex items-center gap-1.5 text-base text-muted-foreground">
-                  <MapPin className="h-4 w-4 shrink-0" />
-                  {etablissement.adresse}, {etablissement.codePostal}{" "}
-                  {etablissement.ville}
-                </p>
-              )}
+            )}
 
-              <p className="flex items-center gap-2 text-sm">
-                <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                Du {formatFrenchDate(mission.dateDebut)} au{" "}
-                {formatFrenchDate(mission.dateFin)}
-              </p>
-              <p className="flex items-center gap-2 text-sm">
-                <Clock3 className="h-4 w-4 text-muted-foreground" />
-                {timeRange} · {formatDurationHours(mission.totalHours)}
-              </p>
-            </div>
+            <p className="flex items-center gap-2 text-sm">
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              Du {formatFrenchDate(mission.dateDebut)} au{" "}
+              {formatFrenchDate(mission.dateFin)}
+            </p>
+            <p className="flex items-center gap-2 text-sm">
+              <Clock3 className="h-4 w-4 text-muted-foreground" />
+              {timeRange} · {formatDurationHours(mission.totalHours)}
+            </p>
           </div>
         </div>
 

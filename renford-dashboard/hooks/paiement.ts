@@ -24,7 +24,7 @@ export const useConnectAccountStatus = () => {
       return (await axios.get("/paiement/connect/status"))
         .data as ConnectAccountStatus;
     },
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 60 /* 1 minute */,
   });
 };
 

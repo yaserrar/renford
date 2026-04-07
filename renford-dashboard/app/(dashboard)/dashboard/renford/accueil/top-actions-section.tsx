@@ -59,7 +59,16 @@ export default function RenfordTopActionsSection({
                   height={16}
                 />
               )}
-              <span>{action.label}</span>
+              <span>
+                {action.highlighted &&
+                  nouvellesOpportunites != null &&
+                  nouvellesOpportunites > 0 && (
+                    <span className="inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-destructive text-white text-xs font-semibold mr-2">
+                      {nouvellesOpportunites}
+                    </span>
+                  )}
+                {action.label}
+              </span>
             </div>
           );
 
@@ -83,16 +92,7 @@ export default function RenfordTopActionsSection({
               variant={action.highlighted ? "outline-primary" : "outline"}
               className="py-12 justify-center rounded-2xl text-sm text-center font-semibold text-black relative"
             >
-              <Link href={action.href}>
-                {content}
-                {action.highlighted &&
-                  nouvellesOpportunites != null &&
-                  nouvellesOpportunites > 0 && (
-                    <span className="absolute top-2 right-2 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-primary text-white text-xs font-semibold">
-                      {nouvellesOpportunites}
-                    </span>
-                  )}
-              </Link>
+              <Link href={action.href}>{content}</Link>
             </Button>
           );
         })}

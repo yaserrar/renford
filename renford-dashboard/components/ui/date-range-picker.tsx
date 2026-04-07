@@ -38,7 +38,7 @@ const DateRangePicker = ({ className, dateRange, setDateRange }: Props) => {
             variant={"outline"}
             className={cn(
               "w-[300px] justify-start text-left font-normal",
-              !currentDateRange && "text-muted-foreground"
+              !currentDateRange && "text-muted-foreground",
             )}
           >
             <CalendarIcon />
@@ -58,18 +58,6 @@ const DateRangePicker = ({ className, dateRange, setDateRange }: Props) => {
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <div className="flex flex-col md:flex-row gap-2 justify-between p-4 flex-wrap">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setCurrentDateRange({
-                  from: addDays(new Date(), -7),
-                  to: new Date(),
-                });
-                setOpen(false);
-              }}
-            >
-              Les 7 derniers jours
-            </Button>
             <Button
               variant="outline"
               onClick={() => {

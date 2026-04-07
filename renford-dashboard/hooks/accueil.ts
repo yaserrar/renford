@@ -11,7 +11,7 @@ export const useEtablissementAccueil = () => {
       return (await axios.get("/etablissement/accueil"))
         .data as EtablissementAccueilData;
     },
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 60 * 20,
   });
 };
 
@@ -23,6 +23,6 @@ export const useRenfordAccueil = () => {
     queryFn: async () => {
       return (await axios.get("/renford/accueil")).data as RenfordAccueilData;
     },
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 60 * 20,
   });
 };

@@ -140,7 +140,8 @@ export default function Etape6RenfordPage() {
               type="button"
               variant="link"
               onClick={handleSkip}
-              disabled={isAdvancing || isSkipping}
+              // disabled={isAdvancing || isSkipping}
+              disabled
               className="text-gray-500"
             >
               {isSkipping && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

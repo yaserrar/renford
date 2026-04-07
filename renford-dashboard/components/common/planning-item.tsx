@@ -1,10 +1,13 @@
 "use client";
 
+import { useCurrentUser } from "@/hooks/utilisateur";
 import { cn, getUrl } from "@/lib/utils";
 import { CalendarDays, Clock3, List, MapPin } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 type PlanningItemProps = {
+  id: string;
   title: string;
   nameLabel?: string;
   subtitle?: string;
@@ -22,6 +25,7 @@ type PlanningItemProps = {
 };
 
 export default function PlanningItem({
+  id,
   title,
   nameLabel,
   subtitle,
@@ -37,15 +41,27 @@ export default function PlanningItem({
   hideDate = false,
   className,
 }: PlanningItemProps) {
+  const { data: currentUser } = useCurrentUser();
+
   return (
-    <div className={cn("border-t border-border bg-white py-4", className)}>
+    <Link
+      href={
+        currentUser?.typeUtilisateur === "etablissement"
+          ? `/dashboard/etablissement/missions/${id}`
+          : `/dashboard/renford/missions/${id}`
+      }
+      className={cn(
+        "border-t border-border bg-white py-4 cursor-pointer",
+        className,
+      )}
+    >
       <div className="flex items-start gap-4">
         <div
           className={cn(
             "overflow-hidden bg-gray-50 flex items-center justify-center",
             visualType === "avatar"
               ? "h-14 w-14 min-w-14 rounded-full"
-              : "h-24 w-24 min-w-24 rounded-xl",
+              : "md:h-30 md:w-30 h-16 w-16 md:rounded-xl rounded-sm",
           )}
         >
           {logoSrc ? (
@@ -123,6 +139,6 @@ export default function PlanningItem({
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

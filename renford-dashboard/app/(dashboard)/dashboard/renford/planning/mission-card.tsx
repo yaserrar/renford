@@ -1,7 +1,8 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { useCurrentUser } from "@/hooks/utilisateur";
 import { cn, getInitials, getUrl } from "@/lib/utils";
 import { RenfordPlanningSlot } from "@/types/mission";
 import {
@@ -11,6 +12,7 @@ import {
 } from "@/validations/mission";
 import { Clock3, MapPin, List, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type Props = {
   slot: RenfordPlanningSlot;
@@ -18,6 +20,8 @@ type Props = {
 };
 
 export default function MissionCard({ slot, className }: Props) {
+  const router = useRouter();
+
   const disciplineLabel =
     DISCIPLINE_MISSION_LABELS[slot.discipline] ?? slot.discipline;
 
@@ -33,14 +37,14 @@ export default function MissionCard({ slot, className }: Props) {
 
   return (
     <div
-      className={cn(
-        "rounded-3xl border border-border bg-white px-4 py-4 md:px-5 md:py-5",
-        className,
-      )}
+      className={cn("border-t border-border py-4 cursor-pointer", className)}
     >
-      <div className="flex items-start gap-4">
+      <Link
+        className="flex md:flex-row flex-col items-start gap-4"
+        href={`/dashboard/renford/missions/${slot.missionId}`}
+      >
         {/* Avatar */}
-        <Avatar className="mt-0.5 hidden h-20 w-20 shrink-0 rounded-md border border-input sm:flex">
+        <Avatar className="mt-0.5 md:h-30 md:w-30 h-16 w-16 shrink-0 rounded-sm md:rounded-xl">
           <AvatarImage
             src={
               slot.etablissement.avatarChemin
@@ -101,17 +105,17 @@ export default function MissionCard({ slot, className }: Props) {
               </ul>
             </div>
           )}
-
-          {/* Un problème? */}
-          <div className="mt-3 flex justify-end">
-            <Link
-              href={`/dashboard/renford/missions/${slot.missionId}`}
-              className={buttonVariants({ variant: "dark" })}
-            >
-              Un problème ?
-            </Link>
-          </div>
         </div>
+      </Link>
+
+      {/* Un problème? */}
+      <div className="my-2 flex justify-end">
+        <Link
+          className={buttonVariants({ variant: "dark" })}
+          href={`/dashboard/support?tab=contact`}
+        >
+          Un problème ?
+        </Link>
       </div>
     </div>
   );

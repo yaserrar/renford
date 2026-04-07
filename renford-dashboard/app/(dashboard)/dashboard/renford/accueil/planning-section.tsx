@@ -32,7 +32,7 @@ export default function RenfordPlanningSection({ planning }: Props) {
 
   return (
     <section className="rounded-2xl border border-border bg-white p-4 md:p-6">
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex justify-between gap-3">
         <p className="text-xl font-semibold text-foreground">Mon planning</p>
         <Link
           href="/dashboard/renford/planning"
@@ -72,6 +72,7 @@ export default function RenfordPlanningSection({ planning }: Props) {
                   return (
                     <PlanningItem
                       key={`${slot.id}-${index}`}
+                      id={slot.missionId}
                       title={disciplineLabel}
                       establishmentName={slot.etablissement.nom}
                       establishmentAddress={address}

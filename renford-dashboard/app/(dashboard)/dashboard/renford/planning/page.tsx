@@ -75,12 +75,12 @@ export default function RenfordPlanningPage() {
 
       <div className="bg-secondary-background min-h-[620px] rounded-3xl border m-1 p-4 md:p-6">
         {/* Info banner */}
-        <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-100 px-4 py-3 text-sm text-black font-semibold">
+        {/* <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-100 px-4 py-3 text-sm text-black font-semibold">
           <p>
             Merci de venir légèrement en avance pour faciliter la prise de
             poste.
           </p>
-        </div>
+        </div> */}
 
         {/* Content */}
         {isLoading ? (
@@ -99,8 +99,11 @@ export default function RenfordPlanningPage() {
         ) : (
           <div className="space-y-6">
             {grouped.map((group) => (
-              <section key={group.date} className="space-y-3">
-                <h2 className="text-base md:text-lg font-semibold text-foreground capitalize">
+              <section
+                key={group.date}
+                className="space-y-3 pt-4 border border-border rounded-3xl bg-white px-4"
+              >
+                <h2 className="text-base font-semibold text-foreground capitalize">
                   {formatDayHeading(group.date)}
                 </h2>
                 <div className="space-y-3">
