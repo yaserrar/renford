@@ -29,3 +29,11 @@ export type Evaluation = {
   dateCreation: Date;
   dateMiseAJour: Date;
 };
+
+// Évaluation simplifiée d'un Renford par un établissement
+export type EvaluationRenford = {
+  id: string;
+  note: number;
+  commentaire: string | null;
+  dateCreation: Date | string;
+};

@@ -10,7 +10,7 @@ import { DateRange } from "react-day-picker";
 import { CalendarOff, Info } from "lucide-react";
 import { useMemo, useState } from "react";
 import CenterState from "@/components/common/center-state";
-import IndisponibilitesDialog from "./indisponibilites-dialog";
+import IndisponibilitesCalendarDialog from "./indisponibilites-calendar-dialog";
 import MissionCard from "./mission-card";
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -64,12 +64,12 @@ export default function RenfordPlanningPage() {
         {/* Header actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
-          <IndisponibilitesDialog>
-            <Button variant="outline" className="gap-2" disabled>
+          <IndisponibilitesCalendarDialog>
+            <Button variant="outline" className="gap-2">
               <CalendarOff className="h-4 w-4" />
               Mes indisponibilités
             </Button>
-          </IndisponibilitesDialog>
+          </IndisponibilitesCalendarDialog>
         </div>
       </div>
 

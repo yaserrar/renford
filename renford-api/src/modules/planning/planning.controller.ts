@@ -1,6 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
 import prisma from '../../config/prisma';
-import type { RepetitionIndisponibilite } from '@prisma/client';
 
 export const getEtablissementPlanning = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -257,9 +256,48 @@ export const getRenfordPlanning = async (req: Request, res: Response, next: Next
 
 // ─── Indisponibilités CRUD ───────────────────────────────────
 
+/** Convert "HH:MM" to minutes since midnight */
+const timeToMinutes = (time: string): number => {
+  const [h, m] = time.split(':').map(Number);
+  return h! * 60 + m!;
+};
+
+/** Generate the list of dates to create based on the repetition rule */
+const expandDates = (dateDebut: Date, dateFin: Date, repetition: string): Date[] => {
+  const dates: Date[] = [];
+  const start = new Date(dateDebut);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(dateFin);
+  end.setHours(0, 0, 0, 0);
+
+  if (repetition === 'tous_les_jours') {
+    const current = new Date(start);
+    while (current <= end) {
+      dates.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+  } else if (repetition === 'toutes_les_semaines') {
+    const current = new Date(start);
+    while (current <= end) {
+      dates.push(new Date(current));
+      current.setDate(current.getDate() + 7);
+    }
+  } else {
+    // "aucune" — one row per day in the range
+    const current = new Date(start);
+    while (current <= end) {
+      dates.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+  }
+
+  return dates;
+};
+
 export const getIndisponibilites = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.userId!;
+    const { year, month } = req.query as { year?: string; month?: string };
 
     const profilRenford = await prisma.profilRenford.findUnique({
       where: { utilisateurId: userId },
@@ -270,9 +308,21 @@ export const getIndisponibilites = async (req: Request, res: Response, next: Nex
       return res.status(404).json({ message: 'Profil Renford non trouvé' });
     }
 
+    // If year & month are provided, filter to that month only
+    const dateFilter: { gte?: Date; lt?: Date } = {};
+    if (year && month) {
+      const y = parseInt(year, 10);
+      const m = parseInt(month, 10); // 1-based (1 = January)
+      dateFilter.gte = new Date(y, m - 1, 1);
+      dateFilter.lt = new Date(y, m, 1); // first day of next month
+    }
+
     const indisponibilites = await prisma.indisponibiliteRenford.findMany({
-      where: { profilRenfordId: profilRenford.id },
-      orderBy: { dateDebut: 'asc' },
+      where: {
+        profilRenfordId: profilRenford.id,
+        ...(dateFilter.gte ? { date: dateFilter } : {}),
+      },
+      orderBy: { date: 'asc' },
     });
 
     return res.json(indisponibilites);
@@ -295,19 +345,32 @@ export const createIndisponibilite = async (req: Request, res: Response, next: N
       return res.status(404).json({ message: 'Profil Renford non trouvé' });
     }
 
-    const indisponibilite = await prisma.indisponibiliteRenford.create({
-      data: {
+    const isFullDay = Boolean(journeeEntiere);
+    const startMinutes = !isFullDay && heureDebut ? timeToMinutes(heureDebut) : null;
+    const endMinutes = !isFullDay && heureFin ? timeToMinutes(heureFin) : null;
+
+    const dates = expandDates(new Date(dateDebut), new Date(dateFin), repetition || 'aucune');
+
+    if (dates.length === 0) {
+      return res.status(400).json({ message: 'Plage de dates invalide' });
+    }
+
+    // Cap at 365 rows to prevent abuse
+    if (dates.length > 365) {
+      return res.status(400).json({ message: 'La plage de dates ne peut pas dépasser 365 jours' });
+    }
+
+    const created = await prisma.indisponibiliteRenford.createMany({
+      data: dates.map((date) => ({
         profilRenfordId: profilRenford.id,
-        dateDebut: new Date(dateDebut),
-        dateFin: new Date(dateFin),
-        heureDebut: journeeEntiere ? null : heureDebut,
-        heureFin: journeeEntiere ? null : heureFin,
-        journeeEntiere: Boolean(journeeEntiere),
-        repetition: (repetition as RepetitionIndisponibilite) || 'aucune',
-      },
+        date,
+        heureDebut: startMinutes,
+        heureFin: endMinutes,
+        journeeEntiere: isFullDay,
+      })),
     });
 
-    return res.status(201).json(indisponibilite);
+    return res.status(201).json({ count: created.count });
   } catch (err) {
     return next(err);
   }

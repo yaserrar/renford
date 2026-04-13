@@ -1,66 +1,42 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  useCreateIndisponibilite,
-  useDeleteIndisponibilite,
-  useIndisponibilites,
-} from "@/hooks/mission";
+import { DatePicker } from "@/components/ui/date-picker";
+import TimePicker from "@/components/common/time-picker";
+import { useCreateIndisponibilite } from "@/hooks/indisponibilite";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { CalendarIcon, Clock, Trash2 } from "lucide-react";
 import { useState } from "react";
-import type { RepetitionIndisponibilite } from "@/types/mission";
-
-// ─── Time options ────────────────────────────────────────────
-
-const TIME_OPTIONS = Array.from({ length: 30 }, (_, i) => {
-  const h = Math.floor(i / 2) + 6;
-  const m = i % 2 === 0 ? "00" : "30";
-  return `${String(h).padStart(2, "0")}:${m}`;
-});
 
 type Props = {
-  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
-export default function IndisponibilitesDialog({ children }: Props) {
-  const [open, setOpen] = useState(false);
+export default function CreateIndisponibiliteDialog({
+  open,
+  onOpenChange,
+}: Props) {
   const [journeeEntiere, setJourneeEntiere] = useState(true);
   const [dateDebut, setDateDebut] = useState<Date | undefined>();
   const [dateFin, setDateFin] = useState<Date | undefined>();
   const [heureDebut, setHeureDebut] = useState("08:00");
   const [heureFin, setHeureFin] = useState("18:00");
   const [repeter, setRepeter] = useState(false);
-  const [repetition, setRepetition] =
-    useState<RepetitionIndisponibilite>("aucune");
+  const [repetition, setRepetition] = useState<
+    "aucune" | "tous_les_jours" | "toutes_les_semaines"
+  >("aucune");
 
-  const { data: indisponibilites } = useIndisponibilites();
   const createMutation = useCreateIndisponibilite();
-  const deleteMutation = useDeleteIndisponibilite();
 
   const resetForm = () => {
     setJourneeEntiere(true);
@@ -84,17 +60,21 @@ export default function IndisponibilitesDialog({ children }: Props) {
         journeeEntiere,
         repetition: repeter ? repetition : "aucune",
       },
-      { onSuccess: resetForm },
+      {
+        onSuccess: () => {
+          resetForm();
+          onOpenChange(false);
+        },
+      },
     );
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md rounded-2xl p-0">
         <DialogHeader className="border-b border-border px-6 py-5">
           <DialogTitle className="text-lg font-semibold">
-            Mes indisponibilités
+            Ajouter une indisponibilité
           </DialogTitle>
         </DialogHeader>
 
@@ -116,13 +96,13 @@ export default function IndisponibilitesDialog({ children }: Props) {
             <Label className="text-sm font-medium text-muted-foreground">
               A Partir de
             </Label>
-            <DatePickerField
-              date={dateDebut}
-              onSelect={setDateDebut}
+            <DatePicker
+              value={dateDebut}
+              onChange={setDateDebut}
               placeholder="début"
             />
             {!journeeEntiere && (
-              <TimeSelect
+              <TimePicker
                 value={heureDebut}
                 onChange={setHeureDebut}
                 placeholder="Horaire de début"
@@ -135,13 +115,13 @@ export default function IndisponibilitesDialog({ children }: Props) {
             <Label className="text-sm font-medium text-muted-foreground">
               Jusqu&apos;au
             </Label>
-            <DatePickerField
-              date={dateFin}
-              onSelect={setDateFin}
+            <DatePicker
+              value={dateFin}
+              onChange={setDateFin}
               placeholder="fin..."
             />
             {!journeeEntiere && (
-              <TimeSelect
+              <TimePicker
                 value={heureFin}
                 onChange={setHeureFin}
                 placeholder="Horaire de fin"
@@ -197,152 +177,20 @@ export default function IndisponibilitesDialog({ children }: Props) {
           </div>
 
           {/* Submit */}
-          <Button
-            onClick={handleSubmit}
-            disabled={!dateDebut || !dateFin || createMutation.isPending}
-            className="w-full rounded-xl"
-            variant="dark"
-          >
-            {createMutation.isPending ? "Enregistrement..." : "Enregistrer"}
-          </Button>
-
-          {/* Existing indisponibilités */}
-          {indisponibilites && indisponibilites.length > 0 && (
-            <div className="space-y-3 border-t border-border pt-5">
-              <p className="text-sm font-semibold text-foreground">
-                Indisponibilités enregistrées
-              </p>
-              <div className="space-y-2">
-                {indisponibilites.map((indispo) => (
-                  <div
-                    key={indispo.id}
-                    className="flex items-center justify-between rounded-xl border border-border bg-secondary-background px-4 py-3"
-                  >
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-medium text-foreground">
-                        {format(new Date(indispo.dateDebut), "dd MMM yyyy", {
-                          locale: fr,
-                        })}{" "}
-                        →{" "}
-                        {format(new Date(indispo.dateFin), "dd MMM yyyy", {
-                          locale: fr,
-                        })}
-                      </p>
-                      {!indispo.journeeEntiere && indispo.heureDebut && (
-                        <p className="text-xs text-muted-foreground">
-                          {indispo.heureDebut} – {indispo.heureFin}
-                        </p>
-                      )}
-                      {indispo.repetition !== "aucune" && (
-                        <p className="text-xs text-muted-foreground">
-                          {indispo.repetition === "tous_les_jours"
-                            ? "Tous les jours"
-                            : "Toutes les semaines"}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => deleteMutation.mutate(indispo.id)}
-                      disabled={deleteMutation.isPending}
-                      className="rounded-lg p-2 text-destructive transition-colors hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <DialogFooter>
+            <Button onClick={() => onOpenChange(false)} variant="outline">
+              Annuler
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={!dateDebut || !dateFin || createMutation.isPending}
+              variant="dark"
+            >
+              {createMutation.isPending ? "Enregistrement..." : "Enregistrer"}
+            </Button>
+          </DialogFooter>
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-// ─── Date picker sub-component ──────────────────────────────
-
-function DatePickerField({
-  date,
-  onSelect,
-  placeholder,
-}: {
-  date: Date | undefined;
-  onSelect: (d: Date | undefined) => void;
-  placeholder: string;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "flex w-full items-center gap-3 rounded-xl border border-border bg-white px-4 py-3 text-sm transition-colors hover:bg-secondary/30",
-            !date && "text-muted-foreground",
-          )}
-        >
-          <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-          <span className="flex-1 text-left">
-            {date ? format(date, "dd MMM yyyy", { locale: fr }) : placeholder}
-          </span>
-          <svg
-            className="h-4 w-4 text-muted-foreground shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={(d) => {
-            onSelect(d);
-            setOpen(false);
-          }}
-          locale={fr}
-        />
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-// ─── Time select sub-component ──────────────────────────────
-
-function TimeSelect({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-full rounded-xl border-border bg-white px-4 py-3 h-auto text-sm [&>svg]:hidden">
-        <div className="flex items-center gap-3">
-          <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-          <SelectValue placeholder={placeholder} />
-        </div>
-      </SelectTrigger>
-      <SelectContent>
-        {TIME_OPTIONS.map((time) => (
-          <SelectItem key={time} value={time}>
-            {time}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }
