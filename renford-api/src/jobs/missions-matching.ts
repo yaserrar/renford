@@ -99,8 +99,8 @@ const formatDateTimeSlots = (
     return a.heureDebut.localeCompare(b.heureDebut);
   });
 
-  const first = orderedSlots[0];
-  const last = orderedSlots[orderedSlots.length - 1];
+  const first = orderedSlots[0]!;
+  const last = orderedSlots[orderedSlots.length - 1]!;
 
   const dateLabel =
     orderedSlots.length === 1
