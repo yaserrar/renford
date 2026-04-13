@@ -3,11 +3,12 @@ import {
   dateFilterFn,
   selectFilterFn,
 } from "@/components/table/filter-functions";
-import { Badge } from "@/components/ui/badge";
+import UserMiniCard from "@/components/common/user-mini-card";
 import { formatDate, formatTime } from "@/lib/date";
 import type { ContactMessage } from "@/types/admin";
-import { TYPE_UTILISATEUR_LABELS } from "@/validations/utilisateur";
 import { ColumnDef } from "@tanstack/react-table";
+import { Badge } from "@/components/ui/badge";
+import { TYPE_UTILISATEUR_LABELS } from "@/validations/utilisateur";
 
 export const columns: ColumnDef<ContactMessage>[] = [
   {
@@ -18,13 +19,14 @@ export const columns: ColumnDef<ContactMessage>[] = [
     ),
     cell: ({ row }) => {
       const user = row.original.utilisateur;
+      const name = `${user.prenom} ${user.nom}`.trim() || user.email;
       return (
-        <div>
-          <p className="font-medium">
-            {user.prenom} {user.nom}
-          </p>
-          <p className="text-xs text-muted-foreground">{user.email}</p>
-        </div>
+        <UserMiniCard
+          userId={user.id}
+          name={name}
+          type={user.typeUtilisateur}
+          subtitle={user.email}
+        />
       );
     },
     filterFn: "includesString",
@@ -86,8 +88,8 @@ export const columns: ColumnDef<ContactMessage>[] = [
           variant={traite ? "default" : "secondary"}
           className={
             traite
-              ? "bg-green-50 text-green-700 border-green-200"
-              : "bg-orange-50 text-orange-700 border-orange-200"
+              ? "bg-secondary-background text-secondary border-secondary/60"
+              : "bg-amber-100 text-amber-600 border-amber-200"
           }
         >
           {traite ? "Traité" : "Non traité"}

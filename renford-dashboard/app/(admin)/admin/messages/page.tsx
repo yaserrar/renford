@@ -27,7 +27,10 @@ export default function MessagesPage() {
           return <span className="text-xs text-muted-foreground">Traité</span>;
         }
         return (
-          <Button variant="default" onClick={() => setSelectedMessage(message)}>
+          <Button
+            variant="secondary"
+            onClick={() => setSelectedMessage(message)}
+          >
             <CheckCircle className="size-4" />
             Traiter
           </Button>

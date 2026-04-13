@@ -273,7 +273,7 @@ export function DataTable<TData, TValue>({
       {/* Table */}
       <div
         className={cn(
-          "rounded-t-3xl border bg-secondary-background  p-4 md:p-6 overflow-hidden flex flex-col",
+          "rounded-3xl border bg-secondary-background  p-4 md:p-6 overflow-hidden flex flex-col",
           hidePadding && "p-0 md:p-0",
         )}
       >

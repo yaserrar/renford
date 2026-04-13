@@ -6,6 +6,7 @@ import {
   dateFilterFn,
 } from "@/components/table/filter-functions";
 import { buttonVariants } from "@/components/ui/button";
+import UserMiniCard from "@/components/common/user-mini-card";
 import { formatDate } from "@/lib/date";
 import type { AdminMissionListItem } from "@/types/admin";
 import {
@@ -46,14 +47,27 @@ export const columns: ColumnDef<AdminMissionListItem>[] = [
     header: ({ column }) => (
       <ColumnHeader column={column} header="Établissement" />
     ),
-    cell: ({ row: { original } }) => (
-      <div className="flex flex-col">
-        <span className="font-medium">{original.etablissement.nom}</span>
-        <span className="text-sm text-gray-500">
-          {original.etablissement.ville}
-        </span>
-      </div>
-    ),
+    cell: ({ row: { original } }) => {
+      const etab = original.etablissement;
+      const profil = etab.profilEtablissement;
+      if (!profil) {
+        return (
+          <div className="flex flex-col">
+            <span className="font-medium">{etab.nom}</span>
+            <span className="text-sm text-gray-500">{etab.ville}</span>
+          </div>
+        );
+      }
+      return (
+        <UserMiniCard
+          userId={profil.utilisateurId}
+          name={etab.nom}
+          type="etablissement"
+          avatarPath={profil.avatarChemin}
+          subtitle={etab.ville}
+        />
+      );
+    },
   },
   {
     accessorKey: "modeMission",

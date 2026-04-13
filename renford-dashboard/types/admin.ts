@@ -162,6 +162,10 @@ export type AdminMissionListItem = {
     id: string;
     nom: string;
     ville: string;
+    profilEtablissement: {
+      utilisateurId: string;
+      avatarChemin: string | null;
+    } | null;
   };
   _count: {
     missionsRenford: number;
@@ -202,6 +206,7 @@ export type AdminMissionDetail = {
     telephonePrincipal: string | null;
     profilEtablissement: {
       id: string;
+      utilisateurId: string;
       avatarChemin: string | null;
       raisonSociale: string | null;
     };

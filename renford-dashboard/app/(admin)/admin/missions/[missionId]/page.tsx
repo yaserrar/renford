@@ -5,6 +5,7 @@ import { useAdminMissionDetail } from "@/hooks/admin";
 import CenterState from "@/components/common/center-state";
 import MissionStatusBadge from "@/components/common/mission-status-badge";
 import MissionRenfordStatusBadge from "@/components/common/mission-renford-status-badge";
+import UserMiniCard from "@/components/common/user-mini-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
   Building2,
   CalendarDays,
   Clock3,
+  ExternalLink,
   Mail,
   MapPin,
   Phone,
@@ -174,24 +176,40 @@ export default function AdminMissionDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage
-                    src={getUrl(
-                      mission.etablissement.profilEtablissement?.avatarChemin,
-                    )}
+                {mission.etablissement.profilEtablissement?.utilisateurId ? (
+                  <UserMiniCard
+                    userId={
+                      mission.etablissement.profilEtablissement.utilisateurId
+                    }
+                    name={mission.etablissement.nom}
+                    type="etablissement"
+                    avatarPath={
+                      mission.etablissement.profilEtablissement.avatarChemin
+                    }
+                    subtitle={
+                      mission.etablissement.profilEtablissement.raisonSociale
+                    }
                   />
-                  <AvatarFallback className="bg-blue-100 text-blue-700">
-                    <Building2 className="h-5 w-5" />
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold">{mission.etablissement.nom}</p>
-                  {mission.etablissement.profilEtablissement?.raisonSociale && (
-                    <p className="text-sm text-muted-foreground">
-                      {mission.etablissement.profilEtablissement.raisonSociale}
-                    </p>
-                  )}
-                </div>
+                ) : (
+                  <>
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage
+                        src={getUrl(
+                          mission.etablissement.profilEtablissement
+                            ?.avatarChemin,
+                        )}
+                      />
+                      <AvatarFallback className="bg-blue-100 text-blue-700">
+                        <Building2 className="h-5 w-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold">
+                        {mission.etablissement.nom}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
@@ -276,7 +294,7 @@ export default function AdminMissionDetailPage() {
                     >
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={getUrl(renford.avatarChemin)} />
-                        <AvatarFallback className="bg-purple-100 text-purple-700 text-sm">
+                        <AvatarFallback className="bg-secondary-background text-secondary text-sm">
                           {getInitials(fullName)}
                         </AvatarFallback>
                       </Avatar>
@@ -294,6 +312,14 @@ export default function AdminMissionDetailPage() {
                           </div>
                         )}
                         <MissionRenfordStatusBadge status={mr.statut} />
+                        <a
+                          href={`/admin/utilisateurs/${user.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                          title="Voir le profil"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
                       </div>
                     </button>
                   );
@@ -347,11 +373,11 @@ function CandidatureDetailDialog({
           <div className="flex items-center gap-4">
             <Avatar className="h-14 w-14">
               <AvatarImage src={getUrl(renford.avatarChemin)} />
-              <AvatarFallback className="bg-purple-100 text-purple-700">
+              <AvatarFallback className="bg-secondary-background text-secondary">
                 {getInitials(fullName)}
               </AvatarFallback>
             </Avatar>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="font-semibold text-lg">{fullName}</p>
               {renford.titreProfil && (
                 <p className="text-sm text-muted-foreground">
@@ -359,6 +385,13 @@ function CandidatureDetailDialog({
                 </p>
               )}
             </div>
+            <a
+              href={`/admin/utilisateurs/${user.id}`}
+              className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
+              title="Voir le profil utilisateur"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
           </div>
 
           {/* Contact info */}

@@ -3,10 +3,11 @@ import {
   dateFilterFn,
   selectFilterFn,
 } from "@/components/table/filter-functions";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { formatDate, formatTime } from "@/lib/date";
-import { cn } from "@/lib/utils";
+import { cn, getUrl } from "@/lib/utils";
 import type { AdminUserListItem } from "@/types/admin";
 import {
   STATUT_COMPTE_LABELS,
@@ -26,12 +27,26 @@ export const columns: ColumnDef<AdminUserListItem>[] = [
     cell: ({ row: { original } }) => {
       const name = `${original.prenom} ${original.nom}`.trim() || "N/A";
       const initial = name.charAt(0).toUpperCase();
+      const avatarPath =
+        original.profilEtablissement?.avatarChemin ??
+        original.profilRenford?.avatarChemin ??
+        null;
 
       return (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-            <span className="text-gray-500 font-medium">{initial}</span>
-          </div>
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={getUrl(avatarPath)} alt={name} />
+            <AvatarFallback
+              className={cn(
+                "text-sm font-medium",
+                original.typeUtilisateur === "etablissement"
+                  ? "bg-primary-background text-primary-dark"
+                  : "bg-secondary-background text-secondary",
+              )}
+            >
+              {initial}
+            </AvatarFallback>
+          </Avatar>
           <div className="flex flex-col">
             <span className="font-medium">{name}</span>
             <span className="text-sm text-gray-500">{original.email}</span>

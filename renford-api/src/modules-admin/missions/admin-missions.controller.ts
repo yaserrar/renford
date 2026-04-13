@@ -23,6 +23,12 @@ export const getAdminMissions = async (_req: Request, res: Response, next: NextF
             id: true,
             nom: true,
             ville: true,
+            profilEtablissement: {
+              select: {
+                utilisateurId: true,
+                avatarChemin: true,
+              },
+            },
           },
         },
         _count: {
@@ -63,6 +69,7 @@ export const getAdminMissionDetail = async (
             profilEtablissement: {
               select: {
                 id: true,
+                utilisateurId: true,
                 avatarChemin: true,
                 raisonSociale: true,
               },

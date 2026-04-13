@@ -99,7 +99,11 @@ export default function UserDetailPage() {
               <h1 className="text-2xl font-bold">{fullName}</h1>
               <div className="mt-1 flex items-center gap-2">
                 <Badge
-                  variant={user.typeUtilisateur === "etablissement" ? "default" : "secondary"}
+                  variant={
+                    user.typeUtilisateur === "etablissement"
+                      ? "default"
+                      : "secondary"
+                  }
                 >
                   {TYPE_UTILISATEUR_LABELS[user.typeUtilisateur]}
                 </Badge>
@@ -135,9 +139,8 @@ export default function UserDetailPage() {
             icon={user.emailVerifie ? CheckCircle2 : XCircle}
             label="Email vérifié"
             value={user.emailVerifie ? "Oui" : "Non"}
-            iconClass={user.emailVerifie ? "text-green-500" : "text-red-400"}
           />
-          {user.statut !== "actif" && (
+          {user.statut === "onboarding" && (
             <QuickInfo
               icon={Footprints}
               label="Étape onboarding"
