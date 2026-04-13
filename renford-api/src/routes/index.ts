@@ -16,11 +16,14 @@ import planningRouter from '../modules/planning/planning.route';
 import contactRouter from '../modules/contact/contact.route';
 import notificationsRouter from '../modules/notifications/notifications.route';
 import paiementRouter from '../modules/paiement/paiement.route';
+import evaluationsRouter from '../modules/evaluations/evaluations.route';
 import adminAdministrateursRouter from '../modules-admin/administrateurs/admin.route';
 import adminUtilisateursRouter from '../modules-admin/utilisateurs/utilisateur.route';
+import adminAuthRouter from '../modules-admin/auth/admin-auth.route';
 import adminStatistiquesRouter from '../modules-admin/statistiques/statistiques.route';
 import adminMessagesContactRouter from '../modules-admin/messages-contact/messages-contact.route';
 import adminNotificationsRouter from '../modules-admin/notifications/notifications.route';
+import adminMissionsRouter from '../modules-admin/missions/admin-missions.route';
 
 const router = Router();
 
@@ -40,13 +43,16 @@ router.use('/', planningRouter);
 router.use('/', contactRouter);
 router.use('/', notificationsRouter);
 router.use('/', paiementRouter);
+router.use('/', evaluationsRouter);
 
 // ── Admin modules ───────────────────────────────────────────
+router.use('/', adminAuthRouter);
 router.use('/', adminAdministrateursRouter);
 router.use('/', adminUtilisateursRouter);
 router.use('/', adminStatistiquesRouter);
 router.use('/', adminMessagesContactRouter);
 router.use('/', adminNotificationsRouter);
+router.use('/', adminMissionsRouter);
 
 router.use('/upload', uploadsRouter);
 

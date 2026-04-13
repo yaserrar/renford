@@ -1,14 +1,9 @@
 import { z } from 'zod';
 
-export const userIdParamSchema = z.object({
-  params: z.object({ userId: z.string().uuid() }),
+export const userIdParamsSchema = z.object({ userId: z.string().uuid() });
+
+export const toggleUserStatusBodySchema = z.object({
+  statut: z.enum(['actif', 'suspendu']),
 });
 
-export const toggleUserStatusSchema = z.object({
-  params: z.object({ userId: z.string().uuid() }),
-  body: z.object({
-    statut: z.enum(['actif', 'suspendu']),
-  }),
-});
-
-export type ToggleUserStatusSchema = z.infer<typeof toggleUserStatusSchema>;
+export type ToggleUserStatusBody = z.infer<typeof toggleUserStatusBodySchema>;

@@ -1,11 +1,7 @@
 import bcrypt from 'bcryptjs';
 import type { NextFunction, Request, Response } from 'express';
 import prisma from '../../config/prisma';
-import type {
-  CreateAdminSchema,
-  UpdateAdminSchema,
-  UpdateAdminPasswordSchema,
-} from './admin.schema';
+import type { CreateAdminBody, UpdateAdminBody, UpdateAdminPasswordBody } from './admin.schema';
 
 // GET /admin/admins - Liste des administrateurs
 export const getAdmins = async (_req: Request, res: Response, next: NextFunction) => {
@@ -32,7 +28,7 @@ export const getAdmins = async (_req: Request, res: Response, next: NextFunction
 
 // POST /admin/admins - Créer un administrateur
 export const createAdmin = async (
-  req: Request<unknown, unknown, CreateAdminSchema>,
+  req: Request<unknown, unknown, CreateAdminBody>,
   res: Response,
   next: NextFunction,
 ) => {
@@ -79,7 +75,7 @@ export const createAdmin = async (
 
 // PUT /admin/admins/:adminId - Modifier un administrateur
 export const updateAdmin = async (
-  req: Request<UpdateAdminSchema['params'], unknown, UpdateAdminSchema['body']>,
+  req: Request<{ adminId: string }, unknown, UpdateAdminBody>,
   res: Response,
   next: NextFunction,
 ) => {
@@ -131,7 +127,7 @@ export const updateAdmin = async (
 
 // PUT /admin/admins/:adminId/password - Modifier le mot de passe d'un admin
 export const updateAdminPassword = async (
-  req: Request<UpdateAdminPasswordSchema['params'], unknown, UpdateAdminPasswordSchema['body']>,
+  req: Request<{ adminId: string }, unknown, UpdateAdminPasswordBody>,
   res: Response,
   next: NextFunction,
 ) => {

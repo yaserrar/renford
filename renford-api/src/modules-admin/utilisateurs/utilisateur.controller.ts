@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import prisma from '../../config/prisma';
-import type { ToggleUserStatusSchema } from './utilisateur.schema';
+import type { ToggleUserStatusBody } from './utilisateur.schema';
 
 // GET /admin/users - Liste des utilisateurs (établissements + renfords)
 export const getUsers = async (_req: Request, res: Response, next: NextFunction) => {
@@ -92,7 +92,7 @@ export const getUserDetail = async (
 
 // PUT /admin/users/:userId/status - Activer/Suspendre un utilisateur
 export const toggleUserStatus = async (
-  req: Request<ToggleUserStatusSchema['params'], unknown, ToggleUserStatusSchema['body']>,
+  req: Request<{ userId: string }, unknown, ToggleUserStatusBody>,
   res: Response,
   next: NextFunction,
 ) => {
