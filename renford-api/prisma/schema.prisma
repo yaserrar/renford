@@ -563,15 +563,15 @@ model Mission {
 
     // Dates et horaires
     dateDebut DateTime
-    dateFin   DateTime
+    dateFin   DateTime?
 
     PlageHoraireMission PlageHoraireMission[]
 
     methodeTarification MethodeTarification @default(horaire)
     tarif               Decimal?            @db.Decimal(10, 2) // Tarif horaire, journalier ou demi-journalier selon la méthode de tarification
     montantHT           Decimal?            @db.Decimal(10, 2) // Montant HT stocké au moment de la création
-    montantFraisService Decimal?            @db.Decimal(10, 2) // Frais de service Renford
-    montantTTC          Decimal?            @db.Decimal(10, 2) // Total facturé à l'établissement (HT + frais)
+    montantFraisService Decimal?            @db.Decimal(10, 2) // Frais de service Renford (HT)
+    montantTTC          Decimal?            @db.Decimal(10, 2) // Total facturé = montantHT + fraisTTC (TVA 20% sur frais uniquement)
     dateDerniereRechercheRenford DateTime? // Dernière exécution de recherche de Renfords
 
     pourcentageVariationTarif Decimal? @db.Decimal(5, 2) // Pourcentage de variation du tarif en fonction de l'expérience du Renford (ex: +20% pour un expert)
@@ -693,11 +693,14 @@ model MissionRenford {
     // Tarif négocié final
     tarifNegocie Decimal? @db.Decimal(8, 2)
 
-    // Signatures des documents contractuels
-    signatureContratPrestationRenfordChemin      String?
-    signatureContratPrestationEtablissementChemin String?
-    signatureAttestationMissionRenfordChemin      String?
-    signatureAttestationMissionEtablissementChemin String?
+    // Signature – Contrat de prestation
+    signatureContratPrestationRenfordId        String? @unique
+    signatureContratPrestationRenford          SignatureContrat? @relation("SignatureContratRenford", fields: [signatureContratPrestationRenfordId], references: [id])
+    signatureContratPrestationEtablissementId  String? @unique
+    signatureContratPrestationEtablissement    SignatureContrat? @relation("SignatureContratEtablissement", fields: [signatureContratPrestationEtablissementId], references: [id])
+
+    // Évaluation laissée par l'établissement
+    evaluation EvaluationRenford?
 
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
@@ -707,6 +710,78 @@ model MissionRenford {
     @@index([profilRenfordId])
     @@index([statut])
     @@map("missions_renfords")
+}
+
+// ============================================================================
+// TABLE: Signatures de contrats (signature électronique in-app)
+// ============================================================================
+
+model SignatureContrat {
+    id String @id @default(uuid())
+
+    // Chemin d'accès à l'image de la signature stockée
+    cheminImage String
+
+    // Nom complet du signataire
+    nomSignataire  String
+    emailSignataire String
+
+    // Rôle du signataire (renford ou etablissement)
+    roleSignataire RoleSignataire
+
+    // Lien vers les CGU acceptées au moment de la signature
+    lienCgu String
+
+    // Source de la signature
+    source SourceSignature @default(web)
+
+    // Informations techniques
+    adresseIp  String
+    userAgent  String    @db.Text
+
+    // Dates
+    dateCreation DateTime @default(now())
+
+    // Relations inverses
+    missionRenfordContratRenford       MissionRenford? @relation("SignatureContratRenford")
+    missionRenfordContratEtablissement MissionRenford? @relation("SignatureContratEtablissement")
+
+    @@index([emailSignataire])
+    @@index([dateCreation])
+    @@map("signatures_contrats")
+}
+
+enum RoleSignataire {
+    renford
+    etablissement
+}
+
+enum SourceSignature {
+    web
+    mobile
+}
+
+// ============================================================================
+// TABLE: Évaluation d'un Renford par un établissement après mission terminée
+// ============================================================================
+
+model EvaluationRenford {
+    id String @id @default(uuid())
+
+    missionRenfordId String           @unique
+    missionRenford   MissionRenford @relation(fields: [missionRenfordId], references: [id], onDelete: Cascade)
+
+    // Note globale (1 à 5 étoiles)
+    note Int // @db.SmallInt — 1..5
+
+    // Commentaire libre
+    commentaire String? @db.Text
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@index([missionRenfordId])
+    @@map("evaluations_renfords")
 }
 
 
@@ -747,32 +822,23 @@ model FavorisRenford {
 
 // ============================================================================
 // TABLE: Indisponibilités des renfords
+// Chaque jour est stocké séparément. Les heures sont en minutes depuis minuit.
 // ============================================================================
-
-enum RepetitionIndisponibilite {
-    aucune
-    tous_les_jours
-    toutes_les_semaines
-}
 
 model IndisponibiliteRenford {
     id              String @id @default(uuid())
     profilRenfordId String
     profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
 
-    dateDebut  DateTime @db.Date
-    dateFin    DateTime @db.Date
-    heureDebut String?  // HH:MM - null si journée entière
-    heureFin   String?  // HH:MM - null si journée entière
+    date       DateTime @db.Date   // Le jour précis de l'indisponibilité
+    heureDebut Int?                // Minutes depuis minuit (ex: 540 = 09:00). null si journée entière
+    heureFin   Int?                // Minutes depuis minuit. null si journée entière
     journeeEntiere Boolean @default(true)
 
-    repetition RepetitionIndisponibilite @default(aucune)
-
-    dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt
+    dateCreation DateTime @default(now())
 
     @@index([profilRenfordId])
-    @@index([dateDebut, dateFin])
+    @@index([profilRenfordId, date])
     @@map("indisponibilites_renford")
 }
 
