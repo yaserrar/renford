@@ -359,16 +359,11 @@ export const updateRenfordQualificationsSchema = z
     }),
     diplomes: z
       .array(z.enum(DIPLOME_KEYS), {
-        required_error: 'Veuillez sélectionner au moins un diplôme',
         invalid_type_error: 'Le format des diplômes est invalide',
       })
-      .min(1, 'Veuillez sélectionner au moins un diplôme'),
-    justificatifDiplomeChemins: z
-      .array(z.string().min(1, 'Le justificatif diplôme est obligatoire'))
-      .min(1, 'Veuillez ajouter les justificatifs de diplôme'),
-    justificatifCarteProfessionnelleChemin: z
-      .string({ required_error: 'Le justificatif carte professionnelle est obligatoire' })
-      .min(1, 'Le justificatif carte professionnelle est obligatoire'),
+      .default([]),
+    justificatifDiplomeChemins: z.array(z.string()).default([]),
+    justificatifCarteProfessionnelleChemin: z.string().nullable().optional(),
     tarifHoraire: tarifHoraireSchema,
     proposeJournee: z.boolean().default(false),
     tarifJournee: tarifJourneeSchema,
@@ -376,7 +371,10 @@ export const updateRenfordQualificationsSchema = z
     tarifDemiJournee: tarifDemiJourneeSchema,
   })
   .superRefine((data, ctx) => {
-    if (data.justificatifDiplomeChemins.length !== data.diplomes.length) {
+    if (
+      data.diplomes.length > 0 &&
+      data.justificatifDiplomeChemins.length !== data.diplomes.length
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['justificatifDiplomeChemins'],

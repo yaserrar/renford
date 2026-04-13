@@ -10,9 +10,9 @@ Ce document décrit le processus de paiement après publication d'une mission, s
 
 Une fois la mission publiée, le flux se divise selon le type de mission :
 
-| Type | Comportement initial |
-|------|----------------------|
-| **Renford Flex** | Mission publiée immédiatement |
+| Type              | Comportement initial                                 |
+| ----------------- | ---------------------------------------------------- |
+| **Renford Flex**  | Mission publiée immédiatement                        |
 | **Renford Coach** | Mise en attente d'acceptation de la mise en relation |
 
 ---
@@ -23,12 +23,13 @@ Une fois la mission publiée, le flux se divise selon le type de mission :
 
 #### Option A — Carte Bancaire
 
-| Situation | Résultat |
-|-----------|----------|
-| Carte **valide** | Stripe déclenche le paiement |
+| Situation          | Résultat                                                            |
+| ------------------ | ------------------------------------------------------------------- |
+| Carte **valide**   | Stripe déclenche le paiement                                        |
 | Carte **invalide** | Mission NON publiée + email envoyé à l'établissement pour réessayer |
 
 Si le paiement est déclenché :
+
 1. Mission publiée ✅
 2. Mission réalisée
 3. Paiement en fin de mission ou facturation mensuelle
@@ -37,12 +38,13 @@ Si le paiement est déclenché :
 
 #### Option B — SEPA
 
-| Situation | Résultat |
-|-----------|----------|
-| Mandat SEPA **validé** | Mission publiée ✅ |
+| Situation                  | Résultat                              |
+| -------------------------- | ------------------------------------- |
+| Mandat SEPA **validé**     | Mission publiée ✅                    |
 | Mandat SEPA **non validé** | Email de rappel envoyé après X heures |
 
 Si le mandat est validé :
+
 1. Mission publiée ✅
 2. Mission réalisée
 3. Paiement automatique (fin de mission ou mensuel)
@@ -57,10 +59,10 @@ Si le mandat est validé :
 
 L'établissement est notifié par email et doit accepter la mise en relation.
 
-| Décision Renford | Résultat |
-|-----------------|----------|
-| **Accepte** | Email de confirmation de mise en relation envoyé |
-| **N'accepte pas** | Mission **BLOQUÉE** |
+| Décision Renford  | Résultat                                         |
+| ----------------- | ------------------------------------------------ |
+| **Accepte**       | Email de confirmation de mise en relation envoyé |
+| **N'accepte pas** | Mission **BLOQUÉE**                              |
 
 ### Étape 2 — Après acceptation
 

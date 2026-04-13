@@ -17,6 +17,7 @@ export type MissionPricingBreakdown = {
   totalUnites: number;
   montantHT: number;
   montantFraisService: number;
+  montantFraisTTC: number;
   montantTTC: number;
 };
 
@@ -91,12 +92,14 @@ export const computeMissionPricing = ({
 
   const montantHT = roundCurrency(safeTarif * totalUnites);
   const montantFraisService = roundCurrency(montantHT * (safeCommissionPercent / 100));
-  const montantTTC = roundCurrency(montantHT * 1.2);
+  const montantFraisTTC = roundCurrency(montantFraisService * 1.2);
+  const montantTTC = roundCurrency(montantHT + montantFraisTTC);
 
   return {
     totalUnites,
     montantHT,
     montantFraisService,
+    montantFraisTTC,
     montantTTC,
   };
 };

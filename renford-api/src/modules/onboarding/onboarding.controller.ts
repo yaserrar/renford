@@ -640,7 +640,7 @@ export const updateRenfordQualifications = async (
       where: { utilisateurId: userId },
       data: {
         niveauExperience,
-        justificatifCarteProfessionnelleChemin,
+        justificatifCarteProfessionnelleChemin: justificatifCarteProfessionnelleChemin ?? null,
         tarifHoraire,
         proposeJournee,
         tarifJournee: proposeJournee ? tarifJournee : null,
@@ -648,13 +648,15 @@ export const updateRenfordQualifications = async (
         tarifDemiJournee: proposeDemiJournee ? tarifDemiJournee : null,
         renfordDiplomes: {
           deleteMany: {},
-          create: diplomes.map((typeDiplome, index) => ({
-            typeDiplome,
-            justificatifDiplomeChemin: justificatifDiplomeChemins[index] ?? null,
-            mention: null,
-            anneeObtention: null,
-            etablissementFormation: null,
-          })),
+          ...(diplomes.length > 0 && {
+            create: diplomes.map((typeDiplome, index) => ({
+              typeDiplome,
+              justificatifDiplomeChemin: justificatifDiplomeChemins[index] ?? null,
+              mention: null,
+              anneeObtention: null,
+              etablissementFormation: null,
+            })),
+          }),
         },
       },
       include: {

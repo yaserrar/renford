@@ -5,7 +5,15 @@ import type {
   StatutMissionRenford,
 } from '@prisma/client';
 import prisma from '../config/prisma';
+import { env } from '../config/env';
+import {
+  getConfirmationMissionRenfordEmail,
+  getNewMissionRenfordEmail,
+  getRenfordTrouveCoachEmail,
+  getRenfordTrouveFlexEmail,
+} from '../config/email-templates';
 import { logger } from '../config/logger';
+import { mail } from '../config/mail';
 import { createNotification, createNotifications } from '../config/notification';
 import { getTypeMissionLabel } from '../modules/missions/missions.schema';
 
@@ -69,6 +77,53 @@ const decimalToNumber = (value: Prisma.Decimal | number | string | null | undefi
 
   const normalized = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(normalized) ? normalized : 0;
+};
+
+const formatDateFr = (value: Date): string =>
+  value.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+
+const formatDateTimeSlots = (
+  slots: Array<{ date: Date; heureDebut: string; heureFin: string }>,
+): { dateLabel: string; heureLabel: string } => {
+  if (slots.length === 0) {
+    return { dateLabel: '-', heureLabel: '-' };
+  }
+
+  const orderedSlots = slots.slice().sort((a, b) => {
+    const dateDiff = a.date.getTime() - b.date.getTime();
+    if (dateDiff !== 0) return dateDiff;
+    return a.heureDebut.localeCompare(b.heureDebut);
+  });
+
+  const first = orderedSlots[0];
+  const last = orderedSlots[orderedSlots.length - 1];
+
+  const dateLabel =
+    orderedSlots.length === 1
+      ? formatDateFr(first.date)
+      : `${formatDateFr(first.date)} - ${formatDateFr(last.date)}`;
+  const heureLabel = orderedSlots.map((slot) => `${slot.heureDebut}-${slot.heureFin}`).join(' ; ');
+
+  return { dateLabel, heureLabel };
+};
+
+const formatMissionRemuneration = (mission: MatchMission): string => {
+  const tarif = decimalToNumber(mission.tarif);
+  const suffix =
+    mission.methodeTarification === 'horaire'
+      ? '/heure'
+      : mission.methodeTarification === 'journee'
+        ? '/journee'
+        : '/demi-journee';
+
+  return `${tarif.toLocaleString('fr-FR', {
+    minimumFractionDigits: Number.isInteger(tarif) ? 0 : 2,
+    maximumFractionDigits: 2,
+  })} EUR ${suffix}`;
 };
 
 const startOfDay = (value: Date): Date => {
@@ -163,7 +218,10 @@ const isRenfordAvailableForMission = (
       return false;
     }
 
-    if (profilRenford.dateFin && endOfDay(mission.dateFin) > endOfDay(profilRenford.dateFin)) {
+    if (
+      profilRenford.dateFin &&
+      endOfDay(mission.dateFin ?? mission.dateDebut) > endOfDay(profilRenford.dateFin)
+    ) {
       return false;
     }
   }
@@ -657,8 +715,15 @@ export const syncMissionMatches = async (
       },
       select: {
         id: true,
+        missionId: true,
         profilRenford: {
           select: {
+            utilisateur: {
+              select: {
+                email: true,
+                prenom: true,
+              },
+            },
             utilisateurId: true,
           },
         },
@@ -673,6 +738,43 @@ export const syncMissionMatches = async (
         titre: 'Nouvelle mission disponible',
         description: `Une mission ${getTypeMissionLabel(mission.specialitePrincipale)} chez ${mission.etablissement.nom} correspond à votre profil.`,
       })),
+    );
+
+    const { dateLabel, heureLabel } = formatDateTimeSlots(mission.PlageHoraireMission);
+    const missionType = getTypeMissionLabel(mission.specialitePrincipale);
+    const missionUrlBase = env.PLATFORM_URL.replace(/\/$/, '');
+
+    await Promise.all(
+      createdAssignments.map(async (assignment) => {
+        const recipient = assignment.profilRenford.utilisateur;
+        if (!recipient.email) {
+          return;
+        }
+
+        const payload = getNewMissionRenfordEmail({
+          prenomRenford: recipient.prenom,
+          typeMission: missionType,
+          lieu: `${mission.etablissement.ville}`,
+          dateMission: dateLabel,
+          heureMission: heureLabel,
+          remuneration: formatMissionRemuneration(mission),
+          missionUrl: `${missionUrlBase}/dashboard/renford/missions/${assignment.missionId}`,
+        });
+
+        try {
+          await mail.sendMail({
+            to: recipient.email,
+            subject: payload.subject,
+            html: payload.html,
+            text: payload.text,
+          });
+        } catch (error) {
+          logger.error(
+            { err: error, missionId: mission.id, missionRenfordId: assignment.id },
+            "Échec d'envoi de l'email de nouvelle mission au Renford",
+          );
+        }
+      }),
     );
   }
 
@@ -794,12 +896,36 @@ export const registerMissionRenfordResponse = async (params: {
       where: { id: missionRenford.missionId },
       select: {
         id: true,
+        modeMission: true,
         specialitePrincipale: true,
+        missionsRenford: {
+          where: { id: missionRenford.id },
+          select: {
+            profilRenford: {
+              select: {
+                titreProfil: true,
+                utilisateur: {
+                  select: {
+                    prenom: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         etablissement: {
           select: {
+            nom: true,
             profilEtablissement: {
               select: {
+                raisonSociale: true,
                 utilisateurId: true,
+                utilisateur: {
+                  select: {
+                    email: true,
+                    prenom: true,
+                  },
+                },
               },
             },
           },
@@ -815,6 +941,49 @@ export const registerMissionRenfordResponse = async (params: {
         titre: 'Un Renford a accepté votre mission',
         description: `Un candidat a accepté votre mission ${getTypeMissionLabel(missionOwner.specialitePrincipale)}.`,
       });
+
+      const etablissementUser = missionOwner.etablissement.profilEtablissement.utilisateur;
+      const renfordSummary = missionOwner.missionsRenford[0]?.profilRenford;
+      const renfordFirstName = renfordSummary?.utilisateur.prenom || 'Un Renford';
+      const renfordProfileResume = renfordSummary?.titreProfil
+        ? `${renfordSummary.titreProfil}.`
+        : 'Son profil est aligné avec vos attentes.';
+
+      if (etablissementUser.email) {
+        const missionUrlBase = env.PLATFORM_URL.replace(/\/$/, '');
+
+        const emailPayload =
+          missionOwner.modeMission === 'coach'
+            ? getRenfordTrouveCoachEmail({
+                prenomEtablissement: etablissementUser.prenom,
+                typeMission: getTypeMissionLabel(missionOwner.specialitePrincipale),
+                nombreProfilsProposes: 1,
+                profilsSummary: [`${renfordFirstName} — ${renfordProfileResume}`],
+                espaceRenfordUrl: `${missionUrlBase}/dashboard/etablissement/missions/${missionOwner.id}`,
+                lienPaiementUrl: `${missionUrlBase}/dashboard/etablissement/paiement`,
+              })
+            : getRenfordTrouveFlexEmail({
+                prenomEtablissement: etablissementUser.prenom,
+                prenomRenford: renfordFirstName,
+                profilRenfordResume: renfordProfileResume,
+                espaceCompteUrl: `${missionUrlBase}/dashboard/etablissement/missions/${missionOwner.id}`,
+                paiementUrl: `${missionUrlBase}/dashboard/etablissement/paiement`,
+              });
+
+        try {
+          await mail.sendMail({
+            to: etablissementUser.email,
+            subject: emailPayload.subject,
+            html: emailPayload.html,
+            text: emailPayload.text,
+          });
+        } catch (error) {
+          logger.error(
+            { err: error, missionId: missionOwner.id, missionRenfordId: missionRenford.id },
+            "Échec d'envoi de l'email 'Renford trouvé' à l'établissement",
+          );
+        }
+      }
     }
   } else {
     await prisma.missionRenford.update({
@@ -884,8 +1053,20 @@ export const registerEtablissementMissionRenfordResponse = async (params: {
       },
       select: {
         missionId: true,
+        mission: {
+          select: {
+            modeMission: true,
+            specialitePrincipale: true,
+          },
+        },
         profilRenford: {
           select: {
+            utilisateur: {
+              select: {
+                email: true,
+                prenom: true,
+              },
+            },
             utilisateurId: true,
           },
         },
@@ -906,6 +1087,35 @@ export const registerEtablissementMissionRenfordResponse = async (params: {
       titre: 'Votre candidature est retenue',
       description: "L'établissement a retenu votre candidature. Signature du contrat requise.",
     });
+
+    const renfordUser = selectedAssignment.profilRenford.utilisateur;
+    if (renfordUser.email) {
+      const missionUrlBase = env.PLATFORM_URL.replace(/\/$/, '');
+      const payload = getConfirmationMissionRenfordEmail({
+        prenomRenford: renfordUser.prenom,
+        typeMission: getTypeMissionLabel(selectedAssignment.mission.specialitePrincipale),
+        confirmationUrl: `${missionUrlBase}/dashboard/renford/missions/${selectedAssignment.missionId}`,
+        includeCoachInSubject: selectedAssignment.mission.modeMission === 'coach',
+      });
+
+      try {
+        await mail.sendMail({
+          to: renfordUser.email,
+          subject: payload.subject,
+          html: payload.html,
+          text: payload.text,
+        });
+      } catch (error) {
+        logger.error(
+          {
+            err: error,
+            missionId: selectedAssignment.missionId,
+            missionRenfordId: missionRenford.id,
+          },
+          "Échec d'envoi de l'email de confirmation de mission au Renford",
+        );
+      }
+    }
   } else {
     if (!['selection_en_cours', 'attente_de_signature'].includes(missionRenford.statut)) {
       throw new Error('MISSION_RENFORD_NOT_FOUND');

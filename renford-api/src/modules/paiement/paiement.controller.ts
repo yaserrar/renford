@@ -307,10 +307,12 @@ export const createCheckoutSession = async (
     }
 
     const montantHT = Number(mission.montantHT ?? 0);
-    const montantCommission = Number(mission.montantFraisService ?? 0);
+    const fraisHT = Number(mission.montantFraisService ?? 0);
     const montantTTC = Number(mission.montantTTC ?? 0);
 
-    const montantTVA = 0;
+    // TVA (20%) applies only to the service fees, not the base amount
+    const montantTVA = Math.round(fraisHT * 0.2 * 100) / 100;
+    const montantCommission = Math.round(fraisHT * 1.2 * 100) / 100; // frais TTC
     const montantNetRenford = Math.round((montantTTC - montantCommission) * 100) / 100;
 
     // Validate calculated amounts

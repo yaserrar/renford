@@ -359,7 +359,7 @@ export const updateQualificationsProfil = async (
       where: { utilisateurId: userId },
       update: {
         niveauExperience,
-        justificatifCarteProfessionnelleChemin,
+        justificatifCarteProfessionnelleChemin: justificatifCarteProfessionnelleChemin ?? null,
         tarifHoraire,
         proposeJournee,
         tarifJournee: proposeJournee ? tarifJournee : null,
@@ -369,7 +369,7 @@ export const updateQualificationsProfil = async (
       create: {
         utilisateurId: userId,
         niveauExperience,
-        justificatifCarteProfessionnelleChemin,
+        justificatifCarteProfessionnelleChemin: justificatifCarteProfessionnelleChemin ?? null,
         tarifHoraire,
         proposeJournee,
         tarifJournee: proposeJournee ? tarifJournee : null,

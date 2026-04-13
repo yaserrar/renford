@@ -110,7 +110,7 @@ export const updateDiplomesProfilSchema = z.object({
       anneeObtention: optionalNumberFromInput,
       mention: optionalStringFromInput,
       etablissementFormation: optionalStringFromInput,
-      justificatifDiplomeChemin: optionalStringFromInput,
+      justificatifDiplomeChemin: z.string().min(1, 'Le justificatif est obligatoire'),
     }),
   ),
 });
@@ -163,11 +163,7 @@ export const updateQualificationsProfilSchema = z
     niveauExperience: z.enum(NIVEAU_EXPERIENCE, {
       required_error: "Le niveau d'expérience est obligatoire",
     }),
-    justificatifCarteProfessionnelleChemin: z
-      .string({
-        required_error: 'Le justificatif carte professionnelle est obligatoire',
-      })
-      .min(1, 'Le justificatif carte professionnelle est obligatoire'),
+    justificatifCarteProfessionnelleChemin: z.string().nullable().optional(),
     tarifHoraire: tarifHoraireSchema,
     proposeJournee: z.boolean().default(false),
     tarifJournee: tarifJourneeSchema,
