@@ -164,6 +164,7 @@ export default function NouvelleMissionPage() {
     setValue,
     watch,
     trigger,
+    setError,
     getValues,
     formState: { errors },
   } = useForm<CreateMissionFormInput, unknown, CreateMissionFormOutput>({
@@ -331,12 +332,13 @@ export default function NouvelleMissionPage() {
         )
       : ["—"];
 
-  const dateRangeLabel =
-    selectedDateDebut && selectedDateFin
+  const dateRangeLabel = selectedDateDebut
+    ? selectedDateFin
       ? `Du ${formatFrenchDate(selectedDateDebut)} au ${formatFrenchDate(
           selectedDateFin,
         )}`
-      : "—";
+      : `Le ${formatFrenchDate(selectedDateDebut)}`
+    : "—";
 
   const plagesHorairesLabels = (selectedPlagesHoraires || []).map((plage) => {
     const slotDate = normalizeDate(plage.date);
@@ -366,7 +368,8 @@ export default function NouvelleMissionPage() {
   });
 
   const totalHT = pricing.montantHT;
-  const serviceFeesHT = pricing.montantFraisService;
+  const fraisHT = pricing.montantFraisService;
+  const tvaFrais = Math.round(fraisHT * 0.2 * 100) / 100;
   const totalTTC = pricing.montantTTC;
 
   useEffect(() => {
@@ -454,12 +457,22 @@ export default function NouvelleMissionPage() {
       const fieldsToValidate: MissionFormField[] = [
         "etablissementId",
         "dateDebut",
-        "dateFin",
         "plagesHoraires",
         "methodeTarification",
         "tarif",
         "pourcentageVariationTarif",
       ];
+
+      // dateFin is required for coach mode
+      if (selectedMode === "coach" && !getValues("dateFin")) {
+        setError("dateFin", {
+          type: "manual",
+          message: "La date de fin est obligatoire pour une annonce Coach",
+        });
+        const isValid = await trigger(fieldsToValidate);
+        if (!isValid) return;
+        return; // block even if other fields are valid
+      }
 
       const isValid = await trigger(fieldsToValidate);
       if (!isValid) return;
@@ -546,7 +559,7 @@ export default function NouvelleMissionPage() {
       shouldDirty: true,
       shouldValidate: true,
     });
-    setValue("dateFin", normalizeDate(mission.dateFin), {
+    setValue("dateFin", mission.dateFin ? normalizeDate(mission.dateFin) : undefined, {
       shouldDirty: true,
       shouldValidate: true,
     });
@@ -1029,14 +1042,26 @@ export default function NouvelleMissionPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="dateDebut">A partir de</Label>
+                    <Label htmlFor="dateDebut">
+                      Date de la mission
+                    </Label>
                     <Controller
                       name="dateDebut"
                       control={control}
                       render={({ field }) => (
                         <DatePicker
                           value={field.value as Date | undefined}
-                          onChange={field.onChange}
+                          onChange={(date) => {
+                            field.onChange(date);
+                            if (selectedMode === "flex" && date) {
+                              horaireFields.forEach((_, i) => {
+                                setValue(
+                                  `plagesHoraires.${i}.date`,
+                                  date,
+                                );
+                              });
+                            }
+                          }}
                           placeholder="Sélectionner..."
                         />
                       )}
@@ -1047,7 +1072,14 @@ export default function NouvelleMissionPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="dateFin">Jusqu&apos;au</Label>
+                    <Label htmlFor="dateFin">
+                      Date de fin{" "}
+                      {selectedMode !== "coach" && (
+                        <span className="text-muted-foreground font-normal">
+                          (optionnel)
+                        </span>
+                      )}
+                    </Label>
                     <Controller
                       name="dateFin"
                       control={control}
@@ -1502,11 +1534,18 @@ export default function NouvelleMissionPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="text-muted-foreground">
-                        Frais de service inclus HT (
-                        {PLATFORM_COMMISSION_PERCENT}%)
+                        Frais de service HT ({PLATFORM_COMMISSION_PERCENT}%)
                       </p>
                       <p className="text-muted-foreground">
-                        {formatEuroAmount(serviceFeesHT)}
+                        {formatEuroAmount(fraisHT)}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-muted-foreground">
+                        TVA sur frais de service (20%)
+                      </p>
+                      <p className="text-muted-foreground">
+                        {formatEuroAmount(tvaFrais)}
                       </p>
                     </div>
                     <div className="flex items-center justify-between">

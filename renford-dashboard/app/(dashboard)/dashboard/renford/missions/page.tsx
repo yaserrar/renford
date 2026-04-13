@@ -1,9 +1,13 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
+import { Download, FileText } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H2 } from "@/components/ui/typography";
 import { useRenfordMissions } from "@/hooks/mission";
+import { useCurrentUser } from "@/hooks/utilisateur";
+import { canApplyForMission } from "@/lib/utils";
 import {
   MissionRenfordListItem,
   RenfordMissionsTab,
@@ -15,9 +19,12 @@ import {
   RENFORD_MISSIONS_TAB_LABELS,
 } from "@/validations/mission-renford";
 import RenfordMissionsPanel from "./renford-missions-panel";
+import { Button } from "@/components/ui/button";
 
 export default function RenfordMissionsPage() {
   const missionsQuery = useRenfordMissions();
+  const { data: currentUser } = useCurrentUser();
+  const profileComplete = canApplyForMission(currentUser);
 
   const allMissions = missionsQuery.data ?? [];
 
@@ -63,6 +70,25 @@ export default function RenfordMissionsPage() {
           <div className="bg-secondary-background m-1 h-full min-h-[520px] rounded-3xl border p-4 md:p-6">
             {RENFORD_MISSIONS_TAB.map((tab) => (
               <TabsContent key={tab} value={tab}>
+                {!profileComplete && (
+                  <Link
+                    href="/dashboard/renford/profil"
+                    className="flex flex-wrap items-center gap-4 rounded-xl border border-amber-300 bg-amber-50 px-5 py-4 mb-4"
+                  >
+                    <Download className="h-6 w-6 shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm text-foreground">
+                        Débloque l&apos;accès aux missions
+                      </p>
+                      <p className="text-sm">
+                        Ajoute ton justificatif (RC pro, diplôme ou carte pro)
+                        pour commencer à accepter des missions.
+                      </p>
+                    </div>
+                    <Button variant="dark">Compléter mon profil</Button>
+                  </Link>
+                )}
+
                 <RenfordMissionsPanel
                   missions={missionsByTab[tab]}
                   isLoading={missionsQuery.isLoading}

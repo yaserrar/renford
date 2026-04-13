@@ -8,6 +8,7 @@ import {
 } from "@/validations/mission";
 import { TYPE_MISSION } from "@/validations/profil-renford";
 import { Etablissement } from "@/types/etablissement";
+import { EvaluationRenford } from "@/types/evaluation";
 import { MissionRenford } from "@/types/mission-renford";
 
 export type ModeMission = (typeof MODE_MISSION)[number];
@@ -41,7 +42,7 @@ export type Mission = {
   description: string | null;
   etablissementId: string;
   dateDebut: Date | string;
-  dateFin: Date | string;
+  dateFin: Date | string | null;
   methodeTarification: MethodeTarificationMission;
   tarif: number | string | null;
   montantHT: number | string | null;
@@ -65,6 +66,9 @@ export type MissionEtablissement = Mission & {
     noteMoyenne: number | null;
     nom: string;
     prenom: string;
+    missionRenfordId?: string;
+    missionRenfordStatut?: string;
+    evaluation?: EvaluationRenford | null;
   } | null;
   totalHours?: number;
 };
@@ -127,22 +131,4 @@ export type RenfordPlanningSlot = {
     codePostal: string;
     ville: string;
   };
-};
-
-export type RepetitionIndisponibilite =
-  | "aucune"
-  | "tous_les_jours"
-  | "toutes_les_semaines";
-
-export type IndisponibiliteRenford = {
-  id: string;
-  profilRenfordId: string;
-  dateDebut: string;
-  dateFin: string;
-  heureDebut: string | null;
-  heureFin: string | null;
-  journeeEntiere: boolean;
-  repetition: RepetitionIndisponibilite;
-  dateCreation: string;
-  dateMiseAJour: string;
 };

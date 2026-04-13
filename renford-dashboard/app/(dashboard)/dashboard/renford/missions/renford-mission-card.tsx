@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Clock3, MapPin } from "lucide-react";
+import { CalendarDays, Clock3, Lock, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,10 @@ import {
   formatFrenchDate,
   getInitials,
   getUrl,
+  canApplyForMission,
 } from "@/lib/utils";
 import { useRespondToMissionProposal } from "@/hooks/mission";
+import { useCurrentUser } from "@/hooks/utilisateur";
 
 type RenfordMissionCardProps = {
   item: MissionRenfordListItem;
@@ -31,7 +33,9 @@ const OPPORTUNITE_STATUSES: StatutMissionRenford[] = ["nouveau", "vu"];
 
 export default function RenfordMissionCard({ item }: RenfordMissionCardProps) {
   const router = useRouter();
+  const { data: currentUser } = useCurrentUser();
   const respondMutation = useRespondToMissionProposal();
+  const profileComplete = canApplyForMission(currentUser);
 
   const mission = item.mission;
   const etablissement = mission.etablissement;
@@ -117,8 +121,9 @@ export default function RenfordMissionCard({ item }: RenfordMissionCardProps) {
 
             <p className="flex items-center gap-2 text-sm">
               <CalendarDays className="h-4 w-4 text-muted-foreground" />
-              Du {formatFrenchDate(mission.dateDebut)} au{" "}
-              {formatFrenchDate(mission.dateFin)}
+              {mission.dateFin
+                ? `Du ${formatFrenchDate(mission.dateDebut)} au ${formatFrenchDate(mission.dateFin)}`
+                : `Le ${formatFrenchDate(mission.dateDebut)}`}
             </p>
             <p className="flex items-center gap-2 text-sm">
               <Clock3 className="h-4 w-4 text-muted-foreground" />
@@ -153,22 +158,39 @@ export default function RenfordMissionCard({ item }: RenfordMissionCardProps) {
 
       {isOpportunite && (
         <div className="flex items-left gap-2 mt-2">
-          <Button
-            variant="outline"
-            type="button"
-            onClick={handleRefuse}
-            disabled={respondMutation.isPending}
-          >
-            Refuser
-          </Button>
-          <Button
-            variant="dark"
-            type="button"
-            onClick={handleAccept}
-            disabled={respondMutation.isPending}
-          >
-            Accepter
-          </Button>
+          {profileComplete ? (
+            <>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={handleRefuse}
+                disabled={respondMutation.isPending}
+              >
+                Refuser
+              </Button>
+              <Button
+                variant="dark"
+                type="button"
+                onClick={handleAccept}
+                disabled={respondMutation.isPending}
+              >
+                Accepter
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="dark"
+              type="button"
+              className="px-5 w-full md:w-fit"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push("/dashboard/renford/profil");
+              }}
+            >
+              <Lock className="h-4 w-4" />
+              Complète ton profil pour accepter
+            </Button>
+          )}
         </div>
       )}
     </article>

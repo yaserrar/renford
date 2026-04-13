@@ -36,11 +36,7 @@ const getSourceIcon = (source: SourceNotification) => {
   return Bell;
 };
 
-type NotificationPopoverProps = {
-  compact?: boolean;
-};
-
-const NotificationPopover = ({ compact = false }: NotificationPopoverProps) => {
+const NotificationPopover = () => {
   const router = useRouter();
   const { open: sidebarOpen } = useSidebar();
   const [open, setOpen] = useState(false);
@@ -127,23 +123,23 @@ const NotificationPopover = ({ compact = false }: NotificationPopoverProps) => {
           )}
           //   className={cn(
           //     "relative flex items-center rounded-sm text-sm font-normal text-gray-500 transition-colors hover:bg-gray-100 active:bg-gray-300 focus-visible:outline-none",
-          //     compact
+          //     !sidebarOpen
           //       ? "size-8 justify-center p-0"
           //       : "w-full justify-start px-3 py-2.5",
           //   )}
         >
           <Bell
-            className={cn("h-4 w-4 text-gray-500", !compact && "mr-1")}
+            className={cn("h-4 w-4 text-gray-500", !!sidebarOpen && "mr-1")}
             strokeWidth={2}
           />
-          {!compact && (
+          {!!sidebarOpen && (
             <p className="text-gray-500 font-normal text-base">Notifications</p>
           )}
           {unreadCount > 0 && (
             <span
               className={cn(
                 "flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white",
-                compact ? "absolute -right-1 -top-1" : "ml-auto",
+                !sidebarOpen ? "absolute -right-1 -top-1" : "ml-auto",
               )}
             >
               {unreadCount > 99 ? "99+" : unreadCount}

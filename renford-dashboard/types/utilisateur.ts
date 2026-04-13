@@ -49,3 +49,14 @@ export type UtilisateurSimple = {
 export type JwtToken = {
   token: string;
 };
+
+export type CurrentAdminUser = {
+  id: string;
+  email: string;
+  nom: string;
+  prenom: string;
+  typeUtilisateur: string;
+  statut: string;
+  derniereConnexion: string | null;
+  dateCreation: string;
+};

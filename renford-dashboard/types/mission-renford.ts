@@ -12,6 +12,8 @@ import {
   TypeMissionSpecialite,
 } from "@/types/mission";
 
+import { EvaluationRenford } from "@/types/evaluation";
+
 export type StatutMissionRenford =
   | "nouveau"
   | "vu"
@@ -37,13 +39,12 @@ export type MissionRenford = {
   dateVisio: Date | string | null;
   visioEffectuee: boolean;
   tarifNegocie: number | string | null;
-  signatureContratPrestationRenfordChemin: string | null;
-  signatureContratPrestationEtablissementChemin: string | null;
-  signatureAttestationMissionRenfordChemin: string | null;
-  signatureAttestationMissionEtablissementChemin: string | null;
+  signatureContratPrestationRenfordId: string | null;
+  signatureContratPrestationEtablissementId: string | null;
   dateCreation: Date | string;
   dateMiseAJour: Date | string;
   profilRenford: ProfilRenfordMissionSimple;
+  evaluation?: EvaluationRenford | null;
 };
 
 export type RenfordMissionsTab = (typeof RENFORD_MISSIONS_TAB)[number];
@@ -93,10 +94,8 @@ export type MissionRenfordListItem = {
   dateReponse: Date | string | null;
   dateContratSigne: Date | string | null;
   tarifNegocie: number | string | null;
-  signatureContratPrestationRenfordChemin: string | null;
-  signatureContratPrestationEtablissementChemin: string | null;
-  signatureAttestationMissionRenfordChemin: string | null;
-  signatureAttestationMissionEtablissementChemin: string | null;
+  signatureContratPrestationRenfordId: string | null;
+  signatureContratPrestationEtablissementId: string | null;
   dateCreation: Date | string;
   dateMiseAJour: Date | string;
   mission: MissionForRenford;

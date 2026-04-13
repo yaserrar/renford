@@ -155,7 +155,7 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
           <NavMain items={footerLinks} />
         </div>
         <div className="px-1">
-          <NotificationPopover compact={!open} />
+          <NotificationPopover />
         </div>
         <NavAccount />
       </SidebarFooter>

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -44,7 +44,28 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           disabled={disabled}
         >
           {value ? format(value, "dd/MM/yyyy") : placeholder}
-          <CalendarIcon />
+          <div className="flex items-center gap-1">
+            {value && (
+              <span
+                role="button"
+                tabIndex={0}
+                className="rounded-full p-0.5 hover:bg-gray-200 text-muted-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(undefined);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    onChange(undefined);
+                  }
+                }}
+              >
+                <X className="size-3.5" />
+              </span>
+            )}
+            <CalendarIcon className="size-4" />
+          </div>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-2 w-auto bg-white" align="start">

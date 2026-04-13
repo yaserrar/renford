@@ -144,7 +144,7 @@ export default function QualificationEditDialog({
             </div>
 
             <div>
-              <Label>Justificatif carte professionnelle *</Label>
+              <Label>Justificatif carte professionnelle</Label>
               {Boolean(justificatifCartePro) ? (
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <FileText className="h-6 w-6 text-gray-400" />

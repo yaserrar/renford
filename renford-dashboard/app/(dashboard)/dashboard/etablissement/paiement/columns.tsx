@@ -39,9 +39,9 @@ export const etablissementColumns: ColumnDef<PaiementWithMission>[] = [
           {original.mission.specialitePrincipale.replaceAll("_", " ")}
         </span>
         <span className="text-sm text-muted-foreground flex items-center gap-1">
-          <Calendar size={16} /> Mission du{" "}
-          {formatFrenchDate(original.mission.dateDebut)} au{" "}
-          {formatFrenchDate(original.mission.dateFin)}
+          <Calendar size={16} /> {original.mission.dateFin
+            ? `Mission du ${formatFrenchDate(original.mission.dateDebut)} au ${formatFrenchDate(original.mission.dateFin)}`
+            : `Mission le ${formatFrenchDate(original.mission.dateDebut)}`}
         </span>
       </Link>
     ),

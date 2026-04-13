@@ -59,7 +59,7 @@ const isMissionMatchingFilters = (
     const endOfDay = new Date(toDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const missionEndDate = parseMissionDate(mission.dateFin);
+    const missionEndDate = parseMissionDate(mission.dateFin ?? mission.dateDebut);
 
     if (missionEndDate && missionEndDate > endOfDay) {
       return false;

@@ -2,7 +2,6 @@ import { getErrorMessage } from "@/lib/utils";
 import {
   EtablissementMissionsTab,
   EtablissementPlanningResponse,
-  IndisponibiliteRenford,
   MissionDetailsEtablissement,
   MissionEtablissement,
   RenfordPlanningSlot,
@@ -163,7 +162,9 @@ export const useTriggerManualMissionSearchByEtablissement = () => {
   return useMutation({
     mutationFn: async ({ missionId }: { missionId: string }) => {
       return (
-        await axios.post(`/etablissement/missions/${missionId}/rechercher-renfords`)
+        await axios.post(
+          `/etablissement/missions/${missionId}/rechercher-renfords`,
+        )
       ).data as {
         missionId: string;
         totalEligible: number;
@@ -331,7 +332,13 @@ export const useRespondToMissionProposal = () => {
   });
 };
 
-// ─── Signature hooks ────────────────────────────────────────
+// ─── Signature hooks ────────────────────────────
+
+type SignatureResponse = {
+  missionRenfordId: string;
+  statut: string;
+  signatureId: string;
+};
 
 export const useSignContractByRenford = () => {
   const axios = useAxios();
@@ -340,23 +347,22 @@ export const useSignContractByRenford = () => {
   return useMutation({
     mutationFn: async ({
       missionId,
-      signatureDataUrl,
+      signatureImage,
     }: {
       missionId: string;
-      signatureDataUrl: string;
+      signatureImage: string;
     }) => {
       return (
         await axios.post(`/renford/missions/${missionId}/signature`, {
-          signatureDataUrl,
+          signatureImage,
         })
-      ).data as { id: string; statut: string; dateContratSigne: string };
+      ).data as SignatureResponse;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["renford-missions"] });
       queryClient.invalidateQueries({
         queryKey: ["renford-mission-details", variables.missionId],
       });
-      toast.success("Contrat signé avec succès");
     },
     onError: (error: any) => {
       const message = getErrorMessage(error?.response?.data?.message);
@@ -373,95 +379,24 @@ export const useSignContractByEtablissement = () => {
     mutationFn: async ({
       missionId,
       missionRenfordId,
-      signatureDataUrl,
+      signatureImage,
     }: {
       missionId: string;
       missionRenfordId: string;
-      signatureDataUrl: string;
+      signatureImage: string;
     }) => {
       return (
         await axios.post(
           `/etablissement/missions/${missionId}/renfords/${missionRenfordId}/signature`,
-          { signatureDataUrl },
+          { signatureImage },
         )
-      ).data as { missionRenfordId: string; statut: string };
+      ).data as SignatureResponse;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["etablissement-mission-details", variables.missionId],
       });
       queryClient.invalidateQueries({ queryKey: ["etablissement-missions"] });
-      toast.success("Contrat signé, la mission est maintenant en cours");
-    },
-    onError: (error: any) => {
-      const message = getErrorMessage(error?.response?.data?.message);
-      toast.error(message);
-    },
-  });
-};
-
-export const useSignAttestationByRenford = () => {
-  const axios = useAxios();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      missionId,
-      signatureDataUrl,
-    }: {
-      missionId: string;
-      signatureDataUrl: string;
-    }) => {
-      return (
-        await axios.post(
-          `/renford/missions/${missionId}/attestation/signature`,
-          {
-            signatureDataUrl,
-          },
-        )
-      ).data as { id: string; statut: string };
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["renford-missions"] });
-      queryClient.invalidateQueries({
-        queryKey: ["renford-mission-details", variables.missionId],
-      });
-      toast.success("Attestation signée avec succès");
-    },
-    onError: (error: any) => {
-      const message = getErrorMessage(error?.response?.data?.message);
-      toast.error(message);
-    },
-  });
-};
-
-export const useSignAttestationByEtablissement = () => {
-  const axios = useAxios();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      missionId,
-      missionRenfordId,
-      signatureDataUrl,
-    }: {
-      missionId: string;
-      missionRenfordId: string;
-      signatureDataUrl: string;
-    }) => {
-      return (
-        await axios.post(
-          `/etablissement/missions/${missionId}/renfords/${missionRenfordId}/attestation/signature`,
-          { signatureDataUrl },
-        )
-      ).data as { id: string; statut: string };
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["etablissement-mission-details", variables.missionId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["etablissement-missions"] });
-      toast.success("Attestation signée avec succès");
     },
     onError: (error: any) => {
       const message = getErrorMessage(error?.response?.data?.message);
@@ -587,64 +522,6 @@ export const useRenfordPlanning = (from?: string, to?: string) => {
         .data as RenfordPlanningSlot[];
     },
     staleTime: 1000 * 60,
-  });
-};
-
-export const useIndisponibilites = () => {
-  const axios = useAxios();
-
-  return useQuery({
-    queryKey: ["renford-indisponibilites"],
-    queryFn: async () => {
-      return (await axios.get("/renford/indisponibilites"))
-        .data as IndisponibiliteRenford[];
-    },
-    staleTime: 1000 * 60,
-  });
-};
-
-export const useCreateIndisponibilite = () => {
-  const axios = useAxios();
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (payload: {
-      dateDebut: string;
-      dateFin: string;
-      heureDebut?: string;
-      heureFin?: string;
-      journeeEntiere: boolean;
-      repetition: string;
-    }) => {
-      return (await axios.post("/renford/indisponibilites", payload)).data;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["renford-indisponibilites"] });
-      toast.success("Indisponibilité ajoutée");
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error));
-    },
-  });
-};
-
-export const useDeleteIndisponibilite = () => {
-  const axios = useAxios();
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (indisponibiliteId: string) => {
-      return (
-        await axios.delete(`/renford/indisponibilites/${indisponibiliteId}`)
-      ).data;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["renford-indisponibilites"] });
-      toast.success("Indisponibilité supprimée");
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error));
-    },
   });
 };
 

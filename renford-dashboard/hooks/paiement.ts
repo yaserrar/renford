@@ -124,7 +124,7 @@ export type PaiementWithMission = Paiement & {
     id: string;
     specialitePrincipale: string;
     dateDebut: string;
-    dateFin: string;
+    dateFin: string | null;
     etablissement: {
       nom: string;
     };

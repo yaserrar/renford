@@ -37,7 +37,7 @@ const useAxios = () => {
         logout();
       }
       return Promise.reject(error);
-    }
+    },
   );
 
   return axiosInstance;

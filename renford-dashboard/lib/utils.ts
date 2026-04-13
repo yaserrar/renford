@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { MEDIA_BASE_URL } from "./env";
+import type { CurrentUser } from "@/types/utilisateur";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -111,4 +112,16 @@ export const getInitials = (name?: string | null) => {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
+};
+
+export const canApplyForMission = (
+  user: CurrentUser | undefined,
+): boolean => {
+  if (!user?.profilRenford) return false;
+  const profil = user.profilRenford;
+  return (
+    profil.assuranceRCPro === true &&
+    (profil.renfordDiplomes ?? []).length > 0 &&
+    !!profil.justificatifCarteProfessionnelleChemin
+  );
 };

@@ -17,6 +17,8 @@ import DetailRow from "@/components/common/detail-row";
 import DocumentCategoryCard from "@/components/common/document-category-card";
 import MissionStatusBadge from "@/components/common/mission-status-badge";
 import SignatureContratDialog from "@/components/common/signature-contrat-dialog";
+import NoterRenfordDialog from "@/components/common/noter-renford-dialog";
+import StarRating from "@/components/common/star-rating";
 import InviterFavoriDialog from "@/components/common/inviter-favori-dialog";
 import CenterState from "@/components/common/center-state";
 import TerminerMissionDialog from "./terminer-mission-dialog";
@@ -41,10 +43,10 @@ import {
   useEtablissementMissionDetails,
   useMarkMissionTermineeByEtablissement,
   useRespondToMissionRenford,
-  useSignAttestationByEtablissement,
   useSignContractByEtablissement,
   useTriggerManualMissionSearchByEtablissement,
 } from "@/hooks/mission";
+import { useCreateEvaluation } from "@/hooks/evaluation";
 import {
   useCreateCheckoutSession,
   useMissionPaymentStatus,
@@ -91,17 +93,20 @@ export default function EtablissementMissionDetailsPage() {
   const markTermineeMutation = useMarkMissionTermineeByEtablissement();
   const clotureMutation = useClotureMissionByEtablissement();
   const signMutation = useSignContractByEtablissement();
-  const signAttestationMutation = useSignAttestationByEtablissement();
+  const evaluationMutation = useCreateEvaluation();
   const downloadDocumentMutation = useDownloadMissionDocumentByEtablissement();
   const checkoutMutation = useCreateCheckoutSession();
   const paymentStatusQuery = useMissionPaymentStatus(missionId);
   const [signDialogOpen, setSignDialogOpen] = useState(false);
-  const [signAttestationDialogOpen, setSignAttestationDialogOpen] =
-    useState(false);
   const [terminerDialogOpen, setTerminerDialogOpen] = useState(false);
   const [cloturerDialogOpen, setCloturerDialogOpen] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [annulerDialogOpen, setAnnulerDialogOpen] = useState(false);
+  const [noterDialogOpen, setNoterDialogOpen] = useState(false);
+  const [noterMissionRenfordId, setNoterMissionRenfordId] = useState<
+    string | null
+  >(null);
+  const [noterRenfordPrenom, setNoterRenfordPrenom] = useState("");
   const [confirmRenfordDialogOpen, setConfirmRenfordDialogOpen] =
     useState(false);
   const [pendingRenfordAction, setPendingRenfordAction] = useState<{
@@ -211,7 +216,8 @@ export default function EtablissementMissionDetailsPage() {
         }, 0);
 
   const totalHt = Number(mission.montantHT ?? 0);
-  const serviceFees = Number(mission.montantFraisService ?? 0);
+  const fraisHt = Number(mission.montantFraisService ?? 0);
+  const tvaFrais = Math.round(fraisHt * 0.2 * 100) / 100;
   const totalTtc = Number(mission.montantTTC ?? 0);
 
   const horaires = (mission.PlageHoraireMission ?? []).map((slot) => {
@@ -258,20 +264,6 @@ export default function EtablissementMissionDetailsPage() {
           id: "contrat_prestation",
           label: "Contrat de prestation de services",
           date: documentDate,
-        },
-        {
-          id: "attestation_mission",
-          label: "Attestation de mission",
-          date: documentDate,
-          disabled:
-            mission.modeMission !== "flex" ||
-            mission.statut !== "mission_terminee",
-          disabledReason:
-            mission.modeMission !== "flex"
-              ? "L’attestation de mission est uniquement pour les missions Flex"
-              : mission.statut !== "mission_terminee"
-                ? "Disponible une fois la mission terminée"
-                : undefined,
         },
       ],
     },
@@ -336,20 +328,6 @@ export default function EtablissementMissionDetailsPage() {
     ["en_attente", "echoue"].includes(
       paymentStatusQuery.data?.paiement?.statut ?? "",
     );
-  const canSignAttestation =
-    mission.modeMission === "flex" && mission.statut === "mission_terminee";
-  const filteredDocumentGroups = documentGroups
-    .map((group) => {
-      if (group.title !== "Contrat") return group;
-      return {
-        ...group,
-        documents: group.documents.filter(
-          (doc) => doc.id !== "attestation_mission" || canSignAttestation,
-        ),
-      };
-    })
-    .filter((group) => group.documents.length > 0);
-
   return (
     <main className="mt-8 space-y-6">
       <H2>Détail de la mission</H2>
@@ -602,6 +580,23 @@ export default function EtablissementMissionDetailsPage() {
                         </>
                       )}
 
+                      {assignment.statut === "attente_de_signature" && (
+                        <Button
+                          variant="outline"
+                          className="px-5"
+                          disabled={respondMutation.isPending}
+                          onClick={() => {
+                            setPendingRenfordAction({
+                              missionRenfordId: assignment.id,
+                              response: "refuse_par_etablissement",
+                            });
+                            setConfirmRenfordDialogOpen(true);
+                          }}
+                        >
+                          Refuser
+                        </Button>
+                      )}
+
                       {assignment.statut === "contrat_signe" && (
                         <Button
                           variant="dark"
@@ -612,18 +607,41 @@ export default function EtablissementMissionDetailsPage() {
                         </Button>
                       )}
 
-                      {canSignAttestation &&
-                        assignment.id === firstMissionRenford?.id && (
+                      {/* Noter le renford */}
+                      {assignment.statut === "mission_terminee" &&
+                        (mission.statut === "mission_terminee" ||
+                          mission.statut === "archivee") &&
+                        !assignment.evaluation && (
                           <Button
-                            variant="outline"
                             className="px-5"
-                            onClick={() => setSignAttestationDialogOpen(true)}
+                            onClick={() => {
+                              setNoterMissionRenfordId(assignment.id);
+                              setNoterRenfordPrenom(
+                                assignment.profilRenford.utilisateur.prenom,
+                              );
+                              setNoterDialogOpen(true);
+                            }}
                           >
-                            Signer l'attestation de mission
+                            Noter {assignment.profilRenford.utilisateur.prenom}
                           </Button>
                         )}
                     </div>
                   </div>
+
+                  {/* Évaluation existante */}
+                  {assignment.evaluation && (
+                    <div className="mt-3 flex items-center gap-3 border-t pt-3">
+                      <StarRating
+                        rating={assignment.evaluation.note}
+                        size={18}
+                      />
+                      {assignment.evaluation.commentaire && (
+                        <p className="text-sm text-muted-foreground">
+                          {assignment.evaluation.commentaire}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -640,8 +658,9 @@ export default function EtablissementMissionDetailsPage() {
                   </h4>
                   <p className="flex items-center gap-2 text-base text-muted-foreground">
                     <CalendarDays className="h-4 w-4" />
-                    Du {formatFrenchDate(mission.dateDebut)} au{" "}
-                    {formatFrenchDate(mission.dateFin)}
+                    {mission.dateFin
+                      ? `Du ${formatFrenchDate(mission.dateDebut)} au ${formatFrenchDate(mission.dateFin)}`
+                      : `Le ${formatFrenchDate(mission.dateDebut)}`}
                   </p>
                 </div>
                 {canRunManualSearch && (
@@ -735,10 +754,14 @@ export default function EtablissementMissionDetailsPage() {
                   </div>
                   <div className="flex items-center justify-between gap-4 text-muted-foreground">
                     <span>
-                      Frais de service inclus HT ({PLATFORM_COMMISSION_PERCENT}
+                      Frais de service HT ({PLATFORM_COMMISSION_PERCENT}
                       %)
                     </span>
-                    <span>{formatAmount(serviceFees)}</span>
+                    <span>{formatAmount(fraisHt)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 text-muted-foreground">
+                    <span>TVA sur frais de service (20%)</span>
+                    <span>{formatAmount(tvaFrais)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-muted-foreground">
                     <span>Total TTC</span>
@@ -750,7 +773,7 @@ export default function EtablissementMissionDetailsPage() {
           </TabsContent>
 
           <TabsContent value="documents" className="space-y-4">
-            {filteredDocumentGroups.map((group) => (
+            {documentGroups.map((group) => (
               <DocumentCategoryCard
                 key={group.title}
                 title={group.title}
@@ -767,7 +790,6 @@ export default function EtablissementMissionDetailsPage() {
                 //     | "facture_prestation"
                 //     | "facture_commission"
                 //     | "contrat_prestation"
-                //     | "attestation_mission",
                 // });
                 isDownloading={downloadDocumentMutation.isPending}
               />
@@ -797,58 +819,24 @@ export default function EtablissementMissionDetailsPage() {
             renfordNom: renfordFullName,
             description: mission.description,
           }}
-          onSign={(signatureDataUrl) => {
+          onSign={(signatureImage) => {
             signMutation.mutate(
               {
                 missionId: mission.id,
                 missionRenfordId: firstMissionRenford.id,
-                signatureDataUrl,
+                signatureImage,
               },
-              { onSuccess: () => setSignDialogOpen(false) },
+              {
+                onSuccess: () => {
+                  setSignDialogOpen(false);
+                  toast.success("Contrat signé avec succès");
+                },
+              },
             );
           }}
           isPending={signMutation.isPending}
         />
       )}
-
-      {firstMissionRenford &&
-        mission.modeMission === "flex" &&
-        mission.statut === "mission_terminee" && (
-          <SignatureContratDialog
-            open={signAttestationDialogOpen}
-            onOpenChange={setSignAttestationDialogOpen}
-            dialogTitle="Attestation de mission"
-            signButtonText="Signer l'attestation"
-            signerRole="etablissement"
-            contractData={{
-              missionTitle: missionTitle,
-              discipline: mission.discipline,
-              dateDebut: mission.dateDebut,
-              dateFin: mission.dateFin,
-              methodeTarification: mission.methodeTarification,
-              tarif: mission.tarif,
-              totalHours,
-              horaires,
-              etablissementNom: mission.etablissement?.nom ?? "-",
-              etablissementAdresse: mission.etablissement
-                ? `${mission.etablissement.adresse}, ${mission.etablissement.codePostal} ${mission.etablissement.ville}`
-                : "-",
-              renfordNom: renfordFullName,
-              description: mission.description,
-            }}
-            onSign={(signatureDataUrl) => {
-              signAttestationMutation.mutate(
-                {
-                  missionId: mission.id,
-                  missionRenfordId: firstMissionRenford.id,
-                  signatureDataUrl,
-                },
-                { onSuccess: () => setSignAttestationDialogOpen(false) },
-              );
-            }}
-            isPending={signAttestationMutation.isPending}
-          />
-        )}
 
       {!isMissionStarted && (
         <InviterFavoriDialog
@@ -897,6 +885,24 @@ export default function EtablissementMissionDetailsPage() {
           });
         }}
         isPending={respondMutation.isPending}
+      />
+
+      <NoterRenfordDialog
+        open={noterDialogOpen}
+        onOpenChange={setNoterDialogOpen}
+        renfordPrenom={noterRenfordPrenom}
+        isPending={evaluationMutation.isPending}
+        onSubmit={(data) => {
+          if (!noterMissionRenfordId) return;
+          evaluationMutation.mutate(
+            {
+              missionRenfordId: noterMissionRenfordId,
+              note: data.note,
+              commentaire: data.commentaire,
+            },
+            { onSuccess: () => setNoterDialogOpen(false) },
+          );
+        }}
       />
     </main>
   );

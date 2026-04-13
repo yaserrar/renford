@@ -465,7 +465,12 @@ const updateProfilRenfordDiplomeItemSchema = z.object({
   anneeObtention: optionalYearSchema,
   mention: optionalNullableStringSchema,
   etablissementFormation: optionalNullableStringSchema,
-  justificatifDiplomeChemin: optionalNullableStringSchema,
+  justificatifDiplomeChemin: z
+    .string()
+    .nullable()
+    .refine((val) => val !== null && val.length > 0, {
+      message: "Le justificatif est obligatoire",
+    }),
 });
 
 export const updateProfilRenfordDiplomesSchema = z.object({
@@ -528,11 +533,7 @@ export const updateProfilRenfordQualificationsSchema = z
     niveauExperience: z.enum(NIVEAU_EXPERIENCE, {
       required_error: "Veuillez sélectionner votre niveau d'expérience",
     }),
-    justificatifCarteProfessionnelleChemin: z
-      .string({
-        required_error: "Le justificatif carte professionnelle est obligatoire",
-      })
-      .min(1, "Le justificatif carte professionnelle est obligatoire"),
+    justificatifCarteProfessionnelleChemin: z.string().nullable().optional(),
     tarifHoraire: tarifHoraireSchema,
     proposeJournee: z.boolean().default(false),
     tarifJournee: tarifJourneeSchema,
