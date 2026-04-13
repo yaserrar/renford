@@ -58,6 +58,10 @@ export type AdminUserDetail = AdminUserListItem & {
     siret: string | null;
     siretEnCoursObtention: boolean;
     formeJuridique: string | null;
+    adresse: string;
+    codePostal: string;
+    ville: string;
+    adresseSiegeDifferente: boolean;
     adresseSiege: string | null;
     codePostalSiege: string | null;
     villeSiege: string | null;

@@ -88,8 +88,8 @@ export default function UserDetailPage() {
                 className={cn(
                   "text-sm font-medium",
                   user.typeUtilisateur === "etablissement"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-purple-100 text-purple-700",
+                    ? "bg-primary-background text-primary-dark"
+                    : "bg-secondary-background text-secondary",
                 )}
               >
                 {getInitials(fullName)}
@@ -99,13 +99,7 @@ export default function UserDetailPage() {
               <h1 className="text-2xl font-bold">{fullName}</h1>
               <div className="mt-1 flex items-center gap-2">
                 <Badge
-                  variant="outline"
-                  className={cn(
-                    "px-3 py-0.5",
-                    user.typeUtilisateur === "etablissement"
-                      ? "bg-blue-50 text-blue-700 border-blue-200"
-                      : "bg-purple-50 text-purple-700 border-purple-200",
-                  )}
+                  variant={user.typeUtilisateur === "etablissement" ? "default" : "secondary"}
                 >
                   {TYPE_UTILISATEUR_LABELS[user.typeUtilisateur]}
                 </Badge>
@@ -143,11 +137,13 @@ export default function UserDetailPage() {
             value={user.emailVerifie ? "Oui" : "Non"}
             iconClass={user.emailVerifie ? "text-green-500" : "text-red-400"}
           />
-          <QuickInfo
-            icon={Footprints}
-            label="Étape onboarding"
-            value={`${user.etapeOnboarding}`}
-          />
+          {user.statut !== "actif" && (
+            <QuickInfo
+              icon={Footprints}
+              label="Étape onboarding"
+              value={`${user.etapeOnboarding}`}
+            />
+          )}
           <QuickInfo
             icon={Calendar}
             label="Inscrit le"

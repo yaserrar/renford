@@ -42,13 +42,31 @@ export default function EtablissementDetails({ user }: Props) {
               </div>
             </div>
 
-            {/* Siège */}
+            {/* Adresses */}
             <div>
-              <h3 className="mb-4 font-medium text-lg">Adresse siège</h3>
-              <div className="space-y-3 rounded-lg border p-4 text-sm bg-white">
-                <InfoRow label="Adresse" value={profil.adresseSiege} />
-                <InfoRow label="Code postal" value={profil.codePostalSiege} />
-                <InfoRow label="Ville" value={profil.villeSiege} />
+              <h3 className="mb-4 font-medium text-lg">Adresses</h3>
+              <div className="space-y-4">
+                <div className="space-y-3 rounded-lg border p-4 text-sm bg-white">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Adresse de l&apos;établissement
+                  </p>
+                  <InfoRow label="Adresse" value={profil.adresse} />
+                  <InfoRow label="Code postal" value={profil.codePostal} />
+                  <InfoRow label="Ville" value={profil.ville} />
+                </div>
+                {profil.adresseSiegeDifferente && profil.adresseSiege && (
+                  <div className="space-y-3 rounded-lg border p-4 text-sm bg-white">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Siège social
+                    </p>
+                    <InfoRow label="Adresse" value={profil.adresseSiege} />
+                    <InfoRow
+                      label="Code postal"
+                      value={profil.codePostalSiege}
+                    />
+                    <InfoRow label="Ville" value={profil.villeSiege} />
+                  </div>
+                )}
               </div>
             </div>
 
