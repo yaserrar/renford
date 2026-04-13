@@ -1,8 +1,10 @@
 import type { NextFunction, Request, Response } from 'express';
 import type { StatutMissionRenford } from '@prisma/client';
 import prisma from '../../config/prisma';
+import { mail } from '../../config/mail';
+import { getSignatureConfirmationEmail } from '../../config/email-templates';
+import { logger } from '../../config/logger';
 import { registerMissionRenfordResponse } from '../../jobs/missions-matching';
-import { saveSignatureDataUrl } from '../../utils/signature-storage';
 import {
   buildMissionDocumentPdf,
   getMissionDocumentFilename,
@@ -14,7 +16,6 @@ import type {
   RenfordMissionIdParamsSchema,
   RenfordMissionsTab,
   RespondToMissionProposalSchema,
-  SignMissionDocumentSchema,
 } from './missions-renford.schema';
 
 const RENFORD_TAB_STATUS_MAP: Record<RenfordMissionsTab, StatutMissionRenford[]> = {
@@ -267,7 +268,7 @@ export const respondToMissionProposal = async (
 };
 
 export const signContractByRenford = async (
-  req: Request<RenfordMissionIdParamsSchema, unknown, SignMissionDocumentSchema>,
+  req: Request<RenfordMissionIdParamsSchema>,
   res: Response,
   next: NextFunction,
 ) => {
@@ -276,7 +277,7 @@ export const signContractByRenford = async (
 
     const profilRenford = await prisma.profilRenford.findUnique({
       where: { utilisateurId: userId },
-      select: { id: true },
+      select: { id: true, utilisateur: { select: { email: true, prenom: true, nom: true } } },
     });
 
     if (!profilRenford) {
@@ -287,6 +288,17 @@ export const signContractByRenford = async (
       where: {
         mission: { id: req.params.missionId },
         profilRenfordId: profilRenford.id,
+      },
+      include: {
+        profilRenford: { include: { utilisateur: true } },
+        mission: {
+          include: {
+            PlageHoraireMission: true,
+            etablissement: {
+              include: { profilEtablissement: { include: { utilisateur: true } } },
+            },
+          },
+        },
       },
     });
 
@@ -300,90 +312,101 @@ export const signContractByRenford = async (
       });
     }
 
-    const updated = await prisma.missionRenford.update({
+    // Check if renford already signed
+    if (missionRenford.signatureContratPrestationRenfordId) {
+      return res.json({
+        id: missionRenford.id,
+        statut: missionRenford.statut,
+        alreadySigned: true,
+        message: 'Vous avez déjà signé ce contrat',
+      });
+    }
+
+    // Validate signature data from request body
+    const { signatureImage } = req.body as { signatureImage?: string };
+    if (!signatureImage) {
+      return res.status(400).json({ message: 'La signature est requise' });
+    }
+
+    // Save signature image to disk
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const signatureDir = path.join(process.cwd(), 'uploads', 'signatures');
+    await fs.mkdir(signatureDir, { recursive: true });
+
+    const filename = `contrat-renford-${missionRenford.id}-${Date.now()}.png`;
+    const filePath = path.join(signatureDir, filename);
+
+    // Remove data URL prefix if present
+    const base64Data = signatureImage.replace(/^data:image\/\w+;base64,/, '');
+    await fs.writeFile(filePath, Buffer.from(base64Data, 'base64'));
+
+    const cheminImage = `uploads/signatures/${filename}`;
+
+    // Create signature record
+    const ipAddress =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.socket.remoteAddress ||
+      'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const lienCgu = `${req.protocol}://${req.get('host')?.replace('/api', '')}/conditions`;
+
+    const signature = await prisma.signatureContrat.create({
+      data: {
+        cheminImage,
+        nomSignataire: `${profilRenford.utilisateur.prenom} ${profilRenford.utilisateur.nom}`,
+        emailSignataire: profilRenford.utilisateur.email,
+        roleSignataire: 'renford',
+        lienCgu,
+        source: 'web',
+        adresseIp: ipAddress,
+        userAgent,
+      },
+    });
+
+    // Link signature to mission renford and update status
+    await prisma.missionRenford.update({
       where: { id: missionRenford.id },
       data: {
+        signatureContratPrestationRenfordId: signature.id,
         statut: 'contrat_signe',
         dateContratSigne: new Date(),
-        signatureContratPrestationRenfordChemin: await saveSignatureDataUrl(
-          req.body.signatureDataUrl,
-          'signatures/contrat-prestation',
-          `renford-${missionRenford.id}`,
-        ),
       },
-      select: { id: true, statut: true, dateContratSigne: true },
     });
 
-    return res.json(updated);
-  } catch (err) {
-    return next(err);
-  }
-};
+    // Send confirmation email to renford
 
-export const signAttestationByRenford = async (
-  req: Request<RenfordMissionIdParamsSchema, unknown, SignMissionDocumentSchema>,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const userId = req.userId!;
-
-    const profilRenford = await prisma.profilRenford.findUnique({
-      where: { utilisateurId: userId },
-      select: { id: true },
+    const emailPayload = getSignatureConfirmationEmail({
+      prenom: profilRenford.utilisateur.prenom,
+      nomSignataire: `${profilRenford.utilisateur.prenom} ${profilRenford.utilisateur.nom}`,
+      roleSignataire: 'Renford',
+      missionDescription: `${missionRenford.mission.discipline} – ${new Date(missionRenford.mission.dateDebut).toLocaleDateString('fr-FR')}`,
+      dateSignature: new Date().toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      lienCgu,
     });
 
-    if (!profilRenford) {
-      return res.status(404).json({ message: 'Profil Renford non trouvé' });
-    }
-
-    const missionRenford = await prisma.missionRenford.findFirst({
-      where: {
-        mission: { id: req.params.missionId },
-        profilRenfordId: profilRenford.id,
-      },
-      include: { mission: { select: { statut: true, modeMission: true } } },
-    });
-
-    if (!missionRenford) {
-      return res.status(404).json({ message: 'Mission non trouvée' });
-    }
-
-    if (missionRenford.mission.modeMission !== 'flex') {
-      return res.status(400).json({
-        message: "L'attestation de mission est uniquement disponible pour les missions Flex",
+    try {
+      await mail.sendMail({
+        to: profilRenford.utilisateur.email,
+        subject: emailPayload.subject,
+        html: emailPayload.html,
+        text: emailPayload.text,
       });
+    } catch (emailError) {
+      logger.error({ err: emailError }, 'Échec envoi email confirmation signature renford');
     }
 
-    if (
-      missionRenford.statut !== 'mission_terminee' ||
-      (missionRenford.mission.statut !== 'mission_terminee' &&
-        missionRenford.mission.statut !== 'archivee')
-    ) {
-      return res.status(400).json({
-        message: "L'attestation de mission ne peut être signée qu'après la fin de mission",
-      });
-    }
-
-    if (missionRenford.signatureAttestationMissionRenfordChemin) {
-      return res.status(400).json({
-        message: "L'attestation de mission a déjà été signée",
-      });
-    }
-
-    const updated = await prisma.missionRenford.update({
-      where: { id: missionRenford.id },
-      data: {
-        signatureAttestationMissionRenfordChemin: await saveSignatureDataUrl(
-          req.body.signatureDataUrl,
-          'signatures/attestation-mission',
-          `renford-${missionRenford.id}`,
-        ),
-      },
-      select: { id: true, statut: true, signatureAttestationMissionRenfordChemin: true },
+    return res.json({
+      id: missionRenford.id,
+      statut: 'contrat_signe',
+      signatureId: signature.id,
     });
-
-    return res.json(updated);
   } catch (err) {
     return next(err);
   }

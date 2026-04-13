@@ -7,7 +7,6 @@ import {
   getRenfordMissionDetails,
   getRenfordPendingMissionsCount,
   respondToMissionProposal,
-  signAttestationByRenford,
   signContractByRenford,
 } from './missions-renford.controller';
 import {
@@ -15,7 +14,6 @@ import {
   renfordMissionDocumentParamsSchema,
   renfordMissionIdParamsSchema,
   respondToMissionProposalSchema,
-  signMissionDocumentSchema,
 } from './missions-renford.schema';
 
 const router = Router();
@@ -50,15 +48,8 @@ router.post(
 router.post(
   '/renford/missions/:missionId/signature',
   authenticateToken(['renford']),
-  validateResource({ params: renfordMissionIdParamsSchema, body: signMissionDocumentSchema }),
+  validateResource({ params: renfordMissionIdParamsSchema }),
   signContractByRenford,
-);
-
-router.post(
-  '/renford/missions/:missionId/attestation/signature',
-  authenticateToken(['renford']),
-  validateResource({ params: renfordMissionIdParamsSchema, body: signMissionDocumentSchema }),
-  signAttestationByRenford,
 );
 
 router.get(

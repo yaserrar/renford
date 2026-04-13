@@ -4,8 +4,11 @@ import prisma from '../../config/prisma';
 import { mail } from '../../config/mail';
 import { env } from '../../config/env';
 import { logger } from '../../config/logger';
-import { getMissionDemandeConfirmeeEmail } from '../../config/email-templates';
-import { saveSignatureDataUrl } from '../../utils/signature-storage';
+import {
+  getMissionDemandeConfirmeeCoachEmail,
+  getMissionDemandeConfirmeeFlexEmail,
+  getSignatureConfirmationEmail,
+} from '../../config/email-templates';
 import { computeMissionPricing } from '../../lib/mission-pricing';
 import {
   registerEtablissementMissionRenfordResponse,
@@ -75,6 +78,45 @@ const getMissionTotalHours = (
 
     return acc + (end - start) / 60;
   }, 0);
+};
+
+const formatMissionPlageForEmail = (
+  plagesHoraires: Array<{
+    date: Date | string;
+    heureDebut: string;
+    heureFin: string;
+  }>,
+) => {
+  return plagesHoraires
+    .slice()
+    .sort((a, b) => {
+      const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      return a.heureDebut.localeCompare(b.heureDebut);
+    })
+    .map((plage) => {
+      const dateLabel = new Date(plage.date).toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+      return `${dateLabel} (${plage.heureDebut} - ${plage.heureFin})`;
+    })
+    .join(' ; ');
+};
+
+const formatMissionTarifForEmail = (tarif: number, methodeTarification: string) => {
+  const methodeLabel =
+    methodeTarification === 'horaire'
+      ? 'heure'
+      : methodeTarification === 'journee'
+        ? 'journee'
+        : 'demi-journee';
+
+  return `${tarif.toLocaleString('fr-FR', {
+    minimumFractionDigits: Number.isInteger(tarif) ? 0 : 2,
+    maximumFractionDigits: 2,
+  })} EUR / ${methodeLabel}`;
 };
 
 export const getEtablissementPendingMissionsCount = async (
@@ -155,6 +197,9 @@ export const getEtablissementMissions = async (
                 },
               },
             },
+            evaluation: {
+              select: { id: true, note: true, commentaire: true, dateCreation: true },
+            },
           },
         },
       },
@@ -163,7 +208,8 @@ export const getEtablissementMissions = async (
 
     const missionsWithTotalHours = missions.map((mission) => {
       const totalHours = getMissionTotalHours(mission.PlageHoraireMission);
-      const renford = mission.missionsRenford[0]?.profilRenford;
+      const firstMR = mission.missionsRenford[0];
+      const renford = firstMR?.profilRenford;
       const { profilEtablissement: etabProfil, ...etabRest } = mission.etablissement;
 
       return {
@@ -179,6 +225,9 @@ export const getEtablissementMissions = async (
               noteMoyenne: renford.noteMoyenne,
               nom: renford.utilisateur.nom,
               prenom: renford.utilisateur.prenom,
+              missionRenfordId: firstMR.id,
+              missionRenfordStatut: firstMR.statut,
+              evaluation: firstMR.evaluation ?? null,
             }
           : null,
       };
@@ -242,6 +291,9 @@ export const getEtablissementMissionDetails = async (
                   },
                 },
               },
+            },
+            evaluation: {
+              select: { id: true, note: true, commentaire: true, dateCreation: true },
             },
           },
           orderBy: [{ ordreShortlist: 'asc' }, { dateProposition: 'asc' }],
@@ -328,7 +380,7 @@ export const createMission = async (
         description: req.body.description ?? null,
         etablissementId: req.body.etablissementId,
         dateDebut: req.body.dateDebut,
-        dateFin: req.body.dateFin,
+        dateFin: req.body.dateFin ?? null,
         methodeTarification: req.body.methodeTarification,
         tarif: normalizedTarif,
         montantHT: pricing.montantHT,
@@ -358,13 +410,26 @@ export const createMission = async (
     });
 
     if (user?.email) {
-      const dashboardUrl = `${env.PLATFORM_URL.replace(/\/$/, '')}/dashboard/etablissement/accueil`;
+      const posteDemande = getTypeMissionLabel(mission.specialitePrincipale);
+      const plageMission = formatMissionPlageForEmail(req.body.plagesHoraires);
+      const prenomEtablissement = user.prenom;
 
-      const emailPayload = getMissionDemandeConfirmeeEmail({
-        nomComplet: `${user.prenom} ${user.nom}`.trim(),
-        specialiteLabel: getTypeMissionLabel(mission.specialitePrincipale),
-        dashboardUrl,
-      });
+      const emailPayload =
+        req.body.modeMission === 'coach'
+          ? getMissionDemandeConfirmeeCoachEmail({
+              prenomEtablissement,
+              posteDemande,
+              plageMission,
+              tarifSouhaite: formatMissionTarifForEmail(
+                normalizedTarif,
+                req.body.methodeTarification,
+              ),
+            })
+          : getMissionDemandeConfirmeeFlexEmail({
+              prenomEtablissement,
+              posteDemande,
+              plageMission,
+            });
 
       try {
         await mail.sendMail({
@@ -615,7 +680,20 @@ export const signContractByEtablissement = async (
           },
         },
       },
-      select: { id: true, statut: true },
+      select: {
+        id: true,
+        statut: true,
+        discipline: true,
+        dateDebut: true,
+        etablissement: {
+          select: {
+            profilEtablissement: {
+              select: { utilisateur: { select: { email: true, prenom: true, nom: true } } },
+            },
+          },
+        },
+        PlageHoraireMission: true,
+      },
     });
 
     if (!mission) {
@@ -630,28 +708,83 @@ export const signContractByEtablissement = async (
       return res.status(404).json({ message: 'Candidature non trouvée' });
     }
 
-    if (missionRenford.statut !== 'contrat_signe') {
+    // Renford must have signed first
+    if (!missionRenford.signatureContratPrestationRenfordId) {
       return res.status(400).json({
         message: 'Le renford doit signer le contrat en premier',
       });
     }
 
+    // Check if etablissement already signed
+    if (missionRenford.signatureContratPrestationEtablissementId) {
+      return res.json({
+        missionRenfordId: missionRenford.id,
+        statut: missionRenford.statut,
+        alreadySigned: true,
+        message: 'Vous avez déjà signé ce contrat',
+      });
+    }
+
+    // Validate signature data from request body
+    const { signatureImage } = req.body as { signatureImage?: string };
+    if (!signatureImage) {
+      return res.status(400).json({ message: 'La signature est requise' });
+    }
+
+    const etablissementUser = mission.etablissement?.profilEtablissement?.utilisateur;
+    if (!etablissementUser?.email) {
+      return res.status(400).json({ message: "Email de l'établissement introuvable" });
+    }
+
+    // Save signature image to disk
+    const { promises: fsPromises } = await import('fs');
+    const pathModule = await import('path');
+    const signatureDir = pathModule.join(process.cwd(), 'uploads', 'signatures');
+    await fsPromises.mkdir(signatureDir, { recursive: true });
+
+    const filename = `contrat-etab-${missionRenford.id}-${Date.now()}.png`;
+    const filePath = pathModule.join(signatureDir, filename);
+
+    const base64Data = signatureImage.replace(/^data:image\/\w+;base64,/, '');
+    await fsPromises.writeFile(filePath, Buffer.from(base64Data, 'base64'));
+
+    const cheminImage = `uploads/signatures/${filename}`;
+
+    const ipAddress =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.socket.remoteAddress ||
+      'unknown';
+    const userAgentStr = req.headers['user-agent'] || 'unknown';
+    const lienCgu = `${req.protocol}://${req.get('host')?.replace('/api', '')}/conditions`;
+
+    // Create signature record
+    const signature = await prisma.signatureContrat.create({
+      data: {
+        cheminImage,
+        nomSignataire: `${etablissementUser.prenom} ${etablissementUser.nom}`,
+        emailSignataire: etablissementUser.email,
+        roleSignataire: 'etablissement',
+        lienCgu,
+        source: 'web',
+        adresseIp: ipAddress,
+        userAgent: userAgentStr,
+      },
+    });
+
+    // Link signature to mission renford and transition to mission_en_cours
     await prisma.$transaction([
       prisma.missionRenford.update({
         where: { id: missionRenford.id },
         data: {
+          signatureContratPrestationEtablissementId: signature.id,
           statut: 'mission_en_cours',
-          signatureContratPrestationEtablissementChemin: await saveSignatureDataUrl(
-            req.body.signatureDataUrl,
-            'signatures/contrat-prestation',
-            `etablissement-${missionRenford.id}`,
-          ),
         },
       }),
       prisma.mission.update({
         where: { id: mission.id },
         data: { statut: 'mission_en_cours' },
       }),
+      // Reject other candidates
       prisma.missionRenford.updateMany({
         where: {
           missionId: mission.id,
@@ -665,78 +798,38 @@ export const signContractByEtablissement = async (
       }),
     ]);
 
+    // Send confirmation email to etablissement
+    const emailPayload = getSignatureConfirmationEmail({
+      prenom: etablissementUser.prenom,
+      nomSignataire: `${etablissementUser.prenom} ${etablissementUser.nom}`,
+      roleSignataire: 'Établissement',
+      missionDescription: `${mission.discipline} – ${new Date(mission.dateDebut).toLocaleDateString('fr-FR')}`,
+      dateSignature: new Date().toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      lienCgu,
+    });
+
+    try {
+      await mail.sendMail({
+        to: etablissementUser.email,
+        subject: emailPayload.subject,
+        html: emailPayload.html,
+        text: emailPayload.text,
+      });
+    } catch (emailError) {
+      logger.error({ err: emailError }, 'Échec envoi email confirmation signature établissement');
+    }
+
     return res.json({
       missionRenfordId: missionRenford.id,
       statut: 'mission_en_cours',
+      signatureId: signature.id,
     });
-  } catch (err) {
-    return next(err);
-  }
-};
-
-export const signAttestationByEtablissement = async (
-  req: Request<MissionRenfordIdParamsSchema, unknown, SignMissionDocumentSchema>,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const userId = req.userId!;
-
-    const mission = await prisma.mission.findFirst({
-      where: {
-        id: req.params.missionId,
-        etablissement: {
-          profilEtablissement: {
-            utilisateurId: userId,
-          },
-        },
-      },
-      select: { id: true, statut: true, modeMission: true },
-    });
-
-    if (!mission) {
-      return res.status(404).json({ message: 'Mission non trouvée' });
-    }
-
-    if (mission.modeMission !== 'flex') {
-      return res.status(400).json({
-        message: "L'attestation de mission est uniquement disponible pour les missions Flex",
-      });
-    }
-
-    const missionRenford = await prisma.missionRenford.findUnique({
-      where: { id: req.params.missionRenfordId },
-    });
-
-    if (!missionRenford || missionRenford.missionId !== mission.id) {
-      return res.status(404).json({ message: 'Candidature non trouvée' });
-    }
-
-    if (mission.statut !== 'mission_terminee' || missionRenford.statut !== 'mission_terminee') {
-      return res.status(400).json({
-        message: "L'attestation de mission ne peut être signée qu'après la fin de mission",
-      });
-    }
-
-    if (missionRenford.signatureAttestationMissionEtablissementChemin) {
-      return res.status(400).json({
-        message: "L'attestation de mission a déjà été signée par l'établissement",
-      });
-    }
-
-    const updated = await prisma.missionRenford.update({
-      where: { id: missionRenford.id },
-      data: {
-        signatureAttestationMissionEtablissementChemin: await saveSignatureDataUrl(
-          req.body.signatureDataUrl,
-          'signatures/attestation-mission',
-          `etablissement-${missionRenford.id}`,
-        ),
-      },
-      select: { id: true, statut: true, signatureAttestationMissionEtablissementChemin: true },
-    });
-
-    return res.json(updated);
   } catch (err) {
     return next(err);
   }

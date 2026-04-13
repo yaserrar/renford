@@ -230,10 +230,11 @@ export const createMissionSchema = z
     ),
     dateFin: z.preprocess(
       parseDateField,
-      z.date({
-        required_error: 'Veuillez sélectionner une date de fin',
-        invalid_type_error: 'Veuillez sélectionner une date de fin valide',
-      }),
+      z
+        .date({
+          invalid_type_error: 'Veuillez sélectionner une date de fin valide',
+        })
+        .optional(),
     ),
     plagesHoraires: z
       .array(plageHoraireSchema)
@@ -264,7 +265,18 @@ export const createMissionSchema = z
     ),
   })
   .superRefine((values, ctx) => {
-    if (values.dateFin < values.dateDebut) {
+    if (values.modeMission === 'coach' && !values.dateFin) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['dateFin'],
+        message: 'La date de fin est obligatoire pour une annonce Coach',
+      });
+      return;
+    }
+
+    const effectiveDateFin = values.dateFin ?? values.dateDebut;
+
+    if (values.dateFin && values.dateFin < values.dateDebut) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['dateFin'],
@@ -273,7 +285,7 @@ export const createMissionSchema = z
     }
 
     values.plagesHoraires.forEach((slot, index) => {
-      if (slot.date < values.dateDebut || slot.date > values.dateFin) {
+      if (slot.date < values.dateDebut || slot.date > effectiveDateFin) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['plagesHoraires', index, 'date'],
@@ -307,9 +319,9 @@ export const respondToMissionRenfordByEtablissementSchema = z.object({
 });
 
 export const signMissionDocumentSchema = z.object({
-  signatureDataUrl: z
-    .string({ required_error: 'La signature est requise' })
-    .regex(/^data:image\/(png|jpeg|jpg);base64,/, 'Format de signature invalide'),
+  documentType: z.enum(['contrat_prestation', 'attestation_mission'], {
+    required_error: 'Veuillez préciser le type de document',
+  }),
 });
 
 export const missionDocumentParamsSchema = z.object({

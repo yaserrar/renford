@@ -156,90 +156,6 @@ const createPdfContext = (): PdfContext => ({
   images: [],
 });
 
-const parseJpegSize = (buffer: Buffer) => {
-  if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8) return null;
-
-  let offset = 2;
-  while (offset < buffer.length - 9) {
-    if (buffer[offset] !== 0xff) {
-      offset += 1;
-      continue;
-    }
-
-    const marker = buffer[offset + 1];
-    const hasLength = marker !== 0xd8 && marker !== 0xd9 && marker !== 0x01;
-    if (!hasLength) {
-      offset += 2;
-      continue;
-    }
-
-    const length = buffer.readUInt16BE(offset + 2);
-    if (length < 2 || offset + 2 + length > buffer.length) return null;
-
-    const isSof =
-      marker === 0xc0 ||
-      marker === 0xc1 ||
-      marker === 0xc2 ||
-      marker === 0xc3 ||
-      marker === 0xc5 ||
-      marker === 0xc6 ||
-      marker === 0xc7 ||
-      marker === 0xc9 ||
-      marker === 0xca ||
-      marker === 0xcb ||
-      marker === 0xcd ||
-      marker === 0xce ||
-      marker === 0xcf;
-
-    if (isSof) {
-      const height = buffer.readUInt16BE(offset + 5);
-      const width = buffer.readUInt16BE(offset + 7);
-      if (width > 0 && height > 0) {
-        return { width, height };
-      }
-      return null;
-    }
-
-    offset += 2 + length;
-  }
-
-  return null;
-};
-
-const resolveSignaturePath = (relativePath: string | null | undefined) => {
-  if (!relativePath) return null;
-  const normalizedRelative = relativePath.replace(/^\/+/, '');
-  const absolute = path.resolve(process.cwd(), normalizedRelative);
-  const uploadsRoot = path.resolve(process.cwd(), 'uploads');
-  if (!absolute.startsWith(uploadsRoot)) return null;
-  if (!fs.existsSync(absolute)) return null;
-  return absolute;
-};
-
-const registerJpegImage = (ctx: PdfContext, imagePath: string | null, baseName: string) => {
-  if (!imagePath) return null;
-  if (!imagePath.toLowerCase().endsWith('.jpg') && !imagePath.toLowerCase().endsWith('.jpeg')) {
-    return null;
-  }
-
-  try {
-    const data = fs.readFileSync(imagePath);
-    const size = parseJpegSize(data);
-    if (!size) return null;
-    const img: PdfImage = {
-      name: baseName,
-      objectId: 7 + ctx.images.length,
-      width: size.width,
-      height: size.height,
-      data,
-    };
-    ctx.images.push(img);
-    return img;
-  } catch {
-    return null;
-  }
-};
-
 const drawSignatureBlock = (
   ctx: PdfContext,
   title: string,
@@ -395,7 +311,9 @@ const drawMissionRecap = (
   drawText(ctx, `Mission: ${mission.discipline}`, 44, ctx.cursorY - 22, 9, false);
   drawText(
     ctx,
-    `Periode: ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)}`,
+    mission.dateFin
+      ? `Periode: ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)}`
+      : `Date: ${formatDate(mission.dateDebut)}`,
     44,
     ctx.cursorY - 36,
     9,
@@ -545,7 +463,9 @@ const renderContrat = (
   drawText(ctx, `Renford: ${renfordName}`, 44, ctx.cursorY - 50, 9, false);
   drawText(
     ctx,
-    `Periode de mission: ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)} - ${formatHours(totalHours)}`,
+    mission.dateFin
+      ? `Periode de mission: ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)} - ${formatHours(totalHours)}`
+      : `Date de mission: ${formatDate(mission.dateDebut)} - ${formatHours(totalHours)}`,
     44,
     ctx.cursorY - 64,
     9,
@@ -580,19 +500,9 @@ const renderContrat = (
     13,
   );
 
-  const renfordSignature = registerJpegImage(
-    ctx,
-    resolveSignaturePath(missionRenford.signatureContratPrestationRenfordChemin),
-    'ImRenford',
-  );
-  const etabSignature = registerJpegImage(
-    ctx,
-    resolveSignaturePath(missionRenford.signatureContratPrestationEtablissementChemin),
-    'ImEtab',
-  );
-
-  drawSignatureBlock(ctx, 'Signature Renford', renfordSignature, 42, 100);
-  drawSignatureBlock(ctx, 'Signature Etablissement', etabSignature, 312, 100);
+  // Signature placeholders (actual signatures applied by Odoo Sign)
+  drawSignatureBlock(ctx, 'Signature Renford', null, 42, 100);
+  drawSignatureBlock(ctx, 'Signature Etablissement', null, 312, 100);
 
   drawText(
     ctx,
@@ -622,7 +532,9 @@ const renderAttestation = (
   drawText(ctx, 'Attestation', 42, ctx.cursorY, 12, true);
   addParagraph(
     ctx,
-    `Nous attestons que ${renfordName} a realise la mission ${mission.discipline} pour ${mission.etablissement.nom} du ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)} pour un volume estime de ${formatHours(totalHours)}.`,
+    mission.dateFin
+      ? `Nous attestons que ${renfordName} a realise la mission ${mission.discipline} pour ${mission.etablissement.nom} du ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)} pour un volume estime de ${formatHours(totalHours)}.`
+      : `Nous attestons que ${renfordName} a realise la mission ${mission.discipline} pour ${mission.etablissement.nom} le ${formatDate(mission.dateDebut)} pour un volume estime de ${formatHours(totalHours)}.`,
     44,
     510,
     10,
@@ -642,7 +554,9 @@ const renderAttestation = (
   drawText(ctx, `Renford: ${renfordName}`, 44, ctx.cursorY - 40, 9, false);
   drawText(
     ctx,
-    `Periode: ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)}`,
+    mission.dateFin
+      ? `Periode: ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)}`
+      : `Date: ${formatDate(mission.dateDebut)}`,
     44,
     ctx.cursorY - 56,
     9,
@@ -650,19 +564,9 @@ const renderAttestation = (
   );
   drawText(ctx, `Date emission: ${formatDate(new Date())}`, 44, ctx.cursorY - 72, 9, false);
 
-  const renfordSignature = registerJpegImage(
-    ctx,
-    resolveSignaturePath(missionRenford.signatureAttestationMissionRenfordChemin),
-    'ImAttRenford',
-  );
-  const etabSignature = registerJpegImage(
-    ctx,
-    resolveSignaturePath(missionRenford.signatureAttestationMissionEtablissementChemin),
-    'ImAttEtab',
-  );
-
-  drawSignatureBlock(ctx, 'Signature Renford', renfordSignature, 42, 100);
-  drawSignatureBlock(ctx, 'Signature Etablissement', etabSignature, 312, 100);
+  // Signature placeholders (actual signatures applied by Odoo Sign)
+  drawSignatureBlock(ctx, 'Signature Renford', null, 42, 100);
+  drawSignatureBlock(ctx, 'Signature Etablissement', null, 312, 100);
 
   drawFooter(ctx);
 };

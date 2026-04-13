@@ -12,7 +12,6 @@ import {
   getEtablissementPendingMissionsCount,
   markMissionAsTermineeByEtablissement,
   respondToMissionRenfordByEtablissement,
-  signAttestationByEtablissement,
   signContractByEtablissement,
   triggerManualMissionSearchByEtablissement,
 } from './missions.controller';
@@ -23,7 +22,6 @@ import {
   missionIdParamsSchema,
   missionRenfordIdParamsSchema,
   respondToMissionRenfordByEtablissementSchema,
-  signMissionDocumentSchema,
 } from './missions.schema';
 
 const router = Router();
@@ -104,19 +102,8 @@ router.post(
   authenticateToken(['etablissement']),
   validateResource({
     params: missionRenfordIdParamsSchema,
-    body: signMissionDocumentSchema,
   }),
   signContractByEtablissement,
-);
-
-router.post(
-  '/etablissement/missions/:missionId/renfords/:missionRenfordId/attestation/signature',
-  authenticateToken(['etablissement']),
-  validateResource({
-    params: missionRenfordIdParamsSchema,
-    body: signMissionDocumentSchema,
-  }),
-  signAttestationByEtablissement,
 );
 
 router.get(

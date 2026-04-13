@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
-import { CalendarDays, Clock3, MapPin, Eraser } from "lucide-react";
+import { Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatFrenchDate, formatAmount } from "@/lib/utils";
 import {
   DISCIPLINE_MISSION_LABELS,
@@ -26,7 +27,7 @@ type ContractData = {
   missionTitle: string;
   discipline: DisciplineMission;
   dateDebut: string | Date;
-  dateFin: string | Date;
+  dateFin: string | Date | null;
   methodeTarification: MethodeTarificationMission;
   tarif: number | string | null;
   totalHours: number;
@@ -42,7 +43,7 @@ type SignatureContratDialogProps = {
   onOpenChange: (open: boolean) => void;
   contractData: ContractData;
   signerRole: "renford" | "etablissement";
-  onSign: (signatureDataUrl: string) => void;
+  onSign: (signatureImage: string) => void;
   isPending?: boolean;
   dialogTitle?: string;
   signButtonText?: string;
@@ -58,28 +59,33 @@ export default function SignatureContratDialog({
   dialogTitle,
   signButtonText,
 }: SignatureContratDialogProps) {
-  const sigCanvasRef = useRef<SignatureCanvas>(null);
-  const [hasSigned, setHasSigned] = useState(false);
+  const sigPadRef = useRef<SignatureCanvas>(null);
+  const [isEmpty, setIsEmpty] = useState(true);
+  const [accepted, setAccepted] = useState(false);
 
   const handleClear = () => {
-    sigCanvasRef.current?.clear();
-    setHasSigned(false);
+    sigPadRef.current?.clear();
+    setIsEmpty(true);
   };
 
   const handleEnd = () => {
-    if (sigCanvasRef.current && !sigCanvasRef.current.isEmpty()) {
-      setHasSigned(true);
+    if (sigPadRef.current && !sigPadRef.current.isEmpty()) {
+      setIsEmpty(false);
     }
   };
 
   const handleSign = () => {
-    if (!hasSigned) return;
-    const signatureDataUrl = sigCanvasRef.current?.toDataURL(
-      "image/jpeg",
-      0.95,
-    );
-    if (!signatureDataUrl) return;
-    onSign(signatureDataUrl);
+    if (!sigPadRef.current || sigPadRef.current.isEmpty() || !accepted) return;
+    const dataUrl = sigPadRef.current.toDataURL("image/png");
+    onSign(dataUrl);
+  };
+
+  const handleOpenChange = (value: boolean) => {
+    if (!value) {
+      handleClear();
+      setAccepted(false);
+    }
+    onOpenChange(value);
   };
 
   const disciplineLabel =
@@ -88,14 +94,8 @@ export default function SignatureContratDialog({
 
   const tarifLabel = `${formatAmount(contractData.tarif)}${METHODE_TARIFICATION_SUFFIXES[contractData.methodeTarification]} HT`;
 
-  const today = new Date().toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="md:max-w-4xl max-h-[90vh] p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="text-xl font-semibold">
@@ -104,190 +104,94 @@ export default function SignatureContratDialog({
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(90vh-80px)] px-6 pb-6">
-          {/* Contract document */}
+          {/* Contract summary */}
           <div className="mt-4 space-y-5 text-sm text-foreground">
-            {/* Header */}
             <div className="rounded-2xl border border-border bg-secondary-background/50 p-4 space-y-3">
               <h3 className="text-base font-semibold">
-                Contrat de prestation – {disciplineLabel}
+                {dialogTitle ?? "Contrat de prestation"} – {disciplineLabel}
               </h3>
-              <p className="text-muted-foreground">Établi le {today}</p>
+              <p className="text-muted-foreground">
+                {contractData.etablissementNom} - {contractData.renfordNom}
+              </p>
+              <p className="text-muted-foreground">
+                {contractData.dateFin
+                  ? `Du ${formatFrenchDate(contractData.dateDebut)} au ${formatFrenchDate(contractData.dateFin)}`
+                  : `Le ${formatFrenchDate(contractData.dateDebut)}`}{" "}
+                – {contractData.totalHours.toFixed(1)}h – {tarifLabel}
+              </p>
             </div>
-
-            {/* Parties */}
-            <section className="space-y-2">
-              <h4 className="font-semibold text-base">1. Les parties</h4>
-              <div className="rounded-xl border border-border bg-white p-4 space-y-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                    L'Établissement (donneur d'ordre)
-                  </p>
-                  <p className="font-medium mt-1">
-                    {contractData.etablissementNom}
-                  </p>
-                  <p className="text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {contractData.etablissementAdresse}
-                  </p>
-                </div>
-                <Separator />
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                    Le Renford (prestataire)
-                  </p>
-                  <p className="font-medium mt-1">{contractData.renfordNom}</p>
-                </div>
-              </div>
-            </section>
-
-            {/* Objet */}
-            <section className="space-y-2">
-              <h4 className="font-semibold text-base">
-                2. Objet de la mission
-              </h4>
-              <div className="rounded-xl border border-border bg-white p-4 space-y-2">
-                <p>
-                  Le prestataire s'engage à effectuer une mission de{" "}
-                  <span className="font-medium">{disciplineLabel}</span> au sein
-                  de l'établissement désigné ci-dessus, selon les modalités
-                  décrites dans le présent contrat.
-                </p>
-                {contractData.description && (
-                  <p className="text-muted-foreground">
-                    {contractData.description}
-                  </p>
-                )}
-              </div>
-            </section>
-
-            {/* Dates & horaires */}
-            <section className="space-y-2">
-              <h4 className="font-semibold text-base">3. Dates et horaires</h4>
-              <div className="rounded-xl border border-border bg-white p-4 space-y-2">
-                <p className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                  Du {formatFrenchDate(contractData.dateDebut)} au{" "}
-                  {formatFrenchDate(contractData.dateFin)}
-                </p>
-                {contractData.horaires.length > 0 && (
-                  <div className="space-y-1 mt-2">
-                    {contractData.horaires.map((line) => (
-                      <p
-                        key={line}
-                        className="text-muted-foreground flex items-center gap-2"
-                      >
-                        <Clock3 className="h-3.5 w-3.5" />
-                        {line}
-                      </p>
-                    ))}
-                  </div>
-                )}
-                <p className="text-muted-foreground mt-1">
-                  Durée totale estimée : {contractData.totalHours.toFixed(1)}h
-                </p>
-              </div>
-            </section>
-
-            {/* Tarification */}
-            <section className="space-y-2">
-              <h4 className="font-semibold text-base">4. Rémunération</h4>
-              <div className="rounded-xl border border-border bg-white p-4">
-                <p>
-                  Le prestataire percevra une rémunération de{" "}
-                  <span className="font-semibold">{tarifLabel}</span> pour la
-                  prestation décrite ci-dessus, frais de service Renford inclus.
-                </p>
-              </div>
-            </section>
-
-            {/* Conditions générales */}
-            <section className="space-y-2">
-              <h4 className="font-semibold text-base">
-                5. Conditions générales
-              </h4>
-              <div className="rounded-xl border border-border bg-white p-4 space-y-2 text-muted-foreground">
-                <p>
-                  <span className="font-medium text-foreground">
-                    Responsabilité :
-                  </span>{" "}
-                  Le prestataire exerce sa mission sous sa propre responsabilité
-                  professionnelle et s'engage à disposer des assurances et
-                  certifications requises.
-                </p>
-                <p>
-                  <span className="font-medium text-foreground">
-                    Annulation :
-                  </span>{" "}
-                  Toute annulation par l'une des parties doit être signalée au
-                  moins 48h avant le début de la mission via la plateforme
-                  Renford.
-                </p>
-                <p>
-                  <span className="font-medium text-foreground">
-                    Confidentialité :
-                  </span>{" "}
-                  Les deux parties s'engagent à respecter la confidentialité des
-                  informations échangées dans le cadre de cette mission.
-                </p>
-                <p>
-                  <span className="font-medium text-foreground">Litige :</span>{" "}
-                  En cas de litige, les parties s'engagent à rechercher une
-                  solution amiable via la plateforme Renford avant toute action.
-                </p>
-              </div>
-            </section>
 
             <Separator />
 
-            {/* Signature area */}
+            {/* Signature pad */}
             <section className="space-y-3">
               <h4 className="font-semibold text-base">
-                Signature{" "}
-                {signerRole === "renford"
-                  ? "du prestataire"
-                  : "de l'établissement"}
+                Signature électronique
               </h4>
+
               <p className="text-muted-foreground text-sm">
-                Veuillez signer ci-dessous pour confirmer votre accord avec les
-                termes du contrat.
+                Dessinez votre signature dans le cadre ci-dessous.
               </p>
 
               <div className="relative rounded-xl border-2 border-dashed border-border bg-white">
                 <SignatureCanvas
-                  ref={sigCanvasRef}
-                  backgroundColor="#ffffff"
-                  penColor="#111111"
+                  ref={sigPadRef}
                   canvasProps={{
-                    className: "w-full h-[160px] rounded-xl",
+                    className: "w-full h-[200px] rounded-xl",
                   }}
                   onEnd={handleEnd}
                 />
-                {!hasSigned && (
-                  <p className="absolute inset-0 flex items-center justify-center pointer-events-none text-muted-foreground/50 text-sm">
-                    Signez ici
-                  </p>
+                {!isEmpty && (
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white border border-border text-muted-foreground hover:text-foreground transition-colors"
+                    title="Effacer la signature"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
                 )}
               </div>
 
-              <div className="flex items-center justify-between gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleClear}
+              {/* CGU acceptance */}
+              <div className="flex items-start gap-3 rounded-xl border border-border bg-secondary-background/30 p-4">
+                <Checkbox
+                  id="accept-cgu"
+                  checked={accepted}
+                  onCheckedChange={(v) => setAccepted(v === true)}
+                  className="mt-0.5"
+                />
+                <label
+                  htmlFor="accept-cgu"
+                  className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
                 >
-                  <Eraser className="mr-2 h-4 w-4" />
-                  Effacer
-                </Button>
+                  En cliquant sur &laquo;&nbsp;
+                  {signButtonText ?? "Accepter la mission"}&nbsp;&raquo;, vous
+                  confirmez accepter cette mission et être lié contractuellement
+                  selon les{" "}
+                  <a
+                    href="/conditions"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-secondary underline"
+                  >
+                    CGU en vigueur
+                  </a>
+                  .
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3">
                 <Button
                   variant="dark"
                   className="px-8"
-                  disabled={!hasSigned || isPending}
+                  disabled={isEmpty || !accepted || isPending}
                   onClick={handleSign}
                 >
-                  {isPending
-                    ? "Signature en cours..."
-                    : (signButtonText ?? "Signer le contrat")}
+                  {isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {signButtonText ?? "Accepter la mission"}
                 </Button>
               </div>
             </section>

@@ -22,9 +22,9 @@ export const respondToMissionProposalSchema = z.object({
 });
 
 export const signMissionDocumentSchema = z.object({
-  signatureDataUrl: z
-    .string({ required_error: 'La signature est requise' })
-    .regex(/^data:image\/(png|jpeg|jpg);base64,/, 'Format de signature invalide'),
+  documentType: z.enum(['contrat_prestation', 'attestation_mission'], {
+    required_error: 'Veuillez préciser le type de document',
+  }),
 });
 
 export const renfordMissionDocumentParamsSchema = z.object({

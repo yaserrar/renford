@@ -26,7 +26,7 @@ type SendMailInput = {
 export const mail = {
   sendMail: async ({ to, from, subject, text, html }: SendMailInput) => {
     await resend.emails.send({
-      from: from || env.EMAIL_HOST_USER,
+      from: from || `L'equipe Renford <${env.EMAIL_HOST_USER}>`,
       to,
       subject,
       text: text || ' ',
