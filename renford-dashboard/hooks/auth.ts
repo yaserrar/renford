@@ -26,6 +26,7 @@ export const useLogin = () => {
         .data as JwtToken;
     },
     onSuccess: async (data) => {
+      console.log("Login successful, received token:", data); // Debug log
       toast.success("Connecté avec succès");
       setSession(data);
     },
