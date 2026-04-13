@@ -11,20 +11,22 @@ type Props = {
 
 const AuthAdminProvider = ({ children }: Props) => {
   const { session } = useSession();
-  const [mounted, setMounted] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    if (session && mounted) {
-      router.push("/admin/accueil");
-    }
-  }, [session, mounted]);
-
-  useEffect(() => {
-    setMounted(true);
+    setHydrated(true);
   }, []);
 
-  if (!mounted) return <LoadingScreen className="h-screen" />;
+  useEffect(() => {
+    if (!hydrated || !session) return;
+    // Only bounce confirmed admins; non-admin sessions are ignored.
+    if (session.utilisateur.typeUtilisateur === "administrateur") {
+      router.push("/admin/accueil");
+    }
+  }, [hydrated, session, router]);
+
+  if (!hydrated) return <LoadingScreen className="h-screen" />;
   return <>{children}</>;
 };
 

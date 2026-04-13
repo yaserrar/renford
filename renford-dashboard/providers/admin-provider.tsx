@@ -23,17 +23,18 @@ export default function AdminProvider({ children }: Props) {
     if (!hydrated) return;
 
     if (!session) {
-      router.push("/admin/connexion");
+      router.push("/connexion");
       return;
     }
 
     if (!isLoading && isError) {
-      router.push("/admin/connexion");
+      router.push("/connexion");
     }
   }, [hydrated, session, isLoading, isError, router]);
 
   // Show loading screen until hydrated; then while the /admin/me request is in flight
-  if (!hydrated || (session && isLoading)) return <LoadingScreen className="h-screen" />;
+  if (!hydrated || (session && isLoading))
+    return <LoadingScreen className="h-screen" />;
 
   if (!session || !admin) return <LoadingScreen className="h-screen" />;
 

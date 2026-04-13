@@ -67,7 +67,7 @@ export const authenticateToken = (allowedTypes?: TypeUtilisateur[]) => {
 
       // Vérifier le statut du compte
       if (utilisateur.statut === 'suspendu') {
-        return res.status(403).json({
+        return res.status(401).json({
           message: 'Votre compte est suspendu. Veuillez contacter le support.',
         });
       }

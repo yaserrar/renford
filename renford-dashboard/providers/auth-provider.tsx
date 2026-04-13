@@ -11,20 +11,25 @@ type Props = {
 
 const AuthProvider = ({ children }: Props) => {
   const { session } = useSession();
-  const [mounted, setMounted] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    if (session && mounted) {
-      router.push("/dashboard/accueil");
-    }
-  }, [session, mounted]);
-
-  useEffect(() => {
-    setMounted(true);
+    setHydrated(true);
   }, []);
 
-  if (!mounted) return <LoadingScreen className="h-screen" />;
+  useEffect(() => {
+    if (!hydrated || !session) return;
+    // Redirect to the correct home based on the stored user type.
+    // Admin users visiting /connexion get sent to the admin dashboard.
+    if (session.utilisateur.typeUtilisateur === "administrateur") {
+      router.push("/admin/accueil");
+    } else {
+      router.push("/dashboard/accueil");
+    }
+  }, [hydrated, session, router]);
+
+  if (!hydrated) return <LoadingScreen className="h-screen" />;
   return <>{children}</>;
 };
 

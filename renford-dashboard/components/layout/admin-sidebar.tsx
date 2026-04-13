@@ -35,7 +35,7 @@ const AdminSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
 
   const handleLogout = () => {
     logout();
-    router.push("/admin/connexion");
+    router.push("/connexion");
   };
 
   return (
@@ -59,8 +59,7 @@ const AdminSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Déconnexion"
-              size="sm"
-              className="flex justify-start px-3 py-5 rounded-sm text-red-500 hover:text-red-600 hover:bg-red-50"
+              className="flex justify-start px-3 py-5 rounded-sm text-red-500 hover:text-red-600  active:text-red-600 active:bg-red-50 hover:bg-red-50"
               onClick={handleLogout}
             >
               <LogOut className="mr-1" strokeWidth={2} />

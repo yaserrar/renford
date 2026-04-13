@@ -48,6 +48,11 @@ export type UtilisateurSimple = {
 // Réponse du JWT token
 export type JwtToken = {
   token: string;
+  utilisateur: {
+    id: string;
+    typeUtilisateur: TypeUtilisateur;
+    statut: StatutCompte;
+  };
 };
 
 export type CurrentAdminUser = {

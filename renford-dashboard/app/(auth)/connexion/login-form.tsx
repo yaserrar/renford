@@ -27,8 +27,13 @@ const LoginForm = () => {
 
   const onSubmit: SubmitHandler<LoginSchema> = (data) => {
     login.mutate(data, {
-      onSuccess: () => {
-        router.push("/dashboard");
+      onSuccess: (result) => {
+        const type = result.utilisateur.typeUtilisateur;
+        if (type === "administrateur") {
+          router.push("/admin/accueil");
+        } else {
+          router.push("/dashboard");
+        }
       },
     });
   };
