@@ -1,6 +1,8 @@
 import { getErrorMessage } from "@/lib/utils";
 import type {
   AdminListItem,
+  AdminMissionDetail,
+  AdminMissionListItem,
   AdminStats,
   AdminUserDetail,
   AdminUserListItem,
@@ -179,6 +181,97 @@ export const useAdminStats = () => {
       return (await axios.get("/admin/stats")).data as AdminStats;
     },
     staleTime: 1000 * 60 * 2,
+  });
+};
+
+export const useAdminMissionsByStatus = () => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["admin-missions-by-status"],
+    queryFn: async () => {
+      return (await axios.get("/admin/stats/missions-by-status"))
+        .data as Record<string, number>;
+    },
+    staleTime: 1000 * 60 * 2,
+  });
+};
+
+export const useAdminUsersByStatus = () => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["admin-users-by-status"],
+    queryFn: async () => {
+      return (await axios.get("/admin/stats/users-by-status")).data as {
+        byType: Array<{ type: string; count: number }>;
+        byStatut: Array<{ statut: string; count: number }>;
+      };
+    },
+    staleTime: 1000 * 60 * 2,
+  });
+};
+
+export const useAdminDailyInscriptions = (from: string, to: string) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["admin-daily-inscriptions", from, to],
+    queryFn: async () => {
+      return (
+        await axios.get("/admin/stats/daily-inscriptions", {
+          params: { from, to },
+        })
+      ).data as { items: Array<{ date: string; count: number }> };
+    },
+    enabled: !!from && !!to,
+    staleTime: 1000 * 60 * 2,
+  });
+};
+
+export const useAdminDailyMissions = (from: string, to: string) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["admin-daily-missions", from, to],
+    queryFn: async () => {
+      return (
+        await axios.get("/admin/stats/daily-missions", {
+          params: { from, to },
+        })
+      ).data as { items: Array<{ date: string; count: number }> };
+    },
+    enabled: !!from && !!to,
+    staleTime: 1000 * 60 * 2,
+  });
+};
+
+// ─── Admin missions ──────────────────────────────────────────
+
+export const useAdminMissions = () => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["admin-missions"],
+    queryFn: async () => {
+      return (await axios.get("/admin/missions"))
+        .data as AdminMissionListItem[];
+    },
+    staleTime: 1000 * 60,
+  });
+};
+
+export const useAdminMissionDetail = (missionId: string) => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["admin-mission-detail", missionId],
+    queryFn: async () => {
+      return (await axios.get(`/admin/missions/${missionId}`))
+        .data as AdminMissionDetail;
+    },
+    enabled: !!missionId,
+    staleTime: 1000 * 60,
   });
 };
 

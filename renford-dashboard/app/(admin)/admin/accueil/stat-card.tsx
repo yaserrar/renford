@@ -22,7 +22,7 @@ export function StatCard({
               {description}
             </p>
           </div>
-          <div className="rounded-lg bg-muted p-2.5">{icon}</div>
+          <div className="rounded-full bg-secondary-background p-3">{icon}</div>
         </div>
       </CardContent>
     </Card>

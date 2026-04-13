@@ -35,14 +35,7 @@ export const columns: ColumnDef<ContactMessage>[] = [
     cell: ({ row }) => {
       const type = row.original.utilisateur.typeUtilisateur;
       return (
-        <Badge
-          variant="outline"
-          className={
-            type === "etablissement"
-              ? "border-blue-200 bg-blue-50 text-blue-700"
-              : "border-purple-200 bg-purple-50 text-purple-700"
-          }
-        >
+        <Badge variant={type === "etablissement" ? "default" : "secondary"}>
           {TYPE_UTILISATEUR_LABELS[type]}
         </Badge>
       );

@@ -27,11 +27,7 @@ export default function MessagesPage() {
           return <span className="text-xs text-muted-foreground">Traité</span>;
         }
         return (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSelectedMessage(message)}
-          >
+          <Button variant="default" onClick={() => setSelectedMessage(message)}>
             <CheckCircle className="size-4" />
             Traiter
           </Button>
@@ -54,7 +50,12 @@ export default function MessagesPage() {
     <main className="min-h-screen bg-secondary-background rounded-2xl m-1 px-4 md:px-8 py-6 md:py-8">
       <div className="mx-auto w-full space-y-5">
         <h1 className="text-2xl font-bold">Messages de contact</h1>
-        <DataTable columns={columns} data={data} isLoading={isLoading} />
+        <DataTable
+          columns={columns}
+          data={data}
+          isLoading={isLoading}
+          hidePadding
+        />
       </div>
 
       {selectedMessage && (

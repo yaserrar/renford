@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { NotificationItem } from "@/types/notification";
 import type { SourceNotification } from "@/types/notification";
+import { useSidebar } from "../ui/sidebar";
 
 const getSourceIcon = (source: SourceNotification) => {
   if (source === "missions") return Handshake;
@@ -37,6 +38,7 @@ const getSourceIcon = (source: SourceNotification) => {
 
 const AdminNotificationPopover = () => {
   const router = useRouter();
+  const { open: sidebarOpen } = useSidebar();
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [displayedItems, setDisplayedItems] = useState<NotificationItem[]>([]);
@@ -111,18 +113,33 @@ const AdminNotificationPopover = () => {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
-          className="flex w-full items-center justify-start rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none"
+          variant="ghost"
+          size={sidebarOpen ? "default" : "icon"}
+          className={cn(
+            "w-full justify-start rounded-sm px-4 relative",
+            !sidebarOpen && "justify-center",
+          )}
         >
-          <Bell className="mr-1 h-4 w-4" strokeWidth={2} />
-          Notifications
+          <Bell
+            className={cn("h-4 w-4 text-gray-500", !!sidebarOpen && "mr-1")}
+            strokeWidth={2}
+          />
+          {!!sidebarOpen && (
+            <p className="text-gray-500 font-normal text-base">Notifications</p>
+          )}
           {unreadCount > 0 && (
-            <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white">
+            <span
+              className={cn(
+                "flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white",
+                !sidebarOpen ? "absolute -right-1 -top-1" : "ml-auto",
+              )}
+            >
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
-        </button>
+        </Button>
       </PopoverTrigger>
 
       <PopoverContent align="start" className="w-[360px] p-0">

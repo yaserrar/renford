@@ -1,4 +1,5 @@
 import "@/app/globals.css";
+import AuthAdminProvider from "@/providers/auth-admin-provide";
 import TanstackQueryProvider from "@/providers/tanstack-query-provider";
 import { Metadata } from "next";
 import { Poppins } from "next/font/google";
@@ -23,9 +24,11 @@ export default function AdminAuthLayout({ children }: Props) {
     <html lang="fr" suppressHydrationWarning>
       <body className={poppins.className} suppressHydrationWarning>
         <Toaster closeButton richColors />
-        <TanstackQueryProvider>
-          <main className="bg-white">{children}</main>
-        </TanstackQueryProvider>
+        <AuthAdminProvider>
+          <TanstackQueryProvider>
+            <main className="bg-white">{children}</main>
+          </TanstackQueryProvider>
+        </AuthAdminProvider>
       </body>
     </html>
   );

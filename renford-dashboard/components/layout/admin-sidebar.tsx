@@ -1,9 +1,7 @@
 "use client";
 
-import { Home, Shield, Users, Mail, LogOut } from "lucide-react";
+import { Home, Shield, Users, Mail, Handshake, LogOut } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import { Logo } from "@/components/common/logo";
 import useSession from "@/stores/session-store";
 import {
@@ -11,67 +9,65 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
+import NavMain from "./nav-main";
 import AdminNotificationPopover from "@/components/common/admin-notification-popover";
+import { useRouter } from "next/navigation";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
 
 const ADMIN_LINKS = [
   { title: "Accueil", url: "/admin/accueil", icon: Home },
+  { title: "Missions", url: "/admin/missions", icon: Handshake },
   { title: "Administrateurs", url: "/admin/administrateurs", icon: Shield },
   { title: "Utilisateurs", url: "/admin/utilisateurs", icon: Users },
   { title: "Messages", url: "/admin/messages", icon: Mail },
 ];
 
 const AdminSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
-  const pathname = usePathname();
   const { logout } = useSession();
+  const { open, setOpen } = useSidebar();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/admin/connexion");
+  };
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader className="px-6 pt-6 pb-3">
-        <Link href="/admin/accueil" className="flex items-center gap-3">
-          <Logo />
-        </Link>
-        <p className="text-xs font-medium text-muted-foreground mt-1 px-1">
-          Panneau d&apos;administration
-        </p>
-        <div className="mt-3">
-          <AdminNotificationPopover />
-        </div>
-      </SidebarHeader>
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader className="px-6 pt-2" />
+      <SidebarContent className="px-1 pt-2 pb-4">
+        <button className="cursor-pointer ml-2" onClick={() => setOpen(!open)}>
+          <Logo onlyIcon={!open} size={open ? "lg" : "sm"} />
+        </button>
 
-      <SidebarContent className="px-3 pt-4">
-        <nav className="space-y-1">
-          {ADMIN_LINKS.map((link) => {
-            const isActive = pathname.startsWith(link.url);
-            return (
-              <Link
-                key={link.url}
-                href={link.url}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-                )}
-              >
-                <link.icon className="h-4 w-4" />
-                {link.title}
-              </Link>
-            );
-          })}
-        </nav>
+        <NavMain items={ADMIN_LINKS} />
       </SidebarContent>
 
       <SidebarFooter className="px-1 pt-2 pb-4">
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
-          onClick={logout}
-        >
-          <LogOut className="h-4 w-4" />
-          Déconnexion
-        </Button>
+        <div className="border-t border-border pt-4">
+          <div className="px-1">
+            <AdminNotificationPopover />
+          </div>
+        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Déconnexion"
+              size="sm"
+              className="flex justify-start px-3 py-5 rounded-sm text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-1" strokeWidth={2} />
+              <p className="font-normal text-base">Déconnexion</p>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );

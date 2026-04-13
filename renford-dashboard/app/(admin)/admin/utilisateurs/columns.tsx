@@ -54,13 +54,9 @@ export const columns: ColumnDef<AdminUserListItem>[] = [
     ),
     cell: ({ row: { original } }) => (
       <Badge
-        variant="outline"
-        className={cn(
-          "px-3 py-1",
-          original.typeUtilisateur === "etablissement"
-            ? "bg-blue-50 text-blue-700 border-blue-200"
-            : "bg-purple-50 text-purple-700 border-purple-200",
-        )}
+        variant={
+          original.typeUtilisateur === "etablissement" ? "default" : "secondary"
+        }
       >
         {TYPE_UTILISATEUR_LABELS[original.typeUtilisateur]}
       </Badge>

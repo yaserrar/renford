@@ -1,4 +1,15 @@
 import type { StatutCompte, TypeUtilisateur } from "./utilisateur";
+import type {
+  StatutMission,
+  DisciplineMission,
+  ModeMission,
+  MethodeTarificationMission,
+  PlageHoraireMission,
+  TypeMissionSpecialite,
+  NiveauExperienceMission,
+  MaterielMission,
+} from "./mission";
+import type { StatutMissionRenford } from "./mission-renford";
 
 // ─── Admin list item ─────────────────────────────────────────
 
@@ -107,10 +118,6 @@ export type AdminStats = {
     tauxAcceptation: number;
   };
   messagesContactNonTraites: number;
-  evolution: {
-    utilisateurs: Array<{ mois: string; total: number }>;
-    missions: Array<{ mois: string; total: number }>;
-  };
 };
 
 // ─── Contact message (for admin) ────────────────────────────
@@ -130,4 +137,106 @@ export type ContactMessage = {
     email: string;
     typeUtilisateur: TypeUtilisateur;
   };
+};
+
+// ─── Admin mission list item ────────────────────────────────
+
+export type AdminMissionListItem = {
+  id: string;
+  statut: StatutMission;
+  modeMission: ModeMission;
+  discipline: DisciplineMission;
+  specialitePrincipale: TypeMissionSpecialite;
+  dateDebut: string;
+  dateFin: string | null;
+  methodeTarification: MethodeTarificationMission;
+  tarif: number | string | null;
+  montantHT: number | string | null;
+  montantTTC: number | string | null;
+  dateCreation: string;
+  etablissement: {
+    id: string;
+    nom: string;
+    ville: string;
+  };
+  _count: {
+    missionsRenford: number;
+  };
+};
+
+// ─── Admin mission detail ───────────────────────────────────
+
+export type AdminMissionDetail = {
+  id: string;
+  statut: StatutMission;
+  modeMission: ModeMission;
+  discipline: DisciplineMission;
+  specialitePrincipale: TypeMissionSpecialite;
+  specialitesSecondaires: TypeMissionSpecialite[];
+  niveauExperienceRequis: NiveauExperienceMission | null;
+  assuranceObligatoire: boolean;
+  materielsRequis: MaterielMission[];
+  description: string | null;
+  dateDebut: string;
+  dateFin: string | null;
+  methodeTarification: MethodeTarificationMission;
+  tarif: number | string | null;
+  montantHT: number | string | null;
+  montantFraisService: number | string | null;
+  montantTTC: number | string | null;
+  pourcentageVariationTarif: number | string | null;
+  dateCreation: string;
+  dateMiseAJour: string;
+  etablissement: {
+    id: string;
+    nom: string;
+    adresse: string;
+    codePostal: string;
+    ville: string;
+    typeEtablissement: string;
+    emailPrincipal: string | null;
+    telephonePrincipal: string | null;
+    profilEtablissement: {
+      id: string;
+      avatarChemin: string | null;
+      raisonSociale: string | null;
+    };
+  };
+  PlageHoraireMission: PlageHoraireMission[];
+  missionsRenford: AdminMissionRenford[];
+};
+
+export type AdminMissionRenford = {
+  id: string;
+  missionId: string;
+  profilRenfordId: string;
+  statut: StatutMissionRenford;
+  ordreShortlist: number | null;
+  dateProposition: string;
+  dateReponse: string | null;
+  dateContratSigne: string | null;
+  lienVisio: string | null;
+  dateVisio: string | null;
+  visioEffectuee: boolean;
+  tarifNegocie: number | string | null;
+  dateCreation: string;
+  dateMiseAJour: string;
+  profilRenford: {
+    id: string;
+    avatarChemin: string | null;
+    titreProfil: string | null;
+    noteMoyenne: number | null;
+    utilisateur: {
+      id: string;
+      nom: string;
+      prenom: string;
+      email: string;
+      telephone: string | null;
+    };
+  };
+  evaluation: {
+    id: string;
+    note: number;
+    commentaire: string | null;
+  } | null;
 };

@@ -67,6 +67,7 @@ interface DataTableProps<TData, TValue> {
   enableFilters?: boolean;
   showGlobalFilter?: boolean;
   toolbarLeft?: ReactNode;
+  hidePadding?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -82,6 +83,7 @@ export function DataTable<TData, TValue>({
   enableFilters = true,
   showGlobalFilter = true,
   toolbarLeft,
+  hidePadding = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -269,7 +271,12 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Table */}
-      <div className="rounded-t-3xl border bg-secondary-background  p-4 md:p-6 overflow-hidden flex flex-col">
+      <div
+        className={cn(
+          "rounded-t-3xl border bg-secondary-background  p-4 md:p-6 overflow-hidden flex flex-col",
+          hidePadding && "p-0 md:p-0",
+        )}
+      >
         <div className="flex-1 overflow-hidden rounded-t-3xl border bg-white">
           <Table className={classNames?.table}>
             <TableHeader>

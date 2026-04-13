@@ -22,7 +22,12 @@ export default function UtilisateursPage() {
     <main className="min-h-screen bg-secondary-background rounded-2xl m-1 px-4 md:px-8 py-6 md:py-8">
       <div className="mx-auto w-full space-y-5">
         <h1 className="text-2xl font-bold">Utilisateurs</h1>
-        <DataTable columns={columns} data={data} isLoading={isLoading} />
+        <DataTable
+          columns={columns}
+          data={data}
+          isLoading={isLoading}
+          hidePadding
+        />
       </div>
     </main>
   );
