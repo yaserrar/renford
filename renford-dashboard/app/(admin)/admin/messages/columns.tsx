@@ -12,6 +12,7 @@ import { ColumnDef } from "@tanstack/react-table";
 export const columns: ColumnDef<ContactMessage>[] = [
   {
     accessorKey: "utilisateur",
+    id: "Utilisateur",
     header: ({ column }) => (
       <ColumnHeader column={column} header="Utilisateur" />
     ),
@@ -30,6 +31,7 @@ export const columns: ColumnDef<ContactMessage>[] = [
   },
   {
     accessorKey: "typeUtilisateur",
+    id: "Type",
     header: ({ column }) => <ColumnHeader column={column} header="Type" />,
     accessorFn: (row) => row.utilisateur.typeUtilisateur,
     cell: ({ row }) => {
@@ -60,6 +62,7 @@ export const columns: ColumnDef<ContactMessage>[] = [
   },
   {
     accessorKey: "dateCreation",
+    id: "Date de création",
     header: ({ column }) => <ColumnHeader column={column} header="Date" />,
     cell: ({ row }) => {
       const date = new Date(row.original.dateCreation);
@@ -74,6 +77,7 @@ export const columns: ColumnDef<ContactMessage>[] = [
   },
   {
     accessorKey: "traite",
+    id: "Statut",
     header: ({ column }) => <ColumnHeader column={column} header="Statut" />,
     cell: ({ row }) => {
       const traite = row.original.traite;

@@ -1,0 +1,680 @@
+﻿Mail de bienvenu RENFORDS
+DE : L'équipe Renford
+OBJET : Bienvenue dans la communauté Renford !
+Bonjour <Prénom>﻿﻿,
+Félicitations et bienvenue chez Renford ! Tu fais désormais partie d'une communauté dynamique qui révolutionne la façon de se connecter dans le sport.
+Voici trois étapes pour démarrer ton expérience :
+**1. Renseigne tes disponibilités** pour recevoir tes premières demandes de missions ;
+**2. Personnalise ton profil** pour mettre en avant tes compétences uniques ;
+**3. Rejoins une communauté soudée** en suivant notre compte Instagram **renford_officiel**.
+Prêt à de nouvelles aventures entrepreneuriales avec **Renford** ? Connecte-toi **<a href="https://renford.fr">ici</a>**.
+À très bientôt sur la plateforme,
+_L'équipe Renford_
+
+
+Mail de bienvenu ETABLISSEMENTS
+DE : L'équipe Renford
+OBJET : Bienvenue sur Renford - Commencez votre parcours dès maintenant !
+Bonjour <Prénom>﻿﻿,
+Nous sommes ravis de vous accueillir au sein de Renford, votre nouvel allié dans la recherche de talents exceptionnels pour des missions à la demande.
+Pour tirer le meilleur parti de notre plateforme :
+**1. Mettez à jour votre profil** - Assurez-vous que vos informations sont à jour pour attirer les meilleurs Renfords ;
+**2. Planifiez votre prochaine mission** - Envoyez-nous votre première demande de mission ;
+**3. Suivez renford_officiel sur Instagram** pour vous tenir au courant des dernières actualités sportives.
+Votre réussite est notre priorité. Pour toute question ou besoin d'assistance, n'hésitez pas à contacter notre support dédié.
+Prêt à débuter ? Connectez-vous et lancez votre première mission **<a href="https://renford.fr">ici</a>**.
+Au plaisir de contribuer au succès de ﻿﻿<Raison sociale>
+À très bientôt sur la plateforme,
+_L'équipe Renford_
+
+
+Rappel infos à compléter RENFORDS
+DE : L'équipe Renford
+OBJET : Finalise ton profil pour recevoir des missions !
+Bonjour <Prénom>,
+Merci de t’être inscrit(e) sur **Renford** ! 🎉
+Nous avons remarqué que certaines informations de ton profil ne sont pas encore complètes.
+👉 **Pourquoi compléter ton profil ?**
+Plus tu renseignes ton expérience, tes compétences et tes préférences, plus tu seras **mis(e) en relation avec des missions** qui te correspondent parfaitement. Cela t’aide non seulement à trouver des opportunités plus rapidement, mais aussi à te **démarquer auprès des établissements sportifs** qui cherchent des passionnés comme toi !
+Ça ne prend que quelques minutes pour faire toute la différence dans ta recherche de missions.
+**Clique ici pour compléter ton profil : **<a href="https://renford.fr">renford.fr</a>** .**
+Si tu as des questions ou si tu as besoin d’aide, notre équipe est là pour t’accompagner à chaque étape.
+À très vite !
+_L'équipe Renford_
+
+
+Remerciement demande mission FLEX
+DE : L'équipe Renford
+OBJET : Confirmation de votre demande de mission FLEX
+Bonjour ﻿﻿<Prénom Etablissement> ﻿﻿,
+Nous vous remercions pour votre demande de mission et pour la confiance que vous accordez à **Renford**.
+Récapitulatif de votre demande :
+**Poste(s) demandé(s)** : ﻿﻿<poste demandé>
+**Plage de la mission** : <plage de la mission>
+🕒 Votre demande est en cours de traitement et nous faisons le nécessaire pour vous proposer le profil le plus adapté. Vous serez informé très prochainement des avancées concernant la sélection des Renfords.
+💬 **Une question ?** Notre équipe est à votre disposition pour vous accompagner et répondre à vos interrogations.
+Merci encore pour votre confiance, et à très bientôt !
+L'équipe Renford
+
+
+Remerciement demande mission COACH
+DE : L'équipe Renford
+OBJET : Confirmation de votre demande de mission COACH
+Bonjour ﻿﻿<Prénom Etablissement> ﻿﻿,
+Nous vous remercions pour votre demande de mission et pour la confiance que vous accordez à **Renford**.
+Récapitulatif de votre demande :
+**- Poste(s) demandé(s)** : ﻿﻿<Poste demandé>
+**- Plage de la mission**: ﻿﻿<Plage de la mission>
+**- Tarification**: ﻿﻿<Tarif souhaité>
+**- Coût du service Renford COACH** (prix unique) : 375 € HT. _(Si vous n'avez pas encore réglé les frais de mise en relation, vous retrouverez le lien <a href="https://buy.stripe.com/aEUcN0fLogapbkI4gm">ici</a>)_.
+💡 Ce que cela inclut : La recherche du profil idéal et qualifié, la vérification des informations administratives ainsi que la mise en place d’un contrat de prestation de services.
+🚀 Prochaine étape : Nous vous recontacterons dans les plus brefs délais avec une première sélection de profils correspondant à vos critères.
+💬 Des questions ? Notre équipe est disponible pour vous accompagner : vous pouvez nous répondre directement à cet e-mail ou nous contacter via contact@renford.fr.
+Merci encore pour votre confiance, on revient vers vous très vite !
+L'équipe Renford
+
+
+
+
+Renford trouvé_FLEX
+[IMPLEMENTE DANS LE CODE - email-templates.ts]
+OBJET :  ✅  Profil trouvé - Votre mission Renford FLEX
+Bonjour <Prenom>, 
+Bonne nouvelle : nous avons trouvé le bon profil pour votre mission Renford FLEX !
+ 👉  <Prenom Renford> a accepté d’intervenir. Diplômé(e) (Licence STAPS, BEESAPT, BEES 1), avec une longue expérience dans le yoga et aligné avec vos attentes, il répond parfaitement à la demande.
+ 📲 
+ Consultez les détails de la mission et le profil du coach
+Rendez-vous directement sur votre espace via ce lien sécurisé :
+ 👉  <Lien vers compte>.
+Vous y trouverez l’ensemble des informations utiles dans l’onglet “Mes Missions”.
+ 💳 
+ Prochaine étape : validation de la mission
+Pour confirmer et permettre la génération automatique du contrat et de la facture :
+* soit vous validez directement la mission depuis votre espace,
+* soit vous répondez simplement à ce mail,
+* soit vous procédez au paiement via ce lien sécurisé :  👉  <Lien de paiement>
+(Le paiement déclenchera l’envoi de la facture + le contrat à signer électroniquement)
+Note : Le Renford ne sera rémunéré qu’à la fin de la mission, après votre validation via un court questionnaire de satisfaction.
+Nous restons bien sûr disponibles si vous avez la moindre question.
+Sportivement,
+L’équipe Renford
+
+
+Renford trouvé COACH
+[IMPLEMENTE DANS LE CODE - email-templates.ts]
+OBJET :  ✅  Renford - Votre sélection personnalisée pour votre besoin
+Bonjour <Prénom Etablissement>,
+ 🎉 
+ Suite à votre besoin en <Type de mission>, nous avons le plaisir de vous proposer <Nombre de profil proposés> profils motivés et disponibles :
+   * <Prénom Renford 1> — Coach expérimentée, formée à l’Institut des Métiers de la Forme, alliant exigence, bienveillance et grande rigueur dans l’exécution des mouvements.
+   * <Prénom Renford 2> — Instructrice certifiée en Pilates Reformer et Matwork, douce et appliquée, elle apporte un accompagnement précis et attentif à la posture.
+   * <Prénom Renford 3> — Coach récemment certifiée en Pilates Reformer, dynamique et passionnée, elle transmet une approche moderne et énergique de la discipline.
+ 👉 
+ Vous pouvez consulter leurs profils complets directement depuis votre <espace Renford>.
+ 👉 
+ Afin d’accéder à leurs coordonnées et programmer une visio de présentation, nous vous invitons à procéder au règlement via le lien ci-dessous :
+ 🔗  <Lien Paiement <Procéder au paiement>>
+Une fois le paiement confirmé, nous organiserons la rencontre avec les coachs sélectionnés et pourrons affiner ensemble le cadrage de la mission.
+Petite question pratique : le centre dispose-t-il de matériel (soft ball, élastiques, haltères, etc.) ? Cette information est souvent utile aux intervenants pour adapter leurs séances.
+Sportivement,
+L'équipe Renford
+
+
+
+
+
+
+Compte suppr RENFORDS
+À bientôt, peut-être ? 💫
+Bonjour,
+Nous avons bien pris en compte la suppression de votre compte, et vos données ont été supprimées conformément à notre politique de confidentialité.
+On voulait simplement vous remercier d’avoir fait un bout de chemin avec nous.
+Chaque utilisateur compte pour nous, et votre présence a fait partie de notre aventure.
+Si jamais l’envie vous reprend, vous serez toujours le/la bienvenu(e) chez nous.
+Et si vous souhaitez partager ce qui vous a poussé à partir, nous serions ravis d’écouter votre retour — cela nous aide à nous améliorer.
+🌿 Prenez soin de vous,
+
+L’équipe Renford
+
+
+
+
+
+New Mission RENFORD
+[IMPLEMENTE DANS LE CODE - email-templates.ts + missions-matching.ts]
+💌 Objet : Nouvelle mission disponible – <Type de mission>
+Bonjour <Prénom>,
+Bonne nouvelle 🎉
+Une mission qui correspond parfaitement à ton profil vient d’être publiée sur Renford.
+Voici les détails :
+   * Mission : <Type de mission>
+   * Lieu : <Ville / arrondissement>
+   * Public : <Type de public>
+   * Date : <Plage horaire>
+   * Heure : <Heure>
+   * Rémunération : <Tarification> <Note tarif si paiement fin du mois>
+Si cette mission t’intéresse et que tu es disponible :
+➡️ Connecte-toi à ton espace sur renford.fr pour consulter la demande de mission ;
+➡️ Nous t’avons également envoyé un SMS : tu peux y répondre directement par “Oui” ou “Non” ;
+Besoin de plus d’infos ? Tu peux nous joindre au 06 64 39 25 28 (numéro non surtaxé).
+⏳ Une réponse rapide serait idéale afin que nous puissions confirmer la mission — premier à répondre, premier servi.
+On a hâte de te voir briller sur cette nouvelle opportunité !
+Bien à toi,
+Seren de chez Renford
+ 🎯 La plateforme dédiée aux freelances du sport et aux établissements sportifs
+
+
+
+
+
+Confirmation Mission RENFORD_coach
+[IMPLEMENTE DANS LE CODE - email-templates.ts + missions-matching.ts]
+Objet : Confirmation de ta prochaine mission avec Renford Coach ✅
+
+Hello <Prénom Renford>, 
+Merci encore pour nos échanges ! Bonne nouvelle, l'établissement a sélectionné ton profil pour la mission <Type de mission>.
+**Pour valider définitivement ta participation, il te suffit de cliquer <a href="LIEN TALLY PERSONNALISEE﻿﻿">ici.</a>**
+Une fois la mission acceptée, **tes coordonnées seront communiquées à l'établissement afin que vous puissiez vous organiser** ensemble.
+📞 Un imprévu, une question ? Tu peux me joindre directement au 06 64 39 26 28.
+Tu peux aussi retrouver tous les détails dans ton espace personnel sur Renford.
+Merci pour ta confiance 🙏
+Hâte de te voir intervenir sur cette mission avec ton professionnalisme et ta bonne humeur 💪
+Bien à toi,
+_Seren de chez Renford_
+
+
+
+
+
+
+contrat a signer_etablissement coach & flex
+
+
+Objet : Contrat de prestation à signer  🖋️ 
+Bonjour <Prénom Etablissement>,
+Merci encore pour votre confiance !
+Afin de sécuriser la mise en relation avec <Prénom Renford>, vous trouverez ci-joint le contrat de prestation à signer électroniquement.
+Une fois signé, la mission sera confirmée et tous les éléments associés (coordonnées, facture, suivi, etc.) seront disponibles depuis votre espace Renford.
+ 👉 
+ Il vous suffit de cliquer sur le lien de signature ci-dessous pour finaliser la procédure :
+ 🔗 
+ <Lien de signature ELECTRONIQUE CONTRAT>
+Merci encore et à très vite,
+L'Équipe Renford
+
+
+
+
+
+
+coach_etablissement_contrat signé
+Objet : Contrats signés – tout est prêt pour démarrer avec votre Renford !
+Bonjour <Prénom Etablissement>,
+Merci beaucoup d’avoir signé le contrat de prestation. Nous avons également reçu votre règlement : tout est désormais en ordre pour votre mission à venir !  🙌 
+ 📎 
+ Vous trouverez en pièce jointe :
+   * Le contrat et annexes signés (pour vos archives)
+   * La facture associée à la mission
+Ces documents restent accessibles à tout moment depuis votre <espace> sur renford.fr.
+ 💡 
+ Pour bien démarrer l’année avec vos Renfords, nous vous joignons également un modèle de contrat interne à télécharger ici.
+Celui-ci est fourni à titre d’exemple et n’a aucune valeur contractuelle, il vous permet simplement de formaliser votre relation directement avec vos intervenants.
+ 🔗 
+ Enfin, les coordonnées de <Prénom Renford> sont disponibles dans votre <espace utilisateur> pour faciliter votre organisation.
+Merci encore pour votre confiance, et très belle collaboration à venir !
+Bien cordialement,
+Seren – Renford
+
+
+
+
+flex_etablissement_contrat signé et paiement OK
+
+
+Objet : Contrats signés – tout est prêt pour démarrer avec votre Renford !
+Bonjour <Prénom Etablissement>,
+Bonne nouvelle : toutes les parties ont bien signé le contrat !  🎉 
+Vous le retrouverez en pièce jointe à ce mail, ainsi que directement dans votre espace Renford une fois la mission terminée (avec l’ensemble des documents liés).
+ 👉 
+ En attendant, vous pouvez déjà consulter les coordonnées de <Prénom Renford>, votre Coach. Même si nous avons tout organisé, n’hésitez pas à la contacter directement pour toute précision de dernière minute.
+ 💳 
+ Voici également les liens utiles :
+   * Lien de paiement sécurisé : <Lien de paiement>,
+   * Facture associée (en PJ). <METTRE LIEN FACTURE EN PJ>
+Le règlement peut être effectué dès maintenant, ou bien après validation de la mission.
+Nous restons bien sûr disponibles avec plaisir pour toute question. Merci encore pour votre confiance, et nous sommes ravis de vous accompagner avec Renford sur cette mission !
+Très belle journée,
+Sportivement,
+L'Équipe Renford
+
+
+Seren – Renford
+
+
+
+
+
+
+contrat a signer renfords_coach & flex
+Objet : Contrat de mission à signer  🖋️ 
+Bonjour <Prénom Renford>,
+Merci encore pour ta disponibilité et ta réactivité !
+Afin de sécuriser la mission avec <Raison sociale>, tu trouveras ci-joint le contrat de prestation à signer électroniquement.
+Une fois le document signé, la mission sera officiellement confirmée et les informations utiles (coordonnées, suivi, etc.) seront accessibles depuis ton espace Renford.
+ 👉 
+ Il te suffit de cliquer sur le lien de signature ci-dessous pour finaliser la procédure :
+ 🔗  <Lien de signature CONTRAT ELECTRONIQUE>
+Merci encore et à très vite,
+L’équipe Renford
+
+
+
+
+
+
+Msg Pas retenu Renfords COACH
+💌 Objet : Retour sur votre candidature à la mission <Type de mission> – Renford Coach
+Bonjour <Prénom>,
+Merci encore pour votre réactivité et votre intérêt pour la mission <Type de mission> proposée à <Ville Raison Sociale>.
+Après échanges avec l’établissement, votre profil n’a malheureusement pas été retenu cette fois-ci.
+Nous tenons toutefois à vous remercier sincèrement pour votre implication et votre professionnalisme 🙏
+Votre sérieux et votre motivation sont très appréciés par l’équipe Renford 💪
+De nouvelles opportunités arrivent régulièrement sur la plateforme :
+nous ne manquerons pas de revenir vers vous dès qu’une mission correspondant à votre profil se présentera.
+Encore merci pour votre confiance et à très vite sur Renford !
+Bien sportivement,
+L’équipe Renford
+
+
+
+
+Confimation & signature RENFORDS_COACH
+Bonjour <Prénom>,
+Merci encore pour ta disponibilité et ta réactivité !
+Afin de sécuriser la mission avec <Raison Sociale>, tu trouveras ci-joint le contrat de prestation à signer électroniquement.
+Une fois le document signé, la mission sera officiellement confirmée et les informations utiles (coordonnées, suivi, etc.) seront accessibles depuis ton espace Renford.
+ 👉 
+ Il te suffit de cliquer sur le lien de signature ci-dessous pour finaliser la procédure :
+ 🔗  <Lien de signature>
+Merci encore et à très vite,
+L’équipe Renford
+
+
+
+
+
+
+Confirmation Mission RENFORD_COACH
+objet :  🚀  Ta mission chez <Raison Sociale> est confirmée !
+
+
+Bonjour <Prénom Renford>,
+Super nouvelle : ta mission avec <Raison Sociale> est officiellement validée !  🎉 
+ 📄 
+ Tu trouveras en pièce jointe le contrat signé pour cette mission.
+ 👉  Les coordonnées de la salle et du référent sont ci-dessous pour préparer ton arrivée :
+   * Salle : <Raison Sociale>
+   * Adresse : <Adresse Raison Sociale>
+   * Référente : <Prénom Référent>
+   * Email : <mail Raison sociale>
+   * Téléphone : <Tel Raison Sociale>
+ 💬 
+ Pense à prendre rapidement contact avec <Prénom Référent> pour organiser les détails pratiques (accueil, accès, déroulé des séances).
+Merci encore pour ton professionnalisme ! On est ravis de te voir représenter Renford et d’apporter ton énergie à cette mission.  💪 
+Bonne préparation et belle mission !
+À très vite,
+Seren de chez Renford
+
+
+
+
+Fin de mission Renford COACH
+OBJET : Merci !
+Bonjour <Prénom Renford>﻿﻿,
+**Merci encore pour ta motivation et pour ta disponibilité dans le cadre de la mission Renford Coach avec <Raison Sociale>﻿﻿ !**
+✅ La mise en relation est désormais finalisée. Tu pourras retrouver dans ton <a href="https://www.renford.fr/connexion">espace Renford</a> le contrat de mise en relation. Dans le cadre de cette mission longue durée, toute la partie administrative (contrat, facturation, organisation) se fera désormais directement avec l’établissement.
+Et si tu as 2 minutes, on serait ravis d’avoir ton retour :
+**👉Partage ton ressenti via ce court formulaire** : <a href="https://tally.so/r/mBRMGN">Formulaire Mission</a>
+**👉Laisse-nous un avis sur notre fiche Google**
+Merci encore pour ton sérieux et ton implication et très belle collaboration à venir avec <Raison Sociale>﻿﻿ ! 
+À très bientôt pour de nouvelles missions,
+_L’équipe Renford_
+
+
+Fin de mission Rd FLEX
+
+
+OBJET : Merci ! 
+Bonjour <Prénom Renford> ﻿﻿,
+**Un grand merci pour ton implication et ton professionnalisme lors de ta mission FLEX avec ﻿﻿<Raison Sociale> 🙌**
+Tu peux retrouver ta facture et ton attestation de mission directement dans ton <a href="https://www.renford.fr/connexion">espace Renford</a>.
+💸 Le virement sera effectué sur ton compte dans les prochaines heures (jour ouvré). N’hésite pas à nous prévenir si tu ne vois rien apparaître d’ici là.
+💬 On aimerait beaucoup avoir ton retour :
+**👉Partage ton ressenti via ce court formulaire** : <a href="https://tally.so/r/mBRMGN">Formulaire Mission</a>
+👉 **Laisse-nous un avis sur notre Fiche Google**
+Ton avis nous aide à faire évoluer Renford et à garantir la meilleure expérience possible pour tous.
+Merci encore pour ta confiance et ta bonne énergie !
+À très bientôt pour de nouvelles missions,
+_L’équipe Renford_
+
+
+fin de mission Etablissement coach
+OBJET : Contrats signés – tout est prêt pour démarrer avec votre Renford !
+Bonjour <Prénom Etablissement>,
+Merci beaucoup d’avoir signé le contrat de prestation. Nous avons également reçu votre règlement : tout est désormais en ordre pour votre mission à venir !  🙌 
+ 📎 
+ Vous trouverez en pièce jointe :
+   * Le contrat et annexes signés (pour vos archives)
+   * La facture associée à la mission
+Ces documents restent accessibles à tout moment depuis votre <espace> sur renford.fr.
+ 💡 
+ Pour bien démarrer l’année avec vos Renfords, nous vous joignons également un modèle de contrat interne à télécharger ici.
+Celui-ci est fourni à titre d’exemple et n’a aucune valeur contractuelle, il vous permet simplement de formaliser votre relation directement avec vos intervenants.
+ 🔗 
+ Enfin, les coordonnées de <Prénom Renford> sont disponibles dans votre <espace utilisateur> pour faciliter votre organisation.
+Merci encore pour votre confiance, et très belle collaboration à venir !
+Bien cordialement,
+Seren – Renford
+
+
+
+
+fin de mission etablissement flex
+Bonjour <Prénom Etablissement>﻿﻿,
+**La mission Renford FLEX avec <Prénom Renford>﻿﻿ est maintenant terminée ✅ 
+** Vous trouverez en pièce jointe la **facture** liée à cette intervention. Elle est également disponible sur votre <a href="https://www.renford.fr/connexion">espace Renford</a>, à tout moment.
+📝 Vous pouvez également **noter la mission et le coach ﻿﻿<Prénom Renford> directement depuis votre <espace>. **Votre retour nous est précieux pour continuer à garantir la qualité des missions !
+**Besoin d’un nouveau coach ?**
+👉 Faites votre demande en 2 minutes ici :
+💼 <a href="https://www.renford.fr/connexion">Envoyer ma prochaine demande</a>
+On reste bien entendu disponibles si besoin, et on espère vous retrouver très vite sur Renford !
+Bien à vous,
+_L'équipe Renford_
+
+
+Rappel Mission Etablissement J-1 FLEX
+OBJET : C'est demain ! - Renford FLEX ✨
+Bonjour <Prénom Etablissement>﻿﻿,
+Petit rappel amical 🤗. **Votre mission Renford FLEX avec <Prénom Renford>﻿﻿ a lieu demain !**
+Merci de vérifier que tout est en place pour accueillir votre Renford dans les meilleures conditions.
+Pour rappel, les coordonnées de ﻿﻿ sont disponibles à tout moment depuis votre **<a href="https://www.renford.fr/connexion">espace membre</a>**.
+Si vous avez la moindre question de dernière minute, notre équipe reste joignable par mail ou sur notre ligne dédiée : 06 25 92 27 70.
+Un grand merci pour votre confiance, et très **belle collaboration à venir !** 🌟
+_L'équipe Renford_
+
+
+Rappel Mission Renfords J-1 flex
+OBJET : Ta mission Renford FLEX commence demain ✨
+Bonjour <Prénom Renford>﻿﻿,
+Petit rappel amical 🤗 **Ta mission Renford FLEX chez <Raison Sociale>﻿﻿ a lieu demain !**
+Pense à vérifier que tout est prêt de ton côté pour que la séance se déroule dans les meilleures conditions.
+Les coordonnées de l'établissement sont disponibles à tout moment depuis ton **<a href="https://www.renford.fr/connexion">espace Renford</a>**.
+Si tu as la moindre question ou un imprévu de dernière minute, notre équipe reste joignable par mail ou au 06 25 92 27 70.
+**Merci encore pour ton professionnalisme et ta fiabilité** 💪
+On te souhaite une très **belle mission demain** !
+À bientôt,
+_L’équipe Renford_
+
+
+
+
+Rappel mission Etablissement J-1 Coach
+OBJET : C'est demain ! - Renford COACH ✨
+
+
+Bonjour <Prenom Etablissement> ﻿﻿,
+Petit rappel amical 🤗. **Votre mission Renford COACH avec ﻿﻿<Prénom Renford> a lieu demain !**
+Merci de vérifier que tout est en place pour accueillir votre Renford dans les meilleures conditions.
+Pour rappel, les coordonnées de ﻿﻿ sont disponibles à tout moment depuis votre **<a href="https://www.renford.fr/connexion">espace membre</a>**.
+Si vous avez la moindre question de dernière minute, notre équipe reste joignable par mail ou sur notre ligne dédiée : 06 25 92 27 70.
+Un grand merci pour votre confiance, et très **belle collaboration à venir !** 🌟
+_L'équipe Renford_
+
+
+Rappel mission Renfords J-1 Coach
+OBJET : Ta mission Renford COACH commence demain ✨
+
+
+Bonjour <Prénom Renford>﻿﻿,
+Petit rappel amical 🤗 **Ta mission Renford FLEX chez <Raison Sociale>﻿﻿ a lieu demain !**
+Pense à vérifier que tout est prêt de ton côté pour que la séance se déroule dans les meilleures conditions.
+Les coordonnées de l'établissement sont disponibles à tout moment depuis ton **<a href="https://www.renford.fr/connexion">espace Renford</a>**.
+Si tu as la moindre question ou un imprévu de dernière minute, notre équipe reste joignable par mail ou au 06 25 92 27 70.
+**Merci encore pour ton professionnalisme et ta fiabilité** 💪
+On te souhaite une très **belle mission demain** !
+À bientôt,
+_L’équipe Renford_
+
+
+Rappel mission -72h Renford_Coach&Flex
+
+
+Objet : 🕦 Rappel – Mission dans moins de 72h
+Bonjour <Prénom Renford>,
+Petit rappel amical : tu interviens dans moins de 72h pour la mission <Type de mission> chez <Raison sociale> !
+📍 Lieu : <Adresse Mission>
+📆 Date : <Plage horaire mission>
+🕒 Heure : <Créneaux horaires>
+Tout est déjà confirmé, c’est juste pour ne pas l’oublier 😉 Tu peux également retrouver toutes les informations liées à la mission via ton <espace renford>. 
+Bonne séance à toi !
+L’équipe Renford
+
+
+
+
+Rappel mission -72h Etablissement_flex
+Objet : Rappel – Votre Renford arrive dans moins de 72h
+Bonjour <Prénon Etablissement> ,
+Petit rappel : une prestation Renford FLEX est prévue dans 72h avec <Prénom Renford>.
+📆 Date : <Plage horaire>
+🕒 Heure : <Date de début ou Créneau>
+📍 Lieu : <Adresse Mission>
+Tout est déjà validé de votre côté, il s’agit seulement d’un rappel.
+👉 Vous pouvez également vous connecter à votre <espace Renford> pour retrouver l’ensemble des informations.
+Bien cordialement,
+L’équipe Renford
+
+
+Rappel mission -72h Etablissement_coach
+Objet : Rappel – Votre Renford dans moins de 72h
+Bonjour <Prénom Etablissement>,
+Petit rappel : <Prénom Renford> interviendra chez vous dans moins de 72h pour la mission de type <Type de mission>.
+📆 Date : <Plage horaire>
+🕒 Heure : <Créneau>
+Tout est déjà confirmé — c’est simplement un rappel.
+👉 Vous pouvez vous connecter à votre espace Renford pour retrouver l’ensemble des informations.
+Bien cordialement,
+L’équipe Renford
+
+
+Mail profil suspect
+Bonjour,
+Nous avons remarqué que certaines informations sur votre compte Renford semblent manquantes ou nécessitent une vérification.
+Afin de garantir un espace sécurisé et fiable pour l’ensemble de notre communauté, nous vous invitons à compléter votre profil dans un délai de 5 jours.
+ 🎯 
+ Ce que cela implique :
+Il peut s’agir de votre photo, de vos diplômes, de votre statut administratif, ou d’autres éléments importants pour valider votre compte en tant qu’intervenant sportif.
+ 💡 
+ Pourquoi c’est important ?
+Un profil complet et conforme vous permet d’accéder pleinement aux opportunités proposées sur Renford, tout en renforçant la confiance des établissements partenaires.
+ 🕐 
+ Passé ce délai, si le profil reste incomplet ou pose question, nous pourrons être amenés à suspendre temporairement votre accès, conformément à nos CGU.
+Bien entendu, nous restons à votre écoute si vous avez des questions ou besoin d’aide pour la mise à jour.
+Merci pour votre compréhension et au plaisir de vous retrouver bientôt actif·ve sur Renford !
+Cordialement,
+
+L’équipe Renford
+
+
+2ème Mail profil suspect
+Bonjour,
+Suite à notre précédent message resté sans action de votre part, nous vous informons que votre compte Renford va être supprimé dans un délai de 48h.
+ ⛔ 
+ Pourquoi ?
+Malgré notre relance, votre profil demeure incomplet ou non conforme aux critères de validation définis dans nos Conditions Générales d’Utilisation.
+ 💡 
+ Pour rappel, un compte validé permet de :
+   * Recevoir des opportunités de mission sportives,
+   * Être visible par nos établissements partenaires,
+   * Bénéficier d’un accompagnement administratif fiable et sécurisé.
+Si vous souhaitez régulariser votre situation avant suppression, il est encore temps : il vous suffit de compléter votre profil dès maintenant.
+ 👉 
+ En cas de doute ou besoin d’aide, notre équipe reste disponible pour vous accompagner.
+Merci pour votre compréhension,
+
+L’équipe Renford
+
+
+
+
+Mission annulée Mail Renfords
+Hello Maria, 
+Nous avons une petite mise à jour à te partager : pour le remplacement prévu le mercredi 27 août au studio de pilates à Paris, l’établissement a finalement trouvé une solution et n'aura pas besoin de renfort cette fois-là.
+Merci beaucoup pour ta réactivité et ton implication, c’est toujours apprécié ! 🙏
+Ce n’est que partie remise : nous continuons à recevoir de nouvelles demandes et nous reviendrons vers toi dès qu’une opportunité se présentera.
+À bientôt et merci pour ta compréhension, 
+Seren de chez Renford
+
+
+Profil annulé Mail Etablissement
+OBJET : Mise à jour concernant votre coaching Renford - ﻿﻿<Date mission>, <Lieu mission>
+
+
+Bonjour, 
+Nous vous contactons suite à un imprévu de dernière minute concernant l'intervenant initialement prévu pour la mission <Nom mission>. 📍
+Malheureusement, ce coach ne pourra finalement pas assurer le(s) cours comme convenu. Nous sommes sincèrement désolés pour ce changement de programme, mais nous mettons un point d'honneur à ce que chaque accompagnement soit irréprochable. ✨
+Rassurez-vous : notre équipe a immédiatement lancé une recherche interne prioritaire 🚀 pour vous sélectionner un nouveau profil parfaitement aligné avec vos attentes et vos objectifs.
+Nous reviendrons vers vous dans les plus brefs délais pour vous présenter votre nouveau coach Renford. 👋
+Merci de votre confiance et de votre compréhension. 
+L’équipe Renford
+	
+
+Coach_Etablissement_profil accepté
+OBJET : Votre sélection est confirmée 🎉
+
+
+Bonjour <Prénom Etablissement>﻿﻿﻿﻿,
+Merci pour votre retour ! **Vous avez sélectionné un profil pour la mission demandée, et c’est bien noté ✅**
+👉 **Nous avons le plaisir de vous joindre les coordonnées de votre Renford pour poursuivre le contact** :
+   * Nom complet : <Nom & prénom Renford>
+   * Téléphone : <Téléphone Renford> 
+Vous pourrez également retrouver l'ensemble des informations utiles directement depuis votre espace personnel, via l’onglet **"Mes demandes"** :
+<a href="https://renford.fr/entreprises-demandes-list?show-toolbar=true" target="_blank">Accéder à mes demandes Renford</a>
+(Vous devez être connecté(e) à votre compte pour y accéder.)
+📌 Vous y retrouverez :
+**- Le profil complet de votre Renford**
+**- Le récapitulatif de votre mission**
+Nous restons disponibles pour toute question ou besoin de suivi.
+Merci encore pour votre confiance, et à très bientôt sur Renford !
+Sportivement,
+_L’équipe Renford_
+
+
+Coach_Etablissement_programmer echange
+Objet: Votre sélection est confirmée 🎉
+
+
+
+
+Bonjour <Prénom Etablissement> ﻿﻿ ﻿﻿,
+Merci pour votre retour concernant votre mission ! 👏 Vous avez choisi de programmer un échange visio avec l’un des profils Renford proposés.
+👉 **Prochaine étape importante** :
+Si ce n'est pas déjà fait, pensez à **indiquer vos créneaux de disponibilités** directement depuis votre espace mission pour faciliter la prise de rendez-vous.
+Accédez à votre mission ici :
+➡️ <a href="https://renford.fr/entreprises-demandes-list?show-toolbar=true" target="_blank">Voir ma mission et proposer mes créneaux</a>
+(⚡️ Astuce : une fois connecté(e), vous pouvez ajouter vos disponibilités facilement en quelques clics.)
+Nous reviendrons rapidement vers vous avec une proposition de rendez-vous pour finaliser la mise en relation. 🚀
+Bien à vous,
+_L’équipe Renford_
+
+
+Coach_Etablissement_profils tous refusés
+OBJET: On vous propose une nouvelle sélection ?
+Bonjour <Prénom Etablissement>﻿﻿ ﻿﻿,
+Nous avons bien noté que vous n’avez retenu aucun des profils proposés pour votre mission.
+🔁 Pas de souci : notre équipe peut vous faire une nouvelle proposition rapidement, en affinant certains critères si besoin.
+👉 Vous souhaitez échanger pour préciser ce que vous recherchez ? Nous pouvons vous appeler ou vous proposer un échange ici :
+📆<a href="https://calendly.com/contact-renford/nouvelle-reunion"_blank">Réserver un créneau</a>
+Merci pour votre retour,
+_L’équipe Renford_
+
+
+envoi visio
+(envoi automatique via le système de visio)
+après visio (coach)_etablissement
+OBJET : 🌟 Finalisez votre choix suite à l’échange avec votre Renford
+Bonjour ﻿﻿<Prénom Etablissement>, 
+Nous espérons que votre échange avec votre Renford s’est bien déroulé ! Il est désormais temps de **finaliser votre choix pour cette mission**.
+Merci de nous indiquer si vous souhaitez confirmer ou non votre collaboration avec le Renford.
+👉 **Connectez-vous à votre compte**, rendez-vous dans la **mission concernée**, puis cliquez sur **"Voir les profils"** pour confirmer votre choix.
+<a href="https://renford.fr/entreprises-demandes-list?show-toolbar=true" target="_blank">Accéder à mes demandes Renford</a>
+Cela nous permettra d’organiser au mieux la suite et d'assurer un démarrage rapide et serein !
+Bien entendu, nous restons disponibles si vous avez besoin d’échanger avant votre décision.
+À très vite,
+_L'équipe Renford_
+
+
+après visio (coach)_renfords
+Bonjour {{prenom_coach}},
+
+
+Merci beaucoup pour ta disponibilité et ton temps lors de la visio avec **{{nom_etablissement}}**.
+
+
+On espère que l’échange s’est bien passé et que tu as pu découvrir plus en détail leurs besoins et le cadre de la mission.
+
+
+De notre côté, nous restons en lien avec l’établissement afin d’avoir leur retour suite à votre échange. On revient vers toi dès que nous avons plus d’informations.
+
+
+Encore merci pour ton implication et ta réactivité 🙌
+
+
+Très belle journée,
+
+
+Seren & l’équipe Renford
+
+
+
+
+mail apres confirmation renfords coach
+objet : Tu peux maintenant échanger directement avec l’établissement 👋
+
+
+Hello <Prénom Renford>
+**Merci d’avoir confirmé ta participation à la mission, c’est officiel maintenant !** 🚀
+Voici les coordonnées de l’établissement pour organiser ensemble les derniers détails de ton intervention :
+👤 Contact : ﻿﻿ ﻿﻿<Nom complet Référent>
+🏢 Établissement : ﻿﻿<Raison sociale> 
+📧 Email : ﻿﻿<Mail referent>
+📞 Téléphone : ﻿﻿<Telephone réferent>
+ **C’est maintenant à vous de vous organiser en direct**. De notre côté, nous sortons du process ✌️
+Mais bien sûr, si tu rencontres un souci ou si tu as une question, tu peux toujours nous écrire.
+On te souhaite une très belle mission !
+Merci pour ta confiance 🙏
+À très bientôt,
+_Seren de chez Renford_
+
+
+mail si refus renfords coach
+objet : Merci de nous avoir tenu informés 🙏
+
+
+Hello !
+
+
+Merci pour ton retour, c’est noté : **tu ne pourras finalement pas participer à cette mission.**
+
+
+Pas d’inquiétude, il y en aura d’autres très bientôt 🚀
+
+
+On continue de te proposer **des missions adaptées dès que possible.**
+
+
+N’oublie pas de mettre régulièrement à jour tes disponibilités depuis ton espace personnel pour ne rien rater.
+
+
+À très bientôt,
+_Seren de chez Renford_

@@ -417,9 +417,7 @@ export default function RenfordMissionDetailsPage() {
                 title={group.title}
                 documents={group.documents}
                 onDownload={() => {
-                  toast.error(
-                    "Merci de nous fournir le modèle de ce document au format PDF ou Word.",
-                  );
+                  toast.error("En cours de création");
                 }}
                 //      onDownload={(documentId) => {
                 // downloadDocumentMutation.mutate({
