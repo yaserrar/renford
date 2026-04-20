@@ -9,6 +9,7 @@ import type {
 } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
+import zlib from 'zlib';
 
 export const MISSION_DOCUMENT_TYPES = [
   'facture_prestation',
@@ -25,6 +26,12 @@ type PdfImage = {
   width: number;
   height: number;
   data: Buffer;
+  isPng?: boolean;
+};
+
+type PdfPage = {
+  ops: string[];
+  images: PdfImage[];
 };
 
 type PdfContext = {
@@ -33,6 +40,8 @@ type PdfContext = {
   cursorY: number;
   ops: string[];
   images: PdfImage[];
+  pages: PdfPage[];
+  marginBottom: number;
 };
 
 type MissionDocumentContext = {
@@ -154,7 +163,22 @@ const createPdfContext = (): PdfContext => ({
   cursorY: 770,
   ops: [],
   images: [],
+  pages: [],
+  marginBottom: 60,
 });
+
+const newPage = (ctx: PdfContext) => {
+  ctx.pages.push({ ops: [...ctx.ops], images: [...ctx.images] });
+  ctx.ops = [];
+  ctx.images = [];
+  ctx.cursorY = 800;
+};
+
+const ensureSpace = (ctx: PdfContext, needed: number) => {
+  if (ctx.cursorY - needed < ctx.marginBottom) {
+    newPage(ctx);
+  }
+};
 
 const drawSignatureBlock = (
   ctx: PdfContext,
@@ -185,11 +209,23 @@ const drawSignatureBlock = (
 };
 
 const buildPdfBuffer = (ctx: PdfContext): Buffer => {
-  const contentStream = Buffer.from(`${ctx.ops.join('\n')}\n`, 'ascii');
-  const contentObjectId = 6;
+  // Finalize current page
+  ctx.pages.push({ ops: [...ctx.ops], images: [...ctx.images] });
 
-  const imageResourcePart = ctx.images.map((img) => `/${img.name} ${img.objectId} 0 R`).join(' ');
+  const allImages = ctx.pages.flatMap((p) => p.images);
+  const imageResourcePart = allImages.map((img) => `/${img.name} ${img.objectId} 0 R`).join(' ');
   const xObject = imageResourcePart ? `/XObject << ${imageResourcePart} >>` : '';
+  const resourcesDict = `/Resources << /Font << /F1 4 0 R /F2 5 0 R >> ${xObject} >>`;
+
+  const pageCount = ctx.pages.length;
+  const contentStartId = 6;
+
+  const pageObjectIds: number[] = [];
+  const contentObjectIds: number[] = [];
+  for (let i = 0; i < pageCount; i++) {
+    pageObjectIds.push(contentStartId + i * 2);
+    contentObjectIds.push(contentStartId + i * 2 + 1);
+  }
 
   const objects: Array<{ id: number; data: Buffer }> = [
     {
@@ -198,12 +234,8 @@ const buildPdfBuffer = (ctx: PdfContext): Buffer => {
     },
     {
       id: 2,
-      data: Buffer.from('2 0 obj\n<< /Type /Pages /Count 1 /Kids [3 0 R] >>\nendobj\n', 'ascii'),
-    },
-    {
-      id: 3,
       data: Buffer.from(
-        `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${ctx.width} ${ctx.height}] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> ${xObject} >> /Contents ${contentObjectId} 0 R >>\nendobj\n`,
+        `2 0 obj\n<< /Type /Pages /Count ${pageCount} /Kids [${pageObjectIds.map((id) => `${id} 0 R`).join(' ')}] >>\nendobj\n`,
         'ascii',
       ),
     },
@@ -221,23 +253,61 @@ const buildPdfBuffer = (ctx: PdfContext): Buffer => {
         'ascii',
       ),
     },
-    {
-      id: contentObjectId,
-      data: Buffer.concat([
-        Buffer.from(`6 0 obj\n<< /Length ${contentStream.length} >>\nstream\n`, 'ascii'),
-        contentStream,
-        Buffer.from('endstream\nendobj\n', 'ascii'),
-      ]),
-    },
   ];
 
-  for (const img of ctx.images) {
+  for (let i = 0; i < pageCount; i++) {
+    const pageOps = ctx.pages[i]!.ops;
+    const stream = Buffer.from(`${pageOps.join('\n')}\n`, 'ascii');
+    const pageObjId = pageObjectIds[i]!;
+    const contentObjId = contentObjectIds[i]!;
+
+    objects.push({
+      id: pageObjId,
+      data: Buffer.from(
+        `${pageObjId} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${ctx.width} ${ctx.height}] ${resourcesDict} /Contents ${contentObjId} 0 R >>\nendobj\n`,
+        'ascii',
+      ),
+    });
+    objects.push({
+      id: contentObjId,
+      data: Buffer.concat([
+        Buffer.from(`${contentObjId} 0 obj\n<< /Length ${stream.length} >>\nstream\n`, 'ascii'),
+        stream,
+        Buffer.from('endstream\nendobj\n', 'ascii'),
+      ]),
+    });
+  }
+
+  for (const img of allImages) {
+    if (objects.some((o) => o.id === img.objectId)) continue;
+
+    let imgData: Buffer;
+    let filter: string;
+    let colorSpace = '/DeviceRGB';
+    let extra = '';
+
+    if (img.isPng) {
+      // Decode PNG to raw RGB and compress with FlateDecode
+      const decoded = decodePngToRawRgb(img.data);
+      if (decoded) {
+        imgData = zlib.deflateSync(decoded.rgb);
+        filter = '/FlateDecode';
+        colorSpace = decoded.hasAlpha ? '/DeviceRGB' : '/DeviceRGB';
+        extra = '';
+      } else {
+        continue; // skip undecodable images
+      }
+    } else {
+      imgData = img.data;
+      filter = '/DCTDecode';
+    }
+
     const header = Buffer.from(
-      `${img.objectId} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${img.width} /Height ${img.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.data.length} >>\nstream\n`,
+      `${img.objectId} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${img.width} /Height ${img.height} /ColorSpace ${colorSpace} /BitsPerComponent 8 /Filter ${filter} /Length ${imgData.length} ${extra}>>\nstream\n`,
       'ascii',
     );
     const footer = Buffer.from('\nendstream\nendobj\n', 'ascii');
-    objects.push({ id: img.objectId, data: Buffer.concat([header, img.data, footer]) });
+    objects.push({ id: img.objectId, data: Buffer.concat([header, imgData, footer]) });
   }
 
   objects.sort((a, b) => a.id - b.id);
@@ -440,78 +510,286 @@ const renderContrat = (
   mission: MissionDocumentContext['mission'],
   missionRenford: MissionDocumentContext['missionRenford'],
   totalHours: number,
+  sigRenfordImage: PdfImage | null,
+  sigEtabImage: PdfImage | null,
 ) => {
-  drawHeader(
-    ctx,
-    'Contrat de prestation',
-    'Engagement contractuel',
-    mission.id.slice(0, 8).toUpperCase(),
-  );
+  const { totalHt, commissionHt, prestationTtc, commissionTtc } =
+    computeFinancialsFromMission(mission);
+  const totalTtc = prestationTtc + commissionTtc;
 
-  const renfordName = `${missionRenford.profilRenford.utilisateur.prenom} ${missionRenford.profilRenford.utilisateur.nom}`;
-  drawText(ctx, 'Parties contractantes', 42, ctx.cursorY, 11, true);
-  drawRect(ctx, 36, ctx.cursorY - 88, 523, 82);
-  drawText(ctx, `Etablissement: ${mission.etablissement.nom}`, 44, ctx.cursorY - 22, 9, false);
-  drawText(
-    ctx,
-    `Adresse: ${mission.etablissement.adresse}, ${mission.etablissement.codePostal} ${mission.etablissement.ville}`,
-    44,
-    ctx.cursorY - 36,
-    9,
-    false,
+  const renfordUser = missionRenford.profilRenford.utilisateur;
+  const renfordProfil = missionRenford.profilRenford;
+  const renfordName = `${renfordUser.prenom} ${renfordUser.nom}`;
+  const etab = mission.etablissement;
+  const etabProfil = etab.profilEtablissement;
+
+  const addTitle = (text: string, size = 12) => {
+    ensureSpace(ctx, 30);
+    ctx.cursorY -= 6;
+    drawText(ctx, text, 42, ctx.cursorY, size, true);
+    ctx.cursorY -= size + 6;
+  };
+
+  const addBody = (text: string) => {
+    const approxChars = Math.max(25, Math.floor(510 / (8.5 * 0.55)));
+    const lines = wrapText(text, approxChars);
+    for (const line of lines) {
+      ensureSpace(ctx, 14);
+      drawText(ctx, line, 42, ctx.cursorY, 8.5, false);
+      ctx.cursorY -= 12;
+    }
+  };
+
+  const addGap = (gap = 8) => {
+    ctx.cursorY -= gap;
+  };
+
+  // ---- Page 1: Header ----
+  drawRect(ctx, 32, 800, 531, 30, 0.94);
+  drawText(ctx, 'CONTRAT DE PRESTATION DE SERVICE - OFFRE FLEX', 42, 810, 11, true);
+  ctx.cursorY = 780;
+
+  addTitle('ENTRE LES SOUSSIGNES :', 10);
+  addBody('1. La Plateforme : Renford.');
+  addBody(
+    "Renford, Societe par Actions Simplifiee (SAS) immatriculee au Registre du Commerce et des Societes (RCS) de Nanterre sous le numero 930 657 044, dont le siege social est situe au 76 rue Voltaire, 92150 Suresnes, et identifiee par le numero SIRET 930 657 044 00010, est representee par Monsieur Nicolas Vere, dument habilite aux fins des presentes. Le domaine d'activite de la societe est celui de service de mise en relation numerique.",
   );
-  drawText(ctx, `Renford: ${renfordName}`, 44, ctx.cursorY - 50, 9, false);
-  drawText(
-    ctx,
+  addBody('Ci-apres designee "Renford" ou "La Plateforme".');
+  addGap();
+
+  addBody("2. L'Entreprise Cliente :");
+  addBody(
+    `${sanitizeText(etabProfil.raisonSociale || etab.nom)}, immatriculee sous le numero SIRET ${sanitizeText(etab.siret || '-')}, dont le siege social est situe ${sanitizeText(etab.adresse)}, ${sanitizeText(etab.codePostal)} ${sanitizeText(etab.ville)}.`,
+  );
+  addBody('Elle est ci-apres denommee "l\'Entreprise Cliente".');
+  addGap();
+
+  addBody('3. Le Prestataire (Auto-Entrepreneur) :');
+  addBody(
+    `${sanitizeText(renfordUser.prenom)} ${sanitizeText(renfordUser.nom)}, ne(e) le ${formatDate(renfordProfil.dateNaissance)}, inscrit sous le numero SIRET ${sanitizeText(renfordProfil.siret || '-')}, domicilie au ${sanitizeText(renfordProfil.adresse || '-')}, ${sanitizeText(renfordProfil.ville || '-')} et exercant le type de mission suivante: ${sanitizeText(mission.discipline)}.`,
+  );
+  addBody('Ci-apres denomme "le Prestataire".');
+  addGap(12);
+
+  addTitle('ETANT PREALABLEMENT RAPPELE CE QUI SUIT :', 10);
+  addBody(
+    "Le Prestataire exerce une activite dans le domaine sportif et educatif. L'Entreprise Cliente a souhaite avoir recours aux services d'un Prestataire dans le cadre d'un besoin ponctuel ou temporaire dans le secteur sportif.",
+  );
+  addBody(
+    "A cet effet, Renford a adresse a l'Entreprise Cliente, apres concertation et validation avec le Prestataire, ainsi qu'apres validation de l'organisation de travail proposee et de la fiche de poste, le profil du Prestataire repondant aux exigences transmises, accompagne du devis correspondant, dument accepte et valide par l'Entreprise Cliente.",
+  );
+  addBody(
+    "Le Prestataire reconnait avoir ete consulte en amont par Renford, avoir confirme son interet pour la mission proposee, et atteste que cette derniere est compatible avec son emploi du temps ainsi qu'avec ses engagements professionnels en cours.",
+  );
+  addBody(
+    "Dans ces circonstances, Renford met en relation le Prestataire et l'Entreprise Cliente pour conclure le present contrat de prestations de services afin de definir et de convenir des modalites des services du Prestataire, au benefice du client.",
+  );
+  addGap(12);
+
+  addTitle('IL A ETE CONVENU CE QUI SUIT :', 10);
+
+  addTitle('Article 1 - Objet du Contrat', 10);
+  addBody(
+    "Le present contrat a pour objectif la realisation d'une prestation de services telle que definie ci-dessous :",
+  );
+  addBody(
+    "L'Entreprise Cliente fait appel a un besoin ponctuel d'encadrement sportif dans son etablissement et fait appel aux services du Prestataire pour beneficier des services fournis par la plateforme de mise en relation (ci-apres Renford), dans le but de repondre a ses besoins en personnel qualifie pour des missions temporaires dans le secteur du sport. L'Entreprise Cliente a notamment selectionne l'offre \"Renford Flex\" dont les details sont mentionnes a l'annexe 1, jointe a ce present contrat.",
+  );
+  addBody(
+    "Les services specifiques que le Prestataire s'engage a fournir dans le cadre de chaque mission incluent l'execution des taches specifiees par l'Entreprise Cliente, conformement a sa specialisation et a ses expertises en tant que professionnel independant dans le sport.",
+  );
+  addBody(
+    "Les details de l'organisation et des creneaux proposes par l'Entreprise Cliente sont joints en Annexe 2 du present contrat et ont ete valides par chacune des parties.",
+  );
+  addBody(
+    "Renford s'engage a faciliter la mise en relation entre l'Entreprise Cliente et le Prestataire, agissant en tant que plateforme de mise en relation pour coordonner la prestation de services.",
+  );
+  addGap();
+
+  addTitle('Article 2 - Modalites de realisation de la mission', 10);
+  addBody("2.1 L'Entreprise Cliente :");
+  addBody(
+    "A. L'Entreprise Cliente s'engage a fournir au Prestataire toutes les informations necessaires et detaillees concernant les services requis.",
+  );
+  addBody(
+    "B. L'Entreprise Cliente s'engage a effectuer les paiements dus et relatifs a la mission conformement aux modalites financieres convenues entre les parties.",
+  );
+  addBody(
+    "C. L'Entreprise Cliente collaborera activement avec le Prestataire pour faciliter la prestation de services.",
+  );
+  addGap();
+  addBody('2.2 Le Prestataire :');
+  addBody(
+    "A. Le Prestataire s'engage a fournir les services de maniere professionnelle, en conformite avec les normes de qualite definies par l'Entreprise Cliente.",
+  );
+  addBody(
+    'B. Le Prestataire respectera les delais convenus pour chaque phase de la prestation de services.',
+  );
+  addBody(
+    "C. En cas de probleme, le Prestataire s'engage a informer promptement l'Entreprise Cliente.",
+  );
+  addBody('D. Presenter, si necessaire, une attestation de RC PRO valide.');
+  addGap();
+  addBody('2.3 Renford :');
+  addBody(
+    "A. Renford s'engage a faciliter la mise en relation entre l'Entreprise Cliente et le Prestataire.",
+  );
+  addBody('B. Renford coordonne la communication entre les parties.');
+  addBody("C. Renford s'engage a fournir un soutien logistique.");
+  addBody('D. Assurer un suivi en cas de litige ou de reclamation.');
+  addGap();
+
+  addTitle('Article 3 - Information precontractuelle', 10);
+  addBody(
+    "L'Entreprise Cliente a fourni l'ensemble des informations necessaires a la conclusion du present contrat dans sa demande de mission realisee sur la plateforme Renford. Le Prestataire a recu une annexe avec les modalites de la mission et les a valides apres avoir verifie que la mission etait bien conforme a son organisation de travail.",
+  );
+  addBody(
+    "Renford a transmis les informations precontractuelles au Prestataire qui les a acceptes en validant la demande de mission via la plateforme. La validation du devis par l'Entreprise, suivie du paiement, formalise la mission.",
+  );
+  addGap();
+
+  addTitle('Article 4 - Duree de la mission', 10);
+  addBody(
+    'Les precisions sur la duree de la mission dans le cadre de l\'offre "Renford Flex" sont precisees dans l\'annexe 1 jointe au present contrat.',
+  );
+  addBody(
+    "Le contrat prend effet a compter de la validation du devis par l'Entreprise Cliente et reste applicable jusqu'a la fin de la mission. Il ne sera pas renouvelable par tacite reconduction.",
+  );
+  addGap();
+
+  addTitle('Article 5 - Resiliation anticipee du Contrat et annulation', 10);
+  addBody('5.1. Resiliation pour Manquement');
+  addBody(
+    "En cas de manquement de l'Entreprise Cliente ou du Prestataire a l'une de ses obligations essentielles, Renford notifiera le manquement a la partie defaillante et transmettra sa volonte de resilier le Contrat de maniere anticipee.",
+  );
+  addBody('Delais de preavis selon la duree de la mission :');
+  addBody('- Missions de moins de 3 mois : 72 heures.');
+  addBody('- Missions comprises entre 3 et 6 mois : Une semaine (7 jours calendaires).');
+  addBody('- Missions de plus de 6 mois : Un mois (30 jours calendaires).');
+  addGap();
+  addBody("5.2 Annulation de la Mission par l'Entreprise Cliente");
+  addBody('- Annulation entre 48h et 24h avant la prestation : 25% du montant du premier jour.');
+  addBody('- Annulation la veille de la prestation : 50% du montant total du premier jour.');
+  addBody('- Annulation le jour de la prestation : 75% du premier jour, 50% du deuxieme jour.');
+  addBody('En cas de force majeure, aucune penalite ne sera appliquee.');
+  addGap();
+
+  addTitle('Article 6 - Non-realisation et Insatisfaction de la Mission', 10);
+  addBody(
+    '6.1. En cas de desistement tardif, Renford se reserve la possibilite de prendre toute mesure appropriee (suspension temporaire du compte).',
+  );
+  addBody(
+    "6.2. Si le Prestataire ne se presente pas le jour J sans justification valable, Renford s'engage a rembourser integralement l'Entreprise Cliente dans un delai de 30 jours ouvres.",
+  );
+  addBody(
+    "6.3. En cas d'insatisfaction, l'Entreprise Cliente dispose d'un droit de reclamation via la plateforme dans un delai de 10 jours suivant la fin de la mission.",
+  );
+  addGap();
+
+  addTitle('Article 7 - Remuneration du Prestataire et Paiement', 10);
+  addBody(
+    `En contrepartie de la realisation des prestations, le Prestataire percevra une remuneration de ${formatAmount(totalHt)} HT.`,
+  );
+  addBody(
+    `Pour son role de mise en relation, Renford percevra une commission de ${formatAmount(commissionTtc)} TTC.`,
+  );
+  addBody(`Le montant global de la mission s'eleve a ${formatAmount(totalTtc)} TTC.`);
+  addBody(
+    "Le paiement est effectue par l'Entreprise Cliente via un lien securise fourni par Renford. Les fonds sont conserves par Renford jusqu'a la validation de la mission ou l'expiration d'un delai de 10 jours.",
+  );
+  addGap();
+
+  addTitle('Article 8 - Intuitu Personae - Sous-traitance', 10);
+  addBody(
+    "Le Contrat ne peut pas faire l'objet d'une cession totale ou partielle par une Partie sans l'accord prealable et ecrit de l'autre Partie. Le Prestataire n'aura pas la possibilite de sous-traiter tout ou partie de sa Mission sans l'accord prealable et ecrit de l'Entreprise Cliente.",
+  );
+  addGap();
+
+  addTitle("Article 9 - Declaration d'independance reciproque", 10);
+  addBody(
+    "La relation etablie entre l'Entreprise Cliente et le Prestataire est celle d'entreprises independantes et autonomes. Il n'existe entre les Parties aucun lien de subordination mais uniquement un lien contractuel de nature commerciale.",
+  );
+  addGap();
+
+  addTitle('Article 10 - Declarations des Parties', 10);
+  addBody(
+    "Chacune des Parties declare avoir la pleine capacite juridique. Le Prestataire declare exercer cette mission en tant qu'independant.",
+  );
+  addGap();
+
+  addTitle('Article 11 - Controle de conformite et travail dissimule', 10);
+  addBody(
+    'Renford peut demander au Prestataire de fournir a tout moment des documents justifiant de sa conformite legale (SIRET, RC PRO, attestation de vigilance).',
+  );
+  addGap();
+
+  addTitle('Article 13 - Confidentialite', 10);
+  addBody(
+    "Les Parties s'engagent a maintenir la confidentialite des informations echangees pendant la duree de ce contrat.",
+  );
+  addGap();
+
+  addTitle('Article 14 - Limitations de responsabilite', 10);
+  addBody(
+    "Renford ne pourra etre tenu responsable des dommages indirects resultant de l'execution du present contrat.",
+  );
+  addGap();
+
+  addTitle('Article 15 - Dispositions generales', 10);
+  addBody(
+    "15.1. Les Parties s'engagent a toujours se comporter comme des partenaires loyaux et de bonne foi.",
+  );
+  addBody(
+    "15.2. Aucune modification du Contrat ne produira d'effet sans prendre la forme d'un avenant signe.",
+  );
+  addBody(
+    '15.5. Le present contrat est soumis au droit francais. En cas de litige, la juridiction competente sera le Tribunal de Commerce de Nanterre.',
+  );
+  addGap(12);
+
+  // ---- Signature page ----
+  addBody(
+    `En foi de quoi, les Parties ont signe le present contrat a la date du ${formatDate(missionRenford.dateContratSigne ?? new Date())} a Suresnes, en trois exemplaires originaux.`,
+  );
+  addGap();
+  addBody('Signatures precedees de la mention "Lu et approuve, bon pour accord".');
+  addGap(16);
+
+  // Signature blocks
+  ensureSpace(ctx, 160);
+  drawSignatureBlock(ctx, 'Signature Renford', sigRenfordImage, 42, ctx.cursorY - 110);
+  drawSignatureBlock(ctx, 'Signature Etablissement', sigEtabImage, 312, ctx.cursorY - 110);
+  ctx.cursorY -= 140;
+
+  // Annexe 1
+  ensureSpace(ctx, 200);
+  addGap(12);
+  addTitle('ANNEXE 1 - Details de la mission', 11);
+  addBody(`Mission: ${sanitizeText(mission.discipline)}`);
+  addBody(`Specialite: ${sanitizeText(mission.specialitePrincipale)}`);
+  addBody(
     mission.dateFin
-      ? `Periode de mission: ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)} - ${formatHours(totalHours)}`
-      : `Date de mission: ${formatDate(mission.dateDebut)} - ${formatHours(totalHours)}`,
-    44,
-    ctx.cursorY - 64,
-    9,
-    false,
+      ? `Periode: ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)}`
+      : `Date: ${formatDate(mission.dateDebut)}`,
   );
-  ctx.cursorY -= 114;
+  addBody(`Volume horaire: ${formatHours(totalHours)}`);
+  addBody(`Tarif: ${formatAmount(Number(mission.tarif ?? 0))} HT`);
+  addBody(`Commission Renford: ${formatAmount(commissionHt)} HT`);
+  addBody(`Total TTC: ${formatAmount(totalTtc)}`);
+  addGap();
 
-  drawText(ctx, 'Clauses principales', 42, ctx.cursorY, 11, true);
-  addParagraph(ctx, '.', 44, 510, 9, 13);
-  addParagraph(
-    ctx,
-    "Le prestataire s'engage a realiser la mission selon les standards professionnels attendus. L'etablissement garantit les conditions d'accueil et de securite necessaires.",
-    44,
-    510,
-    9,
-    13,
-  );
-  addParagraph(
-    ctx,
-    'La remuneration est fixee selon le mode de tarification convenu. Toute annulation ou modification doit etre notifiee via la plateforme Renford.',
-    44,
-    510,
-    9,
-    13,
-  );
-  addParagraph(
-    ctx,
-    'Les parties reconnaissent avoir pris connaissance des obligations de confidentialite et de conformite applicables pendant toute la duree de la mission.',
-    44,
-    510,
-    9,
-    13,
-  );
+  // Annexe 2 - Schedule
+  addTitle('ANNEXE 2 - Planning des creneaux', 11);
+  const sortedSlots = [...mission.PlageHoraireMission].sort((a, b) => {
+    const d = new Date(a.date).getTime() - new Date(b.date).getTime();
+    return d !== 0 ? d : a.heureDebut.localeCompare(b.heureDebut);
+  });
+  for (const slot of sortedSlots) {
+    ensureSpace(ctx, 14);
+    const dateStr = formatDate(new Date(slot.date));
+    addBody(`${dateStr} : ${slot.heureDebut} - ${slot.heureFin}`);
+  }
 
-  // Signature placeholders (actual signatures applied by Odoo Sign)
-  drawSignatureBlock(ctx, 'Signature Renford', null, 42, 100);
-  drawSignatureBlock(ctx, 'Signature Etablissement', null, 312, 100);
-
-  drawText(
-    ctx,
-    `Date de signature: ${formatDate(missionRenford.dateContratSigne)}`,
-    42,
-    78,
-    9,
-    false,
-  );
   drawFooter(ctx);
 };
 
@@ -571,6 +849,142 @@ const renderAttestation = (
   drawFooter(ctx);
 };
 
+// Decode a PNG buffer into raw RGB pixel data (strips alpha channel)
+const decodePngToRawRgb = (pngData: Buffer): { rgb: Buffer; hasAlpha: boolean } | null => {
+  try {
+    // Parse PNG chunks to extract IDAT data
+    if (pngData.length < 8) return null;
+    let offset = 8; // skip PNG signature
+    let width = 0;
+    let height = 0;
+    let bitDepth = 0;
+    let colorType = 0;
+    const idatChunks: Buffer[] = [];
+
+    while (offset < pngData.length - 4) {
+      const chunkLen = pngData.readUInt32BE(offset);
+      const chunkType = pngData.subarray(offset + 4, offset + 8).toString('ascii');
+
+      if (chunkType === 'IHDR') {
+        width = pngData.readUInt32BE(offset + 8);
+        height = pngData.readUInt32BE(offset + 12);
+        bitDepth = pngData[offset + 16]!;
+        colorType = pngData[offset + 17]!;
+      } else if (chunkType === 'IDAT') {
+        idatChunks.push(pngData.subarray(offset + 8, offset + 8 + chunkLen));
+      } else if (chunkType === 'IEND') {
+        break;
+      }
+
+      offset += 12 + chunkLen; // length(4) + type(4) + data + crc(4)
+    }
+
+    if (width === 0 || height === 0 || idatChunks.length === 0) return null;
+    if (bitDepth !== 8) return null; // only support 8-bit
+
+    const hasAlpha = colorType === 6; // RGBA
+    const isRgb = colorType === 2; // RGB
+    if (!hasAlpha && !isRgb) return null; // only RGB/RGBA
+
+    const compressed = Buffer.concat(idatChunks);
+    const raw = zlib.inflateSync(compressed);
+
+    const channels = hasAlpha ? 4 : 3;
+    const bytesPerRow = width * channels;
+    const rgb = Buffer.alloc(width * height * 3);
+    let rgbIdx = 0;
+    let prevRow = Buffer.alloc(bytesPerRow);
+
+    for (let y = 0; y < height; y++) {
+      const filterByte = raw[y * (bytesPerRow + 1)]!;
+      const rowStart = y * (bytesPerRow + 1) + 1;
+      const row = Buffer.alloc(bytesPerRow);
+
+      // Copy raw row data
+      raw.copy(row, 0, rowStart, rowStart + bytesPerRow);
+
+      // Apply PNG filter
+      if (filterByte === 1) {
+        // Sub
+        for (let i = channels; i < bytesPerRow; i++) {
+          row[i] = (row[i]! + row[i - channels]!) & 0xff;
+        }
+      } else if (filterByte === 2) {
+        // Up
+        for (let i = 0; i < bytesPerRow; i++) {
+          row[i] = (row[i]! + prevRow[i]!) & 0xff;
+        }
+      } else if (filterByte === 3) {
+        // Average
+        for (let i = 0; i < bytesPerRow; i++) {
+          const a = i >= channels ? row[i - channels]! : 0;
+          const b = prevRow[i]!;
+          row[i] = (row[i]! + Math.floor((a + b) / 2)) & 0xff;
+        }
+      } else if (filterByte === 4) {
+        // Paeth
+        for (let i = 0; i < bytesPerRow; i++) {
+          const a = i >= channels ? row[i - channels]! : 0;
+          const b = prevRow[i]!;
+          const c = i >= channels ? prevRow[i - channels]! : 0;
+          const p = a + b - c;
+          const pa = Math.abs(p - a);
+          const pb = Math.abs(p - b);
+          const pc = Math.abs(p - c);
+          const pr = pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+          row[i] = (row[i]! + pr) & 0xff;
+        }
+      }
+      // filterByte === 0 means None, no transformation needed
+
+      // Extract RGB (skip Alpha if RGBA)
+      for (let x = 0; x < width; x++) {
+        rgb[rgbIdx++] = row[x * channels]!;
+        rgb[rgbIdx++] = row[x * channels + 1]!;
+        rgb[rgbIdx++] = row[x * channels + 2]!;
+      }
+
+      prevRow = row;
+    }
+
+    return { rgb, hasAlpha };
+  } catch {
+    return null;
+  }
+};
+
+const loadSignatureImage = (
+  cheminImage: string | undefined | null,
+  name: string,
+  objectId: number,
+): PdfImage | null => {
+  if (!cheminImage) return null;
+  const absPath = path.join(process.cwd(), cheminImage);
+  if (!fs.existsSync(absPath)) return null;
+  const data = fs.readFileSync(absPath);
+  if (data.length < 24) return null;
+
+  const isPng = data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4e && data[3] === 0x47;
+
+  if (isPng) {
+    const width = data.readUInt32BE(16);
+    const height = data.readUInt32BE(20);
+    return { name, objectId, width: width || 200, height: height || 80, data, isPng: true };
+  }
+
+  // JPEG: read dimensions from SOF0/SOF2 markers
+  let width = 200;
+  let height = 80;
+  for (let i = 0; i < data.length - 8; i++) {
+    if (data[i] === 0xff && (data[i + 1] === 0xc0 || data[i + 1] === 0xc2)) {
+      height = data.readUInt16BE(i + 5);
+      width = data.readUInt16BE(i + 7);
+      break;
+    }
+  }
+  return { name, objectId, width, height, data };
+};
+
 export const getMissionDocumentFilename = (type: MissionDocumentType, missionId: string) => {
   return `${type}-${missionId}.pdf`;
 };
@@ -594,7 +1008,14 @@ export const buildMissionDocumentPdf = (
   }
 
   if (type === 'contrat_prestation') {
-    renderContrat(ctx, mission, missionRenford, totalHours);
+    const sigRenford = (missionRenford as any).signatureContratPrestationRenford;
+    const sigEtab = (missionRenford as any).signatureContratPrestationEtablissement;
+    const maxImgId = 100;
+    const sigRenfordImage = loadSignatureImage(sigRenford?.cheminImage, 'SigR', maxImgId);
+    const sigEtabImage = loadSignatureImage(sigEtab?.cheminImage, 'SigE', maxImgId + 1);
+    if (sigRenfordImage) ctx.images.push(sigRenfordImage);
+    if (sigEtabImage) ctx.images.push(sigEtabImage);
+    renderContrat(ctx, mission, missionRenford, totalHours, sigRenfordImage, sigEtabImage);
   }
 
   if (type === 'attestation_mission') {
