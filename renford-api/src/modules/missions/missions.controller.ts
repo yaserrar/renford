@@ -1012,7 +1012,7 @@ export const markMissionAsTermineeByEtablissement = async (
     await prisma.$transaction([
       prisma.mission.update({
         where: { id: mission.id },
-        data: { statut: 'mission_terminee' },
+        data: { statut: 'mission_terminee', dateTerminee: new Date() },
       }),
       prisma.missionRenford.updateMany({
         where: {
@@ -1139,7 +1139,7 @@ export const clotureMissionByEtablissement = async (
 
     const updatedMission = await prisma.mission.update({
       where: { id: mission.id },
-      data: { statut: 'archivee' },
+      data: { statut: 'archivee', dateCloturee: new Date() },
       select: { id: true, statut: true },
     });
 
@@ -1215,7 +1215,7 @@ export const cancelMissionByEtablissement = async (
     await prisma.$transaction([
       prisma.mission.update({
         where: { id: mission.id },
-        data: { statut: 'annulee' },
+        data: { statut: 'annulee', dateAnnulee: new Date() },
       }),
       prisma.missionRenford.updateMany({
         where: {

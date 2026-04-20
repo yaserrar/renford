@@ -581,6 +581,11 @@ model Mission {
 
     pourcentageVariationTarif Decimal? @db.Decimal(5, 2) // Pourcentage de variation du tarif en fonction de l'expérience du Renford (ex: +20% pour un expert)
 
+    // Jalons de cycle de vie
+    dateTerminee DateTime? // Quand l'établissement a cliqué "Terminer"
+    dateCloturee DateTime? // Quand la mission a été clôturée/archivée
+    dateAnnulee  DateTime? // Quand la mission a été annulée
+
     // Métadonnées
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
@@ -707,6 +712,7 @@ model MissionRenford {
     // Annulation par le renford
     raisonAnnulation      String?
     commentaireAnnulation String?
+    dateAnnulation        DateTime? // Quand le renford a annulé
 
     // Évaluation laissée par l'établissement
     evaluation EvaluationRenford?

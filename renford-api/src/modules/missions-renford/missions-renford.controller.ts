@@ -239,11 +239,29 @@ export const respondToMissionProposal = async (
 
     const profilRenford = await prisma.profilRenford.findUnique({
       where: { utilisateurId: userId },
-      select: { id: true },
+      select: { id: true, attestationVigilanceChemin: true },
     });
 
     if (!profilRenford) {
       return res.status(404).json({ message: 'Profil Renford non trouvé' });
+    }
+
+    // URSSAF: attestation de vigilance obligatoire pour missions >= 5 000 €
+    if (req.body.response === 'selection_en_cours') {
+      const mission = await prisma.mission.findUnique({
+        where: { id: req.params.missionId },
+        select: { montantHT: true },
+      });
+      if (
+        mission &&
+        Number(mission.montantHT ?? 0) >= 5000 &&
+        !profilRenford.attestationVigilanceChemin
+      ) {
+        return res.status(400).json({
+          message:
+            "Cette mission dépasse 5 000 € HT. Vous devez fournir une attestation de vigilance URSSAF dans votre profil avant de pouvoir l'accepter.",
+        });
+      }
     }
 
     try {
@@ -501,6 +519,7 @@ export const annulerMissionByRenford = async (
           statut: 'annule',
           raisonAnnulation: raison,
           commentaireAnnulation: commentaires ?? null,
+          dateAnnulation: new Date(),
         },
       }),
       // Passer la mission en remplacement_en_cours
