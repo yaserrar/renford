@@ -22,7 +22,7 @@ const AuthProvider = ({ children }: Props) => {
     if (!hydrated || !session) return;
     // Redirect to the correct home based on the stored user type.
     // Admin users visiting /connexion get sent to the admin dashboard.
-    if (session.utilisateur.typeUtilisateur === "administrateur") {
+    if (session.utilisateur?.typeUtilisateur === "administrateur") {
       router.push("/admin/accueil");
     } else {
       router.push("/dashboard/accueil");

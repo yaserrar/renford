@@ -1,8 +1,10 @@
 "use client";
 
 import { API_BASE_URL } from "@/lib/env";
+import { auth, googleProvider } from "@/lib/firebase";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import { signInWithPopup } from "firebase/auth";
 import { toast } from "sonner";
 import { getErrorMessage } from "../lib/utils";
 import useSession from "../stores/session-store";
@@ -106,6 +108,37 @@ export const useResetPassword = () => {
     },
     onError: async (error: any) => {
       const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+//-------------------------------------------------------------------------------------------------------------
+
+export const useGoogleAuth = () => {
+  const { setSession } = useSession();
+
+  return useMutation({
+    mutationFn: async () => {
+      // Open Google sign-in popup via Firebase
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+
+      // Send the Firebase ID token to our backend for verification + user creation/login
+      return (await axios.post(`${API_BASE_URL}/auth/google`, { idToken }))
+        .data as JwtToken;
+    },
+    onSuccess: async (data) => {
+      toast.success("Connecté avec succès");
+      setSession(data);
+    },
+    onError: async (error: any) => {
+      // Don't show error if user closed the popup
+      if (error?.code === "auth/popup-closed-by-user") return;
+      if (error?.code === "auth/cancelled-popup-request") return;
+
+      const message =
+        error?.response?.data?.message || getErrorMessage(error?.message);
       toast.error(message);
     },
   });

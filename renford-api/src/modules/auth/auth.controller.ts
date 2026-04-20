@@ -17,6 +17,7 @@ import {
   getResetPasswordCodeEmail,
   getSignupVerificationCodeEmail,
 } from '../../config/email-templates';
+import { syncEmailPasswordUserToFirebase, updateFirebasePassword } from './firebase-sync';
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
@@ -77,6 +78,9 @@ export const signup = async (
     } catch (e) {
       console.error('Erreur envoi email:', e);
     }
+
+    // Sync user to Firebase Auth (email/password provider)
+    syncEmailPasswordUserToFirebase(utilisateur.id, email, password).catch(() => {});
 
     // Générer le token JWT
     const token = jwt.sign({ userId: utilisateur.id, email: utilisateur.email }, env.JWT_SECRET, {
@@ -146,6 +150,9 @@ export const login = async (
       where: { id: utilisateur.id },
       data: { derniereConnexion: new Date() },
     });
+
+    // Sync existing user to Firebase Auth if not already synced (email/password provider)
+    syncEmailPasswordUserToFirebase(utilisateur.id, email, password).catch(() => {});
 
     // Générer le token JWT
     const token = jwt.sign({ userId: utilisateur.id, email: utilisateur.email }, env.JWT_SECRET, {
@@ -308,6 +315,11 @@ export const updatePasswordWithCode = async (
         dateCreationCodeReinit: null,
       },
     });
+
+    // Sync new password to Firebase Auth
+    syncEmailPasswordUserToFirebase(utilisateur.id, email, password).catch(() => {});
+    // Also update password in Firebase if user already exists there
+    updateFirebasePassword(utilisateur.id, password).catch(() => {});
 
     return res.json({ message: 'Mot de passe mis à jour avec succès' });
   } catch (err) {

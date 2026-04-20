@@ -21,7 +21,7 @@ const AuthAdminProvider = ({ children }: Props) => {
   useEffect(() => {
     if (!hydrated || !session) return;
     // Only bounce confirmed admins; non-admin sessions are ignored.
-    if (session.utilisateur.typeUtilisateur === "administrateur") {
+    if (session.utilisateur?.typeUtilisateur === "administrateur") {
       router.push("/admin/accueil");
     }
   }, [hydrated, session, router]);

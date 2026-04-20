@@ -6,6 +6,7 @@ import {
   validatePasswordResetCode,
   updatePasswordWithCode,
 } from './auth.controller';
+import { googleAuth, googleAuthSchema } from './google-auth.controller';
 import { validateResource } from '../../middleware/validate.resource';
 import {
   loginSchema,
@@ -29,6 +30,12 @@ router.post('/auth/signup', validateResource(signupSchema), signup);
 // ============================================================================
 
 router.post('/auth/login', validateResource(loginSchema), login);
+
+// ============================================================================
+// Authentification Google (Firebase)
+// ============================================================================
+
+router.post('/auth/google', validateResource(googleAuthSchema), googleAuth);
 
 // ============================================================================
 // Réinitialisation mot de passe
