@@ -436,6 +436,7 @@ export const useSignContractByEtablissement = () => {
 };
 
 type MissionDocumentType =
+  | "devis"
   | "facture_prestation"
   | "facture_commission"
   | "contrat_prestation"

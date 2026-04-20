@@ -10,8 +10,10 @@ import type {
 import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
+import { getTypeMissionLabel } from './missions.schema';
 
 export const MISSION_DOCUMENT_TYPES = [
+  'devis',
   'facture_prestation',
   'facture_commission',
   'contrat_prestation',
@@ -440,6 +442,185 @@ const drawFooter = (ctx: PdfContext) => {
   drawLine(ctx, 36, 56, 559, 56);
   drawText(ctx, 'Document genere automatiquement par Renford', 36, 40, 8, false);
   drawText(ctx, `Date generation: ${formatDate(new Date())}`, 390, 40, 8, false);
+};
+
+const renderDevis = (
+  ctx: PdfContext,
+  mission: MissionDocumentContext['mission'],
+  renfordName: string,
+  totalHours: number,
+  totalHt: number,
+  commissionHt: number,
+) => {
+  const etab = mission.etablissement;
+  const etabProfil = etab.profilEtablissement;
+  const typeMission = getTypeMissionLabel(mission.specialitePrincipale);
+  const commissionTtc = Number((commissionHt * 1.2).toFixed(2));
+  const totalTtc = totalHt + commissionTtc;
+  const adresseComplete = `${etab.adresse}, ${etab.codePostal} ${etab.ville}`;
+  const plage = mission.dateFin
+    ? `Du ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)}`
+    : `Le ${formatDate(mission.dateDebut)}`;
+
+  // Header
+  drawRect(ctx, 32, 770, 531, 46, 0.94);
+  drawText(ctx, 'RENFORD', 42, 798, 16, true);
+  drawText(ctx, 'DEVIS POUR SERVICES ET COMMISSION', 42, 780, 10, true);
+  drawText(ctx, `N${sanitizeText('°')} ${mission.id.slice(0, 8).toUpperCase()}`, 430, 797, 10, true);
+  ctx.cursorY = 748;
+
+  // Destinataire block
+  drawText(ctx, etabProfil.raisonSociale, 42, ctx.cursorY, 10, true);
+  ctx.cursorY -= 14;
+  drawText(ctx, adresseComplete, 42, ctx.cursorY, 9);
+  ctx.cursorY -= 14;
+  drawText(ctx, 'FRANCE', 42, ctx.cursorY, 9);
+  ctx.cursorY -= 14;
+  drawText(ctx, `SIRET: ${etabProfil.siret}`, 42, ctx.cursorY, 9);
+  ctx.cursorY -= 20;
+
+  // Dates
+  drawText(ctx, `Date du devis : ${formatDate(mission.dateCreation)}`, 42, ctx.cursorY, 9);
+  ctx.cursorY -= 14;
+  drawText(ctx, 'Validite du devis : 72 heures', 42, ctx.cursorY, 9);
+  ctx.cursorY -= 20;
+
+  // Mission title
+  drawText(ctx, `${renfordName} - ${typeMission}`, 42, ctx.cursorY, 11, true);
+  ctx.cursorY -= 22;
+
+  // Table header
+  const tableX = 36;
+  const tableW = 523;
+  const headerH = 20;
+  drawRect(ctx, tableX, ctx.cursorY - headerH, tableW, headerH, 0.93);
+  drawText(ctx, 'Description', tableX + 4, ctx.cursorY - 14, 8, true);
+  drawText(ctx, 'Heures', tableX + 260, ctx.cursorY - 14, 8, true);
+  drawText(ctx, 'Taux', tableX + 320, ctx.cursorY - 14, 8, true);
+  drawText(ctx, 'TVA', tableX + 380, ctx.cursorY - 14, 8, true);
+  drawText(ctx, 'HT', tableX + 425, ctx.cursorY - 14, 8, true);
+  drawText(ctx, 'TTC', tableX + 475, ctx.cursorY - 14, 8, true);
+  ctx.cursorY -= headerH;
+
+  // Row 1: Prestation
+  const row1H = 42;
+  drawRect(ctx, tableX, ctx.cursorY - row1H, tableW, row1H);
+  const row1Y = ctx.cursorY - 14;
+  drawText(ctx, `Prestation temporaire d'encadrement`, tableX + 4, row1Y, 8);
+  drawText(ctx, `du sport - ${typeMission}`, tableX + 4, row1Y - 12, 8);
+  drawText(ctx, `Lieu: ${adresseComplete}`, tableX + 4, row1Y - 24, 7);
+  drawText(ctx, formatHours(totalHours), tableX + 260, row1Y, 8);
+  drawText(ctx, formatAmount(Number(mission.tarif ?? 0)), tableX + 320, row1Y, 8);
+  drawText(ctx, '0%', tableX + 380, row1Y, 8);
+  drawText(ctx, formatAmount(totalHt), tableX + 425, row1Y, 8);
+  drawText(ctx, formatAmount(totalHt), tableX + 475, row1Y, 8);
+  ctx.cursorY -= row1H;
+
+  // Row 2: Commission
+  const row2H = 28;
+  drawRect(ctx, tableX, ctx.cursorY - row2H, tableW, row2H);
+  const row2Y = ctx.cursorY - 14;
+  drawText(ctx, 'Commission sur vente (plateforme Renford)', tableX + 4, row2Y, 8);
+  drawText(ctx, '20%', tableX + 380, row2Y, 8);
+  drawText(ctx, formatAmount(commissionHt), tableX + 425, row2Y, 8);
+  drawText(ctx, formatAmount(commissionTtc), tableX + 475, row2Y, 8);
+  ctx.cursorY -= row2H + 16;
+
+  // Recap box
+  ensureSpace(ctx, 110);
+  const boxX = 336;
+  const boxY = ctx.cursorY;
+  drawRect(ctx, boxX, boxY - 100, 223, 94);
+  drawText(ctx, 'Recapitulatif', boxX + 10, boxY - 16, 10, true);
+  drawText(ctx, `Sous-total prestation TTC: ${formatAmount(totalHt)}`, boxX + 10, boxY - 34, 9);
+  drawText(ctx, `Commission sur vente TTC: ${formatAmount(commissionTtc)}`, boxX + 10, boxY - 50, 9);
+  drawText(ctx, `Montant total TTC: ${formatAmount(totalTtc)}`, boxX + 10, boxY - 68, 10, true);
+  drawText(ctx, `NET A PAYER: ${formatAmount(totalTtc)}`, boxX + 10, boxY - 86, 10, true);
+  ctx.cursorY = boxY - 116;
+
+  // Conditions de paiement
+  ensureSpace(ctx, 60);
+  drawText(ctx, 'Conditions de Paiement', 42, ctx.cursorY, 10, true);
+  ctx.cursorY -= 16;
+  addParagraph(
+    ctx,
+    'Paiement integral demande a la reception de ce devis pour debuter le projet. Mode de paiement : Lien de paiement en ligne via Stripe.',
+    44,
+    510,
+    9,
+    13,
+  );
+  ctx.cursorY -= 10;
+
+  // Validite
+  addParagraph(
+    ctx,
+    'Ce devis est valide jusqu\'a 72 heures apres la date d\'emission. Les services decrits debuteront une fois le paiement integral confirme.',
+    44,
+    510,
+    9,
+    13,
+  );
+  ctx.cursorY -= 10;
+
+  // CGV Summary - Page 2
+  ensureSpace(ctx, 200);
+  drawText(ctx, '1. Validation et Paiement du Devis', 42, ctx.cursorY, 10, true);
+  ctx.cursorY -= 16;
+  addParagraph(
+    ctx,
+    "L'Entreprise Cliente dispose de 72 heures pour valider le devis. Cette validation peut se faire soit par retour de mail, soit en effectuant le paiement integral via le lien de paiement fourni. Passe le delai de 72 heures, l'acceptation du devis sera consideree comme tacite. Sans paiement prealable, la mission ne pourra pas demarrer.",
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 8;
+  addParagraph(
+    ctx,
+    "Le paiement est effectue via un lien Stripe securise. Une fois recu, le paiement est stocke par Renford jusqu'a la fin de la prestation, en attente de validation par l'Entreprise Cliente.",
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 12;
+
+  ensureSpace(ctx, 100);
+  drawText(ctx, "2. Paiement de l'Auto-Entrepreneur", 42, ctx.cursorY, 10, true);
+  ctx.cursorY -= 16;
+  addParagraph(
+    ctx,
+    "Apres validation de la prestation par l'Entreprise Cliente, Renford dispose de 30 jours pour verser le montant du au Prestataire, apres deduction des frais de service.",
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 12;
+
+  ensureSpace(ctx, 160);
+  drawText(ctx, "3. Conditions d'Annulation ou de Modification", 42, ctx.cursorY, 10, true);
+  ctx.cursorY -= 16;
+  addParagraph(
+    ctx,
+    "Annulation entre 48h et 24h avant la prestation : 25% du montant du premier jour. Annulation la veille : 25% du montant total du premier jour. Annulation le jour meme : 50% du montant du premier jour, 25% du deuxieme jour. En cas de force majeure, aucune penalite ne sera appliquee.",
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 8;
+  addParagraph(
+    ctx,
+    "En cas de desistement tardif ou absence du Prestataire : suspension temporaire de 7 jours. Deux desistements en 30 jours : suspension definitive. Renford s'engage a trouver un remplacement rapide.",
+    44,
+    510,
+    8,
+    12,
+  );
+
+  drawFooter(ctx);
 };
 
 const renderFacturePrestation = (
@@ -998,6 +1179,10 @@ export const buildMissionDocumentPdf = (
 
   const renfordName = `${missionRenford.profilRenford.utilisateur.prenom} ${missionRenford.profilRenford.utilisateur.nom}`;
   const ctx = createPdfContext();
+
+  if (type === 'devis') {
+    renderDevis(ctx, mission, renfordName, totalHours, totalHt, commissionHt);
+  }
 
   if (type === 'facture_prestation') {
     renderFacturePrestation(ctx, mission, renfordName, totalHours, totalHt);

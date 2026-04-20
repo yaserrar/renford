@@ -328,6 +328,7 @@ export const missionDocumentParamsSchema = z.object({
   missionId: z.string().uuid("L'identifiant de mission est invalide"),
   missionRenfordId: z.string().uuid("L'identifiant de mission renford est invalide"),
   documentType: z.enum([
+    'devis',
     'facture_prestation',
     'facture_commission',
     'contrat_prestation',
