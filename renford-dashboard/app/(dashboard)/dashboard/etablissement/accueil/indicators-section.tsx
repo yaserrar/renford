@@ -8,6 +8,9 @@ type Props = {
     missionsEnCours: number;
     missionsEnAttente: number;
     missionsRealisees: number;
+    paiementsARegler: number;
+    paiementsEnAttente: number;
+    paiementsReglesCeMois: number;
   };
 };
 
@@ -34,9 +37,19 @@ export default function EtablissementIndicatorsSection({ indicators }: Props) {
       ctaLabel: "Suivre mes paiements",
       ctaHref: "#",
       metrics: [
-        { value: "0", label: "à régler", critical: false },
-        { value: "0", label: "en attente" },
-        { value: "0", label: "réglés ce mois" },
+        {
+          value: String(indicators?.paiementsARegler ?? 0),
+          label: "à régler",
+          critical: (indicators?.paiementsARegler ?? 0) > 0,
+        },
+        {
+          value: String(indicators?.paiementsEnAttente ?? 0),
+          label: "en attente",
+        },
+        {
+          value: String(indicators?.paiementsReglesCeMois ?? 0),
+          label: "réglés ce mois",
+        },
       ],
     },
   ];

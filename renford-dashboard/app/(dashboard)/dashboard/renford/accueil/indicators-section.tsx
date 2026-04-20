@@ -8,6 +8,9 @@ type Props = {
     missionsEnCours: number;
     missionsEnAttente: number;
     missionsRealisees: number;
+    paiementsEnCours: number;
+    paiementsCeMois: number;
+    paiementsCetteAnnee: number;
   };
 };
 
@@ -34,9 +37,18 @@ export default function RenfordIndicatorsSection({ indicators }: Props) {
       ctaLabel: "Suivre mes paiements",
       ctaHref: "#",
       metrics: [
-        { value: "0", label: "en cours" },
-        { value: "0", label: "ce mois" },
-        { value: "0", label: "cette année" },
+        {
+          value: String(indicators?.paiementsEnCours ?? 0),
+          label: "en cours",
+        },
+        {
+          value: String(indicators?.paiementsCeMois ?? 0),
+          label: "ce mois",
+        },
+        {
+          value: String(indicators?.paiementsCetteAnnee ?? 0),
+          label: "cette année",
+        },
       ],
     },
   ];

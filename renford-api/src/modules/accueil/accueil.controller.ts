@@ -29,27 +29,43 @@ export const getEtablissementAccueil = async (req: Request, res: Response, next:
 
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Mission counts
-    const [missionsEnCours, missionsEnAttente, missionsRealisees] = await Promise.all([
+    const missionFilter = { etablissementId: { in: etablissementIds } };
+
+    // Mission counts + payment counts
+    const [
+      missionsEnCours,
+      missionsEnAttente,
+      missionsRealisees,
+      paiementsARegler,
+      paiementsEnAttente,
+      paiementsReglesCeMois,
+    ] = await Promise.all([
       prisma.mission.count({
-        where: {
-          etablissementId: { in: etablissementIds },
-          statut: { in: ['mission_en_cours', 'remplacement_en_cours'] },
-        },
+        where: { ...missionFilter, statut: { in: ['mission_en_cours', 'remplacement_en_cours'] } },
       }),
       prisma.mission.count({
         where: {
-          etablissementId: { in: etablissementIds },
+          ...missionFilter,
           statut: { in: ['en_recherche', 'candidatures_disponibles', 'attente_de_signature'] },
         },
       }),
       prisma.mission.count({
         where: {
-          etablissementId: { in: etablissementIds },
+          ...missionFilter,
           statut: 'mission_terminee',
           dateMiseAJour: { gte: startOfYear },
         },
+      }),
+      prisma.paiement.count({
+        where: { mission: missionFilter, statut: 'en_attente' },
+      }),
+      prisma.paiement.count({
+        where: { mission: missionFilter, statut: { in: ['en_cours', 'bloque'] } },
+      }),
+      prisma.paiement.count({
+        where: { mission: missionFilter, statut: 'libere', dateLiberation: { gte: startOfMonth } },
       }),
     ]);
 
@@ -128,6 +144,9 @@ export const getEtablissementAccueil = async (req: Request, res: Response, next:
         missionsEnCours,
         missionsEnAttente,
         missionsRealisees,
+        paiementsARegler,
+        paiementsEnAttente,
+        paiementsReglesCeMois,
       },
       planning,
     });
@@ -151,38 +170,50 @@ export const getRenfordAccueil = async (req: Request, res: Response, next: NextF
 
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1);
-    // const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Mission counts
-    const [missionsEnCours, missionsEnAttente, missionsRealisees] = await Promise.all([
+    const renfordFilter = { profilRenfordId: profilRenford.id };
+    const renfordMissionFilter = { mission: { missionsRenford: { some: renfordFilter } } };
+
+    // Mission counts + payment counts
+    const [
+      missionsEnCours,
+      missionsEnAttente,
+      missionsRealisees,
+      nouvellesOpportunites,
+      paiementsEnCours,
+      paiementsCeMois,
+      paiementsCetteAnnee,
+    ] = await Promise.all([
+      prisma.missionRenford.count({
+        where: { ...renfordFilter, statut: 'mission_en_cours' },
+      }),
       prisma.missionRenford.count({
         where: {
-          profilRenfordId: profilRenford.id,
-          statut: 'mission_en_cours',
+          ...renfordFilter,
+          statut: { in: ['selection_en_cours', 'attente_de_signature', 'contrat_signe'] },
         },
       }),
       prisma.missionRenford.count({
         where: {
-          profilRenfordId: profilRenford.id,
-          statut: { in: ['nouveau', 'vu', 'selection_en_cours', 'attente_de_signature'] },
-        },
-      }),
-      prisma.missionRenford.count({
-        where: {
-          profilRenfordId: profilRenford.id,
+          ...renfordFilter,
           statut: 'mission_terminee',
           dateMiseAJour: { gte: startOfYear },
         },
       }),
+      prisma.missionRenford.count({
+        where: { ...renfordFilter, statut: { in: ['nouveau', 'vu'] } },
+      }),
+      prisma.paiement.count({
+        where: { ...renfordMissionFilter, statut: { in: ['en_attente', 'en_cours', 'bloque'] } },
+      }),
+      prisma.paiement.count({
+        where: { ...renfordMissionFilter, statut: 'libere', dateLiberation: { gte: startOfMonth } },
+      }),
+      prisma.paiement.count({
+        where: { ...renfordMissionFilter, statut: 'libere', dateLiberation: { gte: startOfYear } },
+      }),
     ]);
-
-    // New opportunities count
-    const nouvellesOpportunites = await prisma.missionRenford.count({
-      where: {
-        profilRenfordId: profilRenford.id,
-        statut: { in: ['nouveau', 'vu'] },
-      },
-    });
 
     // Upcoming planning (next 7 days)
     const today = new Date();
@@ -243,6 +274,9 @@ export const getRenfordAccueil = async (req: Request, res: Response, next: NextF
         missionsEnAttente,
         missionsRealisees,
         nouvellesOpportunites,
+        paiementsEnCours,
+        paiementsCeMois,
+        paiementsCetteAnnee,
       },
       planning,
     });

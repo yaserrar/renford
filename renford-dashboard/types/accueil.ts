@@ -43,6 +43,9 @@ export type EtablissementAccueilData = {
     missionsEnCours: number;
     missionsEnAttente: number;
     missionsRealisees: number;
+    paiementsARegler: number;
+    paiementsEnAttente: number;
+    paiementsReglesCeMois: number;
   };
   planning: EtablissementAccueilPlanningSlot[];
 };
@@ -53,6 +56,9 @@ export type RenfordAccueilData = {
     missionsEnAttente: number;
     missionsRealisees: number;
     nouvellesOpportunites: number;
+    paiementsEnCours: number;
+    paiementsCeMois: number;
+    paiementsCetteAnnee: number;
   };
   planning: RenfordAccueilPlanningSlot[];
 };
