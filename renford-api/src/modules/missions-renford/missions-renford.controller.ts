@@ -5,9 +5,11 @@ import { mail } from '../../config/mail';
 import {
   getSignatureConfirmationEmail,
   getContratASignerEtablissementEmail,
+  getMissionAnnuleeParRenfordEtablissementEmail,
+  getChangementSignaleEtablissementEmail,
 } from '../../config/email-templates';
 import { logger } from '../../config/logger';
-import { registerMissionRenfordResponse } from '../../jobs/missions-matching';
+import { registerMissionRenfordResponse, syncMissionMatches } from '../../jobs/missions-matching';
 import {
   buildMissionDocumentPdf,
   getMissionDocumentFilename,
@@ -20,6 +22,7 @@ import type {
   RenfordMissionsTab,
   RespondToMissionProposalSchema,
 } from './missions-renford.schema';
+import { getTypeMissionLabel } from '../missions/missions.schema';
 import { env } from '../../config/env';
 
 const RENFORD_TAB_STATUS_MAP: Record<RenfordMissionsTab, StatutMissionRenford[]> = {
@@ -433,6 +436,188 @@ export const signContractByRenford = async (
       statut: 'contrat_signe',
       signatureId: signature.id,
     });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+// Raisons d'annulation disponibles pour le renford
+export const annulerMissionByRenford = async (
+  req: Request<RenfordMissionIdParamsSchema, unknown, { raison: string; commentaires?: string }>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+    const { missionId } = req.params;
+    const { raison, commentaires } = req.body;
+
+    if (!raison) {
+      return res.status(400).json({ message: 'La raison est obligatoire' });
+    }
+
+    const profilRenford = await prisma.profilRenford.findUnique({
+      where: { utilisateurId: userId },
+      select: {
+        id: true,
+        utilisateur: { select: { prenom: true, nom: true } },
+      },
+    });
+    if (!profilRenford) {
+      return res.status(404).json({ message: 'Profil Renford non trouvé' });
+    }
+
+    const missionRenford = await prisma.missionRenford.findFirst({
+      where: {
+        missionId,
+        profilRenfordId: profilRenford.id,
+        statut: { in: ['contrat_signe', 'mission_en_cours'] },
+      },
+      include: {
+        mission: {
+          include: {
+            etablissement: {
+              include: {
+                profilEtablissement: { include: { utilisateur: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!missionRenford) {
+      return res.status(400).json({
+        message:
+          'Cette mission ne peut pas être annulée dans son état actuel. Seules les missions avec contrat signé ou en cours peuvent être annulées.',
+      });
+    }
+
+    await prisma.$transaction([
+      // Marquer l'assignation comme annulée
+      prisma.missionRenford.update({
+        where: { id: missionRenford.id },
+        data: {
+          statut: 'annule',
+          raisonAnnulation: raison,
+          commentaireAnnulation: commentaires ?? null,
+        },
+      }),
+      // Passer la mission en remplacement_en_cours
+      prisma.mission.update({
+        where: { id: missionId },
+        data: { statut: 'remplacement_en_cours' },
+      }),
+    ]);
+
+    // Notifier l'établissement
+    const etablissement = missionRenford.mission.etablissement;
+    const profilEtab = etablissement?.profilEtablissement;
+    if (profilEtab?.utilisateur?.email) {
+      const emailPayload = getMissionAnnuleeParRenfordEtablissementEmail({
+        prenomEtablissement:
+          profilEtab.utilisateur.prenom ?? profilEtab.raisonSociale ?? 'Responsable',
+        prenomRenford: `${profilRenford.utilisateur.prenom} ${profilRenford.utilisateur.nom}`,
+        typeMission: getTypeMissionLabel(missionRenford.mission.specialitePrincipale),
+        raison,
+        commentaires,
+        espaceUrl: `${env.PLATFORM_URL}/dashboard/etablissement/missions/${missionId}`,
+      });
+      await mail.sendMail({
+        to: profilEtab.utilisateur.email,
+        subject: emailPayload.subject,
+        html: emailPayload.html,
+        text: emailPayload.text,
+      });
+    }
+
+    // Immediately trigger replacement matching so new renfords are proposed
+    syncMissionMatches(missionId).catch((err) =>
+      logger.error(
+        { err, missionId },
+        'Échec du matching de remplacement après annulation renford',
+      ),
+    );
+
+    return res.json({ message: 'Mission annulée avec succès' });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const signalerChangementByRenford = async (
+  req: Request<RenfordMissionIdParamsSchema, unknown, { type: string; motif: string }>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+    const { missionId } = req.params;
+    const { type, motif } = req.body;
+
+    if (!type || !motif) {
+      return res.status(400).json({ message: 'Le type et le motif sont obligatoires' });
+    }
+
+    const profilRenford = await prisma.profilRenford.findUnique({
+      where: { utilisateurId: userId },
+      select: {
+        id: true,
+        utilisateur: { select: { prenom: true, nom: true } },
+      },
+    });
+    if (!profilRenford) {
+      return res.status(404).json({ message: 'Profil Renford non trouvé' });
+    }
+
+    const missionRenford = await prisma.missionRenford.findFirst({
+      where: {
+        missionId,
+        profilRenfordId: profilRenford.id,
+        statut: { in: ['contrat_signe', 'mission_en_cours'] },
+      },
+      include: {
+        mission: {
+          include: {
+            etablissement: {
+              include: {
+                profilEtablissement: { include: { utilisateur: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!missionRenford) {
+      return res.status(400).json({
+        message:
+          'Vous ne pouvez signaler un changement que pour les missions avec contrat signé ou en cours.',
+      });
+    }
+
+    // Notifier l'établissement par email
+    const etablissement = missionRenford.mission.etablissement;
+    const profilEtab = etablissement?.profilEtablissement;
+    if (profilEtab?.utilisateur?.email) {
+      const emailPayload = getChangementSignaleEtablissementEmail({
+        prenomEtablissement:
+          profilEtab.utilisateur.prenom ?? profilEtab.raisonSociale ?? 'Responsable',
+        prenomRenford: `${profilRenford.utilisateur.prenom} ${profilRenford.utilisateur.nom}`,
+        typeMission: getTypeMissionLabel(missionRenford.mission.specialitePrincipale),
+        typeChangement: type,
+        motif,
+        espaceUrl: `${env.PLATFORM_URL}/dashboard/etablissement/missions/${missionId}`,
+      });
+      await mail.sendMail({
+        to: profilEtab.utilisateur.email,
+        subject: emailPayload.subject,
+        html: emailPayload.html,
+        text: emailPayload.text,
+      });
+    }
+
+    return res.json({ message: 'Changement signalé avec succès' });
   } catch (err) {
     return next(err);
   }

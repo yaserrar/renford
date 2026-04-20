@@ -24,6 +24,7 @@ import CenterState from "@/components/common/center-state";
 import TerminerMissionDialog from "./terminer-mission-dialog";
 import CloturerMissionDialog from "./cloturer-mission-dialog";
 import AnnulerMissionDialog from "./annuler-mission-dialog";
+import SignalerChangementDialog from "@/components/common/signaler-changement-dialog";
 import ConfirmRenfordResponseDialog from "./confirm-renford-response-dialog";
 import VisioDialog from "./visio-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -47,6 +48,7 @@ import {
   useRespondToMissionRenford,
   useSetVisioLink,
   useSignContractByEtablissement,
+  useSignalerChangementByEtablissement,
   useTriggerManualMissionSearchByEtablissement,
 } from "@/hooks/mission";
 import { useCreateEvaluation } from "@/hooks/evaluation";
@@ -105,6 +107,8 @@ export default function EtablissementMissionDetailsPage() {
   const [cloturerDialogOpen, setCloturerDialogOpen] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [annulerDialogOpen, setAnnulerDialogOpen] = useState(false);
+  const [changementDialogOpen, setChangementDialogOpen] = useState(false);
+  const changementMutation = useSignalerChangementByEtablissement();
   const [noterDialogOpen, setNoterDialogOpen] = useState(false);
   const [noterMissionRenfordId, setNoterMissionRenfordId] = useState<
     string | null
@@ -413,6 +417,19 @@ export default function EtablissementMissionDetailsPage() {
                   Annuler et Modifier
                 </Button>
               )}
+            {[
+              "attente_de_signature",
+              "mission_en_cours",
+              "remplacement_en_cours",
+            ].includes(mission.statut) && (
+              <Button
+                variant="outline"
+                className="px-5"
+                onClick={() => setChangementDialogOpen(true)}
+              >
+                Signaler un changement
+              </Button>
+            )}
             {mission.statut === "mission_en_cours" && (
               <Button
                 variant="dark"
@@ -907,6 +924,18 @@ export default function EtablissementMissionDetailsPage() {
         onOpenChange={setAnnulerDialogOpen}
         onConfirm={() => cancelMutation.mutate({ missionId: mission.id })}
         isPending={cancelMutation.isPending}
+      />
+
+      <SignalerChangementDialog
+        open={changementDialogOpen}
+        onOpenChange={setChangementDialogOpen}
+        isPending={changementMutation.isPending}
+        onSubmit={(data) =>
+          changementMutation.mutate(
+            { missionId: mission.id, ...data },
+            { onSuccess: () => setChangementDialogOpen(false) },
+          )
+        }
       />
 
       <ConfirmRenfordResponseDialog

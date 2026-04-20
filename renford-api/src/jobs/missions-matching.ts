@@ -579,10 +579,11 @@ export const syncMissionMatches = async (
     },
   });
 
-  if (!mission || mission.statut !== 'en_recherche') {
+  const matchableStatuses = ['en_recherche', 'remplacement_en_cours'];
+  if (!mission || !matchableStatuses.includes(mission.statut)) {
     logger.warn(
       { missionId, statut: mission?.statut },
-      '[🤝 matching] SKIP: mission not found or not en_recherche',
+      '[🤝 matching] SKIP: mission not found or not matchable',
     );
     return {
       missionId,
@@ -804,7 +805,7 @@ export const syncMissionMatchesForOpenMissions = async (): Promise<{
 }> => {
   const missions = await prisma.mission.findMany({
     where: {
-      statut: 'en_recherche',
+      statut: { in: ['en_recherche', 'remplacement_en_cours'] },
     },
     select: {
       id: true,

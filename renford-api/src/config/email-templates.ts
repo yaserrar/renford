@@ -1948,3 +1948,159 @@ L'équipe Renford`;
     text,
   };
 };
+
+// ============================================================================
+// Mission annulée par le Renford – Établissement notifié
+// ============================================================================
+
+type MissionAnnuleeParRenfordEtablissementInput = {
+  prenomEtablissement: string;
+  prenomRenford: string;
+  typeMission: string;
+  raison: string;
+  commentaires?: string;
+  espaceUrl: string;
+};
+
+export const getMissionAnnuleeParRenfordEtablissementEmail = ({
+  prenomEtablissement,
+  prenomRenford,
+  typeMission,
+  raison,
+  commentaires,
+  espaceUrl,
+}: MissionAnnuleeParRenfordEtablissementInput) => {
+  const firstName = prenomEtablissement.trim() || '<Prénom>';
+
+  const html = renderBaseEmailTemplate({
+    preheader: 'Un Renford a annulé sa participation à votre mission',
+    title: 'Annulation de mission par votre Renford',
+    intro: `Bonjour ${firstName},`,
+    customHtml: `<p style="margin:14px 0 0;color:#334155;line-height:1.7;">${escapeHtml(prenomRenford)} a annulé sa participation à votre mission <strong>${escapeHtml(typeMission)}</strong>.</p>
+      <p style="margin:10px 0 0;color:#334155;line-height:1.7;"><strong>Raison :</strong> ${escapeHtml(raison)}</p>
+      ${commentaires ? `<p style="margin:10px 0 0;color:#334155;line-height:1.7;"><strong>Commentaires :</strong> ${escapeHtml(commentaires)}</p>` : ''}
+      <p style="margin:14px 0 0;color:#334155;line-height:1.7;">Notre équipe prend en charge le remplacement et reviendra vers vous rapidement avec un nouveau profil.</p>
+      <p style="margin:10px 0 0;color:#334155;line-height:1.7;">Vous pouvez suivre l'avancement depuis votre <a href="${espaceUrl}">espace Renford</a>.</p>
+      <p style="margin:14px 0 0;color:#334155;line-height:1.7;">Merci pour votre compréhension,<br/>L'équipe Renford</p>`,
+  });
+
+  const text = `Bonjour ${firstName},
+
+${prenomRenford} a annulé sa participation à votre mission ${typeMission}.
+Raison : ${raison}${commentaires ? `\nCommentaires : ${commentaires}` : ''}
+
+Notre équipe prend en charge le remplacement et reviendra vers vous rapidement.
+
+Suivez l'avancement depuis votre espace Renford : ${espaceUrl}
+
+Merci pour votre compréhension,
+L'équipe Renford`;
+
+  return {
+    subject: 'Annulation de votre mission par votre Renford',
+    html,
+    text,
+  };
+};
+
+// ============================================================================
+// Changement signalé par le Renford – Établissement notifié
+// ============================================================================
+
+type ChangementSignaleEtablissementInput = {
+  prenomEtablissement: string;
+  prenomRenford: string;
+  typeMission: string;
+  typeChangement: string;
+  motif: string;
+  espaceUrl: string;
+};
+
+export const getChangementSignaleEtablissementEmail = ({
+  prenomEtablissement,
+  prenomRenford,
+  typeMission,
+  typeChangement,
+  motif,
+  espaceUrl,
+}: ChangementSignaleEtablissementInput) => {
+  const firstName = prenomEtablissement.trim() || '<Prénom>';
+
+  const html = renderBaseEmailTemplate({
+    preheader: 'Votre Renford signale un changement sur votre mission',
+    title: 'Changement signalé sur votre mission',
+    intro: `Bonjour ${firstName},`,
+    customHtml: `<p style="margin:14px 0 0;color:#334155;line-height:1.7;">${escapeHtml(prenomRenford)} a signalé un changement pour votre mission <strong>${escapeHtml(typeMission)}</strong>.</p>
+      <p style="margin:10px 0 0;color:#334155;line-height:1.7;"><strong>Type de changement :</strong> ${escapeHtml(typeChangement)}</p>
+      <p style="margin:10px 0 0;color:#334155;line-height:1.7;"><strong>Motif :</strong> ${escapeHtml(motif)}</p>
+      <p style="margin:14px 0 0;color:#334155;line-height:1.7;">Veuillez vous connecter à votre <a href="${espaceUrl}">espace Renford</a> pour examiner cette demande et confirmer ou discuter des ajustements.</p>
+      <p style="margin:14px 0 0;color:#334155;line-height:1.7;">L'équipe Renford</p>`,
+  });
+
+  const text = `Bonjour ${firstName},
+
+${prenomRenford} a signalé un changement pour votre mission ${typeMission}.
+Type de changement : ${typeChangement}
+Motif : ${motif}
+
+Connectez-vous à votre espace Renford pour examiner cette demande : ${espaceUrl}
+
+L'équipe Renford`;
+
+  return {
+    subject: 'Changement signalé sur votre mission',
+    html,
+    text,
+  };
+};
+
+// ============================================================================
+// Changement signalé par l'Établissement – Renford notifié
+// ============================================================================
+
+type ChangementSignaleRenfordInput = {
+  prenomRenford: string;
+  raisonSociale: string;
+  typeMission: string;
+  typeChangement: string;
+  motif: string;
+  espaceUrl: string;
+};
+
+export const getChangementSignaleRenfordEmail = ({
+  prenomRenford,
+  raisonSociale,
+  typeMission,
+  typeChangement,
+  motif,
+  espaceUrl,
+}: ChangementSignaleRenfordInput) => {
+  const firstName = prenomRenford.trim() || '<Prénom>';
+
+  const html = renderBaseEmailTemplate({
+    preheader: "L'établissement signale un changement sur ta mission",
+    title: 'Changement signalé sur ta mission',
+    intro: `Hello ${firstName},`,
+    customHtml: `<p style="margin:14px 0 0;color:#334155;line-height:1.7;">L'établissement <strong>${escapeHtml(raisonSociale)}</strong> a signalé un changement pour ta mission <strong>${escapeHtml(typeMission)}</strong>.</p>
+      <p style="margin:10px 0 0;color:#334155;line-height:1.7;"><strong>Type de changement :</strong> ${escapeHtml(typeChangement)}</p>
+      <p style="margin:10px 0 0;color:#334155;line-height:1.7;"><strong>Motif :</strong> ${escapeHtml(motif)}</p>
+      <p style="margin:14px 0 0;color:#334155;line-height:1.7;">Connecte-toi à ton <a href="${espaceUrl}">espace Renford</a> pour consulter les détails et répondre si nécessaire.</p>
+      <p style="margin:14px 0 0;color:#334155;line-height:1.7;">L'équipe Renford</p>`,
+  });
+
+  const text = `Hello ${firstName},
+
+L'établissement ${raisonSociale} a signalé un changement pour ta mission ${typeMission}.
+Type de changement : ${typeChangement}
+Motif : ${motif}
+
+Connecte-toi à ton espace Renford pour les détails : ${espaceUrl}
+
+L'équipe Renford`;
+
+  return {
+    subject: 'Changement signalé sur ta mission',
+    html,
+    text,
+  };
+};

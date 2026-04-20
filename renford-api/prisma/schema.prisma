@@ -704,6 +704,10 @@ model MissionRenford {
     signatureContratPrestationEtablissementId String?           @unique
     signatureContratPrestationEtablissement   SignatureContrat? @relation("SignatureContratEtablissement", fields: [signatureContratPrestationEtablissementId], references: [id])
 
+    // Annulation par le renford
+    raisonAnnulation      String?
+    commentaireAnnulation String?
+
     // Évaluation laissée par l'établissement
     evaluation EvaluationRenford?
 

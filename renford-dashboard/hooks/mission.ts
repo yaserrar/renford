@@ -257,6 +257,36 @@ export const useCancelMissionByEtablissement = () => {
   });
 };
 
+export const useSignalerChangementByEtablissement = () => {
+  const axios = useAxios();
+
+  return useMutation({
+    mutationFn: async ({
+      missionId,
+      type,
+      motif,
+    }: {
+      missionId: string;
+      type: string;
+      motif: string;
+    }) => {
+      return (
+        await axios.post(
+          `/etablissement/missions/${missionId}/signaler-changement`,
+          { type, motif }
+        )
+      ).data;
+    },
+    onSuccess: () => {
+      toast.success("Changement signalé avec succès");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
 // ─── Renford missions hooks ─────────────────────────────────
 
 export const useRenfordMissions = (tab?: RenfordMissionsTab) => {
@@ -513,6 +543,73 @@ export const useSetVisioLink = () => {
 };
 
 // ─── Établissement planning hook ────────────────────────────
+
+export const useAnnulerMissionByRenford = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      missionId,
+      raison,
+      commentaires,
+    }: {
+      missionId: string;
+      raison: string;
+      commentaires?: string;
+    }) => {
+      return (
+        await axios.post(`/renford/missions/${missionId}/annuler`, {
+          raison,
+          commentaires,
+        })
+      ).data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["renford-mission-details", variables.missionId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["renford-missions"] });
+      toast.success("Mission annulée avec succès");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+export const useSignalerChangementByRenford = () => {
+  const axios = useAxios();
+
+  return useMutation({
+    mutationFn: async ({
+      missionId,
+      type,
+      motif,
+    }: {
+      missionId: string;
+      type: string;
+      motif: string;
+    }) => {
+      return (
+        await axios.post(`/renford/missions/${missionId}/signaler-changement`, {
+          type,
+          motif,
+        })
+      ).data;
+    },
+    onSuccess: () => {
+      toast.success("Changement signalé avec succès");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+// ─── Établissement planning hook (original) ─────────────────
 
 export const useEtablissementPlanning = (
   from?: string,

@@ -8,6 +8,8 @@ import {
   getRenfordPendingMissionsCount,
   respondToMissionProposal,
   signContractByRenford,
+  annulerMissionByRenford,
+  signalerChangementByRenford,
 } from './missions-renford.controller';
 import {
   getRenfordMissionsQuerySchema,
@@ -57,6 +59,20 @@ router.get(
   authenticateToken(['renford']),
   validateResource({ params: renfordMissionDocumentParamsSchema }),
   downloadMissionDocumentByRenford,
+);
+
+router.post(
+  '/renford/missions/:missionId/annuler',
+  authenticateToken(['renford']),
+  validateResource({ params: renfordMissionIdParamsSchema }),
+  annulerMissionByRenford,
+);
+
+router.post(
+  '/renford/missions/:missionId/signaler-changement',
+  authenticateToken(['renford']),
+  validateResource({ params: renfordMissionIdParamsSchema }),
+  signalerChangementByRenford,
 );
 
 export default router;

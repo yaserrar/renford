@@ -16,6 +16,7 @@ import {
   getMissionAnnuleeRenfordEmail,
   getContratSigneEtablissementCoachEmail,
   getContratSigneEtablissementFlexEmail,
+  getChangementSignaleRenfordEmail,
 } from '../../config/email-templates';
 import { createNotification } from '../../config/notification';
 import { computeMissionPricing } from '../../lib/mission-pricing';
@@ -1366,6 +1367,72 @@ export const setVisioLinkByEtablissement = async (
     }
 
     return res.json({ lienVisio });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const signalerChangementByEtablissement = async (
+  req: Request<{ missionId: string }, unknown, { type: string; motif: string }>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+    const { missionId } = req.params;
+    const { type, motif } = req.body;
+
+    if (!type || !motif) {
+      return res.status(400).json({ message: 'Le type et le motif sont obligatoires' });
+    }
+
+    const mission = await prisma.mission.findFirst({
+      where: {
+        id: missionId,
+        etablissement: { profilEtablissement: { utilisateurId: userId } },
+        statut: { in: ['attente_de_signature', 'mission_en_cours', 'remplacement_en_cours'] },
+      },
+      include: {
+        etablissement: { select: { nom: true } },
+        missionsRenford: {
+          where: { statut: { in: ['attente_de_signature', 'contrat_signe', 'mission_en_cours'] } },
+          include: {
+            profilRenford: { include: { utilisateur: true } },
+          },
+        },
+      },
+    });
+
+    if (!mission) {
+      return res.status(400).json({
+        message: 'Mission non trouvée ou état non compatible pour signaler un changement.',
+      });
+    }
+
+    // Notifier tous les renforts assignés
+    const raisonSociale = mission.etablissement?.nom ?? "L'établissement";
+    const emailPromises = mission.missionsRenford.map((mr) => {
+      const user = mr.profilRenford.utilisateur;
+      const emailPayload = getChangementSignaleRenfordEmail({
+        prenomRenford: user.prenom,
+        raisonSociale,
+        typeMission: getTypeMissionLabel(mission.specialitePrincipale),
+        typeChangement: type,
+        motif,
+        espaceUrl: `${env.PLATFORM_URL}/dashboard/renford/missions/${missionId}`,
+      });
+      return mail
+        .sendMail({
+          to: user.email,
+          subject: emailPayload.subject,
+          html: emailPayload.html,
+          text: emailPayload.text,
+        })
+        .catch((err) => logger.error({ err }, 'Échec envoi email changement renford'));
+    });
+    await Promise.all(emailPromises);
+
+    return res.json({ message: 'Changement signalé avec succès' });
   } catch (err) {
     return next(err);
   }

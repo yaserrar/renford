@@ -15,6 +15,8 @@ import DetailRow from "@/components/common/detail-row";
 import DocumentCategoryCard from "@/components/common/document-category-card";
 import MissionRenfordStatusBadge from "@/components/common/mission-renford-status-badge";
 import SignatureContratDialog from "@/components/common/signature-contrat-dialog";
+import SignalerChangementDialog from "@/components/common/signaler-changement-dialog";
+import AnnulerMissionRenfordDialog from "./annuler-mission-renford-dialog";
 import CenterState from "@/components/common/center-state";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SecureAvatarImage } from "@/components/common/secure-file";
@@ -26,6 +28,8 @@ import {
   useRenfordMissionDetails,
   useRespondToMissionProposal,
   useSignContractByRenford,
+  useAnnulerMissionByRenford,
+  useSignalerChangementByRenford,
 } from "@/hooks/mission";
 import { formatWeekdayDayMonth } from "@/lib/date";
 import {
@@ -57,6 +61,8 @@ function formatTimeRange(value: string, fallback = "-") {
 
 const SIGNABLE_STATUSES: StatutMissionRenford[] = ["attente_de_signature"];
 const OPPORTUNITE_STATUSES: StatutMissionRenford[] = ["nouveau", "vu"];
+const CANCELLABLE_STATUSES: StatutMissionRenford[] = ["contrat_signe", "mission_en_cours"];
+const CHANGEABLE_STATUSES: StatutMissionRenford[] = ["contrat_signe", "mission_en_cours"];
 
 export default function RenfordMissionDetailsPage() {
   const { missionId } = useParams<{ missionId: string }>();
@@ -68,7 +74,11 @@ export default function RenfordMissionDetailsPage() {
   const respondMutation = useRespondToMissionProposal();
   const signMutation = useSignContractByRenford();
   const downloadDocumentMutation = useDownloadMissionDocumentByRenford();
+  const annulerMutation = useAnnulerMissionByRenford();
+  const changementMutation = useSignalerChangementByRenford();
   const [signDialogOpen, setSignDialogOpen] = useState(false);
+  const [annulerDialogOpen, setAnnulerDialogOpen] = useState(false);
+  const [changementDialogOpen, setChangementDialogOpen] = useState(false);
   const missionRenford = missionQuery.data;
 
   const isLoading = missionQuery.isLoading;
@@ -173,6 +183,8 @@ export default function RenfordMissionDetailsPage() {
   const documentDate = formatFrenchDate(mission.dateCreation, "01/01/2025");
   const isOpportunite = OPPORTUNITE_STATUSES.includes(missionRenford.statut);
   const isSignable = SIGNABLE_STATUSES.includes(missionRenford.statut);
+  const isCancellable = CANCELLABLE_STATUSES.includes(missionRenford.statut);
+  const isChangeable = CHANGEABLE_STATUSES.includes(missionRenford.statut);
 
   const bothSignaturesExist =
     !!missionRenford.signatureContratPrestationRenfordId &&
@@ -301,6 +313,31 @@ export default function RenfordMissionDetailsPage() {
               >
                 Signer le contrat
               </Button>
+            </div>
+          )}
+
+          {(isCancellable || isChangeable) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {isChangeable && (
+                <Button
+                  variant="outline"
+                  className="px-5"
+                  onClick={() => setChangementDialogOpen(true)}
+                  disabled={changementMutation.isPending}
+                >
+                  Signaler un changement
+                </Button>
+              )}
+              {isCancellable && (
+                <Button
+                  variant="outline"
+                  className="px-5 text-destructive border-destructive hover:bg-destructive/10"
+                  onClick={() => setAnnulerDialogOpen(true)}
+                  disabled={annulerMutation.isPending}
+                >
+                  Annuler ma participation
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -499,6 +536,24 @@ export default function RenfordMissionDetailsPage() {
           isPending={signMutation.isPending}
         />
       )}
+
+      <AnnulerMissionRenfordDialog
+        open={annulerDialogOpen}
+        onOpenChange={setAnnulerDialogOpen}
+        onConfirm={(raison, commentaires) => {
+          annulerMutation.mutate({ missionId: mission.id, raison, commentaires });
+        }}
+        isPending={annulerMutation.isPending}
+      />
+
+      <SignalerChangementDialog
+        open={changementDialogOpen}
+        onOpenChange={setChangementDialogOpen}
+        onConfirm={(type, motif) => {
+          changementMutation.mutate({ missionId: mission.id, type, motif });
+        }}
+        isPending={changementMutation.isPending}
+      />
     </main>
   );
 }

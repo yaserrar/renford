@@ -14,6 +14,7 @@ import {
   respondToMissionRenfordByEtablissement,
   setVisioLinkByEtablissement,
   signContractByEtablissement,
+  signalerChangementByEtablissement,
   triggerManualMissionSearchByEtablissement,
 } from './missions.controller';
 import {
@@ -79,6 +80,13 @@ router.post(
   authenticateToken(['etablissement']),
   validateResource({ params: missionIdParamsSchema }),
   cancelMissionByEtablissement,
+);
+
+router.post(
+  '/etablissement/missions/:missionId/signaler-changement',
+  authenticateToken(['etablissement']),
+  validateResource({ params: missionIdParamsSchema }),
+  signalerChangementByEtablissement,
 );
 
 router.post(
