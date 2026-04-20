@@ -12,6 +12,7 @@ import type { PaiementWithMission } from "@/hooks/paiement";
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { Calendar } from "lucide-react";
+import FactureButton from "@/components/common/facture-button";
 
 export const renfordColumns: ColumnDef<PaiementWithMission>[] = [
   {
@@ -100,5 +101,17 @@ export const renfordColumns: ColumnDef<PaiementWithMission>[] = [
         ),
       },
     },
+  },
+  {
+    id: "Facture",
+    header: ({ column }) => <ColumnHeader column={column} header="Facture" />,
+    cell: ({ row: { original } }) => (
+      <FactureButton
+        paiementId={original.id}
+        stripePaymentIntentId={original.stripePaymentIntentId}
+        statut={original.statut}
+      />
+    ),
+    enableSorting: false,
   },
 ];

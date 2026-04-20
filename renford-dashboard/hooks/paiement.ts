@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils";
 import useAxios from "./axios";
+import { useCurrentUser } from "./utilisateur";
 
 // ─── Renford: Connect Account Status ─────────────────────────────────────────
 
@@ -17,6 +18,7 @@ export type ConnectAccountStatus = {
 
 export const useConnectAccountStatus = () => {
   const axios = useAxios();
+  const { data: user } = useCurrentUser();
 
   return useQuery({
     queryKey: ["connect-account-status"],
@@ -25,6 +27,7 @@ export const useConnectAccountStatus = () => {
         .data as ConnectAccountStatus;
     },
     staleTime: 1000 * 60 /* 1 minute */,
+    enabled: !!user && user.typeUtilisateur === "renford",
   });
 };
 
@@ -141,5 +144,26 @@ export const usePaymentHistory = () => {
         .data as PaiementWithMission[];
     },
     staleTime: 1000 * 60,
+  });
+};
+
+// ─── Shared: Get Stripe Receipt URL ─────────────────────────────────────────
+
+export const usePaymentReceiptUrl = () => {
+  const axios = useAxios();
+
+  return useMutation({
+    mutationFn: async (paiementId: string) => {
+      return (await axios.get(`/paiement/${paiementId}/facture`)).data as {
+        receiptUrl: string;
+      };
+    },
+    onSuccess: (data) => {
+      window.open(data.receiptUrl, "_blank");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
   });
 };

@@ -3,7 +3,11 @@ import prisma from '../../config/prisma';
 import { stripe } from '../../config/stripe';
 import { env } from '../../config/env';
 import { logger } from '../../config/logger';
-import type { CreateCheckoutSessionSchema, MissionIdParamSchema } from './paiement.schema';
+import type {
+  CreateCheckoutSessionSchema,
+  MissionIdParamSchema,
+  PaiementIdParamSchema,
+} from './paiement.schema';
 
 // ─── Renford: Create Stripe Connect onboarding link ──────────────────────────
 
@@ -623,6 +627,63 @@ export const getPaymentHistory = async (req: Request, res: Response, next: NextF
     });
 
     return res.json(paiements);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+// ─── Get Stripe Receipt URL for a Payment ────────────────────────────────────
+
+export const getPaymentReceiptUrl = async (
+  req: Request<PaiementIdParamSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+    const { paiementId } = req.params as { paiementId: string };
+
+    const paiement = await prisma.paiement.findFirst({
+      where: {
+        id: paiementId,
+        mission: {
+          OR: [
+            {
+              etablissement: {
+                profilEtablissement: { utilisateurId: userId },
+              },
+            },
+            {
+              missionsRenford: {
+                some: {
+                  profilRenford: { utilisateurId: userId },
+                },
+              },
+            },
+          ],
+        },
+      },
+      select: { stripePaymentIntentId: true, statut: true },
+    });
+
+    if (!paiement) {
+      return res.status(404).json({ message: 'Paiement non trouvé' });
+    }
+
+    if (!paiement.stripePaymentIntentId) {
+      return res.status(400).json({ message: 'Aucun paiement Stripe associé' });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.retrieve(paiement.stripePaymentIntentId, {
+      expand: ['latest_charge'],
+    });
+
+    const charge = paymentIntent.latest_charge;
+    if (!charge || typeof charge === 'string' || !charge.receipt_url) {
+      return res.status(404).json({ message: 'Reçu non disponible' });
+    }
+
+    return res.json({ receiptUrl: charge.receipt_url });
   } catch (err) {
     return next(err);
   }

@@ -12,6 +12,7 @@ import type { PaiementWithMission } from "@/hooks/paiement";
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { Calendar } from "lucide-react";
+import FactureButton from "@/components/common/facture-button";
 
 export const etablissementColumns: ColumnDef<PaiementWithMission>[] = [
   {
@@ -39,7 +40,8 @@ export const etablissementColumns: ColumnDef<PaiementWithMission>[] = [
           {original.mission.specialitePrincipale.replaceAll("_", " ")}
         </span>
         <span className="text-sm text-muted-foreground flex items-center gap-1">
-          <Calendar size={16} /> {original.mission.dateFin
+          <Calendar size={16} />{" "}
+          {original.mission.dateFin
             ? `Mission du ${formatFrenchDate(original.mission.dateDebut)} au ${formatFrenchDate(original.mission.dateFin)}`
             : `Mission le ${formatFrenchDate(original.mission.dateDebut)}`}
         </span>
@@ -97,5 +99,17 @@ export const etablissementColumns: ColumnDef<PaiementWithMission>[] = [
         ),
       },
     },
+  },
+  {
+    id: "Facture",
+    header: ({ column }) => <ColumnHeader column={column} header="Facture" />,
+    cell: ({ row: { original } }) => (
+      <FactureButton
+        paiementId={original.id}
+        stripePaymentIntentId={original.stripePaymentIntentId}
+        statut={original.statut}
+      />
+    ),
+    enableSorting: false,
   },
 ];

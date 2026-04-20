@@ -8,9 +8,14 @@ import {
   getConnectAccountStatus,
   getMissionPaymentStatus,
   getPaymentHistory,
+  getPaymentReceiptUrl,
   handleStripeWebhook,
 } from './paiement.controller';
-import { createCheckoutSessionSchema, missionIdParamSchema } from './paiement.schema';
+import {
+  createCheckoutSessionSchema,
+  missionIdParamSchema,
+  paiementIdParamSchema,
+} from './paiement.schema';
 
 const router = Router();
 
@@ -49,6 +54,13 @@ router.get(
 );
 
 router.get('/paiement/history', authenticateToken(['renford', 'etablissement']), getPaymentHistory);
+
+router.get(
+  '/paiement/:paiementId/facture',
+  authenticateToken(['renford', 'etablissement']),
+  validateResource({ params: paiementIdParamSchema }),
+  getPaymentReceiptUrl,
+);
 
 // ─── Webhook (no auth - verified by Stripe signature) ────────────────────────
 // NOTE: This route is mounted separately in app.ts with express.raw() body parser
