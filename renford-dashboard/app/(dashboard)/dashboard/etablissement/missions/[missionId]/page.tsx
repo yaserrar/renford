@@ -259,6 +259,16 @@ export default function EtablissementMissionDetailsPage() {
 
   const documentGroups = [
     {
+      title: "Devis",
+      documents: [
+        {
+          id: "devis",
+          label: "Devis pour services et commission",
+          date: documentDate,
+        },
+      ],
+    },
+    {
       title: "Factures",
       documents: [
         {
@@ -845,6 +855,7 @@ export default function EtablissementMissionDetailsPage() {
                     missionId: mission.id,
                     missionRenfordId: firstMissionRenford.id,
                     documentType: documentId as
+                      | "devis"
                       | "facture_prestation"
                       | "facture_commission"
                       | "contrat_prestation",
@@ -930,9 +941,9 @@ export default function EtablissementMissionDetailsPage() {
         open={changementDialogOpen}
         onOpenChange={setChangementDialogOpen}
         isPending={changementMutation.isPending}
-        onSubmit={(data) =>
+        onConfirm={(type, motif) =>
           changementMutation.mutate(
-            { missionId: mission.id, ...data },
+            { missionId: mission.id, type, motif },
             { onSuccess: () => setChangementDialogOpen(false) },
           )
         }
