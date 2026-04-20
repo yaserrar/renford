@@ -4,6 +4,7 @@ import MobileSidebarToggle from "@/components/layout/mobile-sidebar-toggle";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import CurrentUserProvider from "@/providers/current-user-provider";
 import SessionProvider from "@/providers/session-provider";
+import StripeSetupProvider from "@/providers/stripe-setup-provider";
 import TanstackQueryProvider from "@/providers/tanstack-query-provider";
 import { Metadata } from "next";
 import { Poppins } from "next/font/google";
@@ -45,13 +46,15 @@ export default function RootLayout({ children }: Props) {
         <TanstackQueryProvider>
           <SessionProvider>
             <CurrentUserProvider>
-              <SidebarProvider>
-                <AppSidebar />
-                <SidebarInset>
-                  <MobileSidebarToggle />
-                  <main className="h-full bg-white px-2">{children}</main>
-                </SidebarInset>
-              </SidebarProvider>
+              <StripeSetupProvider>
+                <SidebarProvider>
+                  <AppSidebar />
+                  <SidebarInset>
+                    <MobileSidebarToggle />
+                    <main className="h-full bg-white px-2">{children}</main>
+                  </SidebarInset>
+                </SidebarProvider>
+              </StripeSetupProvider>
             </CurrentUserProvider>
           </SessionProvider>
         </TanstackQueryProvider>

@@ -14,7 +14,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useCurrentUser } from "@/hooks/utilisateur";
-import { getUrl } from "@/lib/utils";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 import useSession from "@/stores/session-store";
 import { ChevronRight, LogOut, User } from "lucide-react";
 import Link from "next/link";
@@ -43,8 +43,8 @@ const NavAccount = () => {
     me?.typeUtilisateur === "etablissement"
       ? me.profilEtablissement?.avatarChemin
       : me?.typeUtilisateur === "renford"
-      ? me.profilRenford?.avatarChemin
-      : null;
+        ? me.profilRenford?.avatarChemin
+        : null;
 
   return (
     <SidebarMenu>
@@ -56,7 +56,7 @@ const NavAccount = () => {
               className="px-3 py-8 border border-input rounded-2xl"
             >
               <Avatar className="h-10 w-10">
-                <AvatarImage src={getUrl(avatarChemin)} alt={nomComplet} />
+                <SecureAvatarImage chemin={avatarChemin} alt={nomComplet} />
                 <AvatarFallback className="bg-gray-200 text-gray-600">
                   {fallbackInitiales}
                 </AvatarFallback>

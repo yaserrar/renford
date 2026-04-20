@@ -4,6 +4,7 @@ import {
   Building2,
   CalendarDays,
   CircleHelp,
+  CreditCard,
   FileText,
   Home,
   Handshake,
@@ -73,15 +74,14 @@ const ETABLISSEMENT_MAIN_LINKS = [
 ];
 
 const RENFORD_FOOTER_LINKS = [
-  { title: "Bons plans", url: "#", icon: Percent },
   { title: "Support", url: "/dashboard/support", icon: CircleHelp },
 ];
 
 const ETABLISSEMENT_FOOTER_LINKS = [
   {
-    title: "Bons plans",
-    url: "#",
-    icon: Percent,
+    title: "Abonnement",
+    url: "/dashboard/etablissement/abonnement",
+    icon: CreditCard,
   },
   {
     title: "Support",

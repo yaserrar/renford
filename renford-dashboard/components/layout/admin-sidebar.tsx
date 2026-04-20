@@ -1,6 +1,14 @@
 "use client";
 
-import { Home, Shield, Users, Mail, Handshake, LogOut } from "lucide-react";
+import {
+  Home,
+  Shield,
+  Users,
+  Mail,
+  Handshake,
+  LogOut,
+  CreditCard,
+} from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/common/logo";
 import useSession from "@/stores/session-store";
@@ -23,6 +31,7 @@ import {
 const ADMIN_LINKS = [
   { title: "Accueil", url: "/admin/accueil", icon: Home },
   { title: "Missions", url: "/admin/missions", icon: Handshake },
+  { title: "Paiements", url: "/admin/paiements", icon: CreditCard },
   { title: "Administrateurs", url: "/admin/administrateurs", icon: Shield },
   { title: "Utilisateurs", url: "/admin/utilisateurs", icon: Users },
   { title: "Messages", url: "/admin/messages", icon: Mail },
