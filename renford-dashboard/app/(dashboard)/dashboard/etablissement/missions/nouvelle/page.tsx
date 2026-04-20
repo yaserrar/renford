@@ -365,6 +365,7 @@ export default function NouvelleMissionPage() {
     plagesHoraires: selectedPlagesHoraires || [],
     methodeTarification: selectedMethodeTarification ?? "horaire",
     tarif: hasValidTarif ? selectedTarif : 0,
+    modeMission: selectedMode ?? "flex",
   });
 
   const totalHT = pricing.montantHT;
@@ -559,10 +560,14 @@ export default function NouvelleMissionPage() {
       shouldDirty: true,
       shouldValidate: true,
     });
-    setValue("dateFin", mission.dateFin ? normalizeDate(mission.dateFin) : undefined, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
+    setValue(
+      "dateFin",
+      mission.dateFin ? normalizeDate(mission.dateFin) : undefined,
+      {
+        shouldDirty: true,
+        shouldValidate: true,
+      },
+    );
     setValue("plagesHoraires", normalizedPlages, {
       shouldDirty: true,
       shouldValidate: true,
@@ -1042,9 +1047,7 @@ export default function NouvelleMissionPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="dateDebut">
-                      Date de la mission
-                    </Label>
+                    <Label htmlFor="dateDebut">Date de la mission</Label>
                     <Controller
                       name="dateDebut"
                       control={control}
@@ -1055,10 +1058,7 @@ export default function NouvelleMissionPage() {
                             field.onChange(date);
                             if (selectedMode === "flex" && date) {
                               horaireFields.forEach((_, i) => {
-                                setValue(
-                                  `plagesHoraires.${i}.date`,
-                                  date,
-                                );
+                                setValue(`plagesHoraires.${i}.date`, date);
                               });
                             }
                           }}
@@ -1534,7 +1534,9 @@ export default function NouvelleMissionPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="text-muted-foreground">
-                        Frais de service HT ({PLATFORM_COMMISSION_PERCENT}%)
+                        {selectedMode === "coach"
+                          ? "Frais de mise en relation HT"
+                          : `Frais de service HT (${PLATFORM_COMMISSION_PERCENT}%)`}
                       </p>
                       <p className="text-muted-foreground">
                         {formatEuroAmount(fraisHT)}

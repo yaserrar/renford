@@ -2,7 +2,8 @@
 
 import { CalendarDays, Clock3, Lock, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 import { Button } from "@/components/ui/button";
 import MissionRenfordStatusBadge from "@/components/common/mission-renford-status-badge";
 import {
@@ -19,7 +20,6 @@ import {
   formatDurationHours,
   formatFrenchDate,
   getInitials,
-  getUrl,
   canApplyForMission,
 } from "@/lib/utils";
 import { useRespondToMissionProposal } from "@/hooks/mission";
@@ -93,12 +93,8 @@ export default function RenfordMissionCard({ item }: RenfordMissionCardProps) {
               "mt-0.5 md:h-30 md:w-30 h-16 w-16 shrink-0 md:rounded-xl rounded-sm",
             )}
           >
-            <AvatarImage
-              src={
-                etablissement?.avatarChemin
-                  ? getUrl(etablissement.avatarChemin)
-                  : undefined
-              }
+            <SecureAvatarImage
+              chemin={etablissement?.avatarChemin}
               alt={etablissement?.nom ?? "Établissement"}
               className="rounded-md"
             />

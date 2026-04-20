@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getUrl } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 import { PlanningRenford } from "@/types/mission";
 import SlotCell from "./slot-cell";
 
@@ -23,7 +23,7 @@ export default function RenfordRow({ renford, days, onSlotClick }: Props) {
       <td className="sticky left-0 z-10 bg-white py-3 pl-4 pr-6">
         <div className="flex items-center gap-3">
           <Avatar className="size-10">
-            <AvatarImage src={getUrl(renford.avatarChemin)} />
+            <SecureAvatarImage chemin={renford.avatarChemin} />
             <AvatarFallback className="text-xs font-semibold">
               {renford.prenom?.[0]}
               {renford.nom?.[0]}

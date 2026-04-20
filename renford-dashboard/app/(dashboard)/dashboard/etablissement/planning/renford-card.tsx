@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getUrl } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 import { PlanningRenford } from "@/types/mission";
 
 type Props = {
@@ -23,7 +23,7 @@ export default function RenfordCard({
     <div className="flex items-start gap-3 rounded-xl border border-border bg-white p-4">
       <div className="flex flex-col items-center gap-1">
         <Avatar className="size-12">
-          <AvatarImage src={getUrl(renford.avatarChemin)} />
+          <SecureAvatarImage chemin={renford.avatarChemin} />
           <AvatarFallback className="text-xs font-semibold">
             {renford.prenom?.[0]}
             {renford.nom?.[0]}

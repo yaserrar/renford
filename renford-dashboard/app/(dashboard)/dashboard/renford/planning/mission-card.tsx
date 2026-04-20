@@ -1,9 +1,10 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/utilisateur";
-import { cn, getInitials, getUrl } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { RenfordPlanningSlot } from "@/types/mission";
 import {
   DISCIPLINE_MISSION_LABELS,
@@ -45,12 +46,8 @@ export default function MissionCard({ slot, className }: Props) {
       >
         {/* Avatar */}
         <Avatar className="mt-0.5 md:h-30 md:w-30 h-16 w-16 shrink-0 rounded-sm md:rounded-xl">
-          <AvatarImage
-            src={
-              slot.etablissement.avatarChemin
-                ? getUrl(slot.etablissement.avatarChemin)
-                : undefined
-            }
+          <SecureAvatarImage
+            chemin={slot.etablissement.avatarChemin}
             alt={slot.etablissement.nom}
             className="rounded-md"
           />

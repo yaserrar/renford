@@ -1,7 +1,8 @@
 "use client";
 
 import { useCurrentUser } from "@/hooks/utilisateur";
-import { cn, getUrl } from "@/lib/utils";
+import { useFileUrl } from "@/hooks/use-file-url";
+import { cn } from "@/lib/utils";
 import { CalendarDays, Clock3, List, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -42,6 +43,7 @@ export default function PlanningItem({
   className,
 }: PlanningItemProps) {
   const { data: currentUser } = useCurrentUser();
+  const logoUrl = useFileUrl(logoSrc ?? null);
 
   return (
     <Link
@@ -64,9 +66,9 @@ export default function PlanningItem({
               : "md:h-30 md:w-30 h-16 w-16 md:rounded-xl rounded-sm",
           )}
         >
-          {logoSrc ? (
+          {logoSrc && logoUrl ? (
             <Image
-              src={getUrl(logoSrc)}
+              src={logoUrl}
               alt={title}
               width={80}
               height={80}

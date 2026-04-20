@@ -4,7 +4,8 @@ import { useState } from "react";
 import { CalendarDays, Clock3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 import MissionStatusBadge from "@/components/common/mission-status-badge";
 import StarRating from "@/components/common/star-rating";
 import NoterRenfordDialog from "@/components/common/noter-renford-dialog";
@@ -19,7 +20,6 @@ import {
   formatDurationHours,
   formatFrenchDate,
   getInitials,
-  getUrl,
 } from "@/lib/utils";
 
 type EtablissementMissionCardProps = {
@@ -39,7 +39,7 @@ export default function EtablissementMissionCard({
 
   // Avatar logic: show renford avatar if assigned, otherwise etablissement avatar
   const renford = mission.renfordAssigne;
-  const avatarSrc = renford ? getUrl(renford.avatarChemin) : "";
+  const avatarChemin = renford?.avatarChemin ?? null;
   const avatarInitials = renford
     ? getInitials(`${renford.prenom} ${renford.nom}`)
     : getInitials(mission.etablissement?.nom);
@@ -98,7 +98,7 @@ export default function EtablissementMissionCard({
           <div className="">
             <div className="flex min-w-0 items-center gap-3">
               <Avatar className="h-16 w-16 shrink-0">
-                <AvatarImage src={avatarSrc} alt={avatarSubtext} />
+                <SecureAvatarImage chemin={avatarChemin} alt={avatarSubtext} />
                 <AvatarFallback className="bg-secondary/10 text-secondary-dark text-sm font-medium">
                   {avatarInitials}
                 </AvatarFallback>
