@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { v4 as uuid } from 'uuid';
+import { promises as fs } from 'fs';
 import path from 'path';
-import { minioClient, MINIO_BUCKET } from '../../config/minio';
+import { v4 as uuid } from 'uuid';
 
 interface FileRequest extends Request {
   file: Express.Multer.File;
@@ -15,6 +15,7 @@ export const uploadController = async (req: FileRequest, res: Response) => {
     const uploadName = req.body.name as string | undefined;
     const file = req.file;
 
+    // Check if file is present
     if (!file) {
       return res.status(400).json({
         status: false,
@@ -29,22 +30,24 @@ export const uploadController = async (req: FileRequest, res: Response) => {
       });
     }
 
+    // Create upload directory if it doesn't exist
+    const uploadDir = path.join(process.cwd(), 'uploads', uploadPath);
+    await fs.mkdir(uploadDir, { recursive: true });
+
+    // Generate unique filename using UUID
     const ext = path.extname(file.originalname);
     const filename =
-      uploadName && uploadName !== ''
+      uploadName && uploadName != ''
         ? `${uploadName.toLowerCase().replaceAll(' ', '-')}-${uuid().split('-')[0]}${uuid().split('-')[0]}${ext}`
         : `${uuid()}${ext}`;
+    const filepath = path.join(uploadDir, filename);
 
-    // Object key in MinIO: uploads/<path>/<filename>
-    const objectKey = `uploads/${uploadPath}/${filename}`;
+    // Write file to filesystem
+    await fs.writeFile(filepath, file.buffer);
 
-    await minioClient.putObject(MINIO_BUCKET, objectKey, file.buffer, file.size, {
-      'Content-Type': file.mimetype,
-      'x-amz-meta-uploaded-by': req.utilisateur!.id,
-    });
-
+    // Return response
     return res.status(201).json({
-      path: objectKey,
+      path: `uploads/${uploadPath}/${filename}`,
     });
   } catch {
     return res.status(500).json({
