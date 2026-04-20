@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import prisma from '../../config/prisma';
-import type { ToggleUserStatusBody } from './utilisateur.schema';
+import type { ToggleUserStatusBody, ToggleDiplomeVerificationBody } from './utilisateur.schema';
 
 // GET /admin/users - Liste des utilisateurs (établissements + renfords)
 export const getUsers = async (_req: Request, res: Response, next: NextFunction) => {
@@ -120,6 +120,38 @@ export const toggleUserStatus = async (
         nom: true,
         prenom: true,
         statut: true,
+      },
+    });
+
+    return res.json(updated);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+// PUT /admin/diplomes/:diplomeId/verification - Vérifier/Dévérifier un diplôme
+export const toggleDiplomeVerification = async (
+  req: Request<{ diplomeId: string }, unknown, ToggleDiplomeVerificationBody>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { diplomeId } = req.params;
+    const { verifie } = req.body;
+
+    const diplome = await prisma.renfordDiplome.findUnique({
+      where: { id: diplomeId },
+    });
+
+    if (!diplome) {
+      return res.status(404).json({ message: 'Diplôme non trouvé' });
+    }
+
+    const updated = await prisma.renfordDiplome.update({
+      where: { id: diplomeId },
+      data: {
+        verifie,
+        dateVerification: verifie ? new Date() : null,
       },
     });
 

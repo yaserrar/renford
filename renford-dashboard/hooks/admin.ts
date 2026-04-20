@@ -3,6 +3,7 @@ import type {
   AdminListItem,
   AdminMissionDetail,
   AdminMissionListItem,
+  AdminPaiementListItem,
   AdminStats,
   AdminUserDetail,
   AdminUserListItem,
@@ -163,6 +164,40 @@ export const useToggleUserStatus = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("Statut mis à jour");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+};
+
+// ─── Admin diploma verification ──────────────────────────────
+
+export const useToggleDiplomeVerification = () => {
+  const axios = useAxios();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      diplomeId,
+      verifie,
+    }: {
+      userId: string;
+      diplomeId: string;
+      verifie: boolean;
+    }) => {
+      return (
+        await axios.put(`/admin/diplomes/${diplomeId}/verification`, {
+          verifie,
+        })
+      ).data;
+    },
+    onSuccess: (_data, variables) => {
+      qc.refetchQueries({ queryKey: ["admin-users", variables.userId] });
+      toast.success(
+        variables.verifie ? "Diplôme vérifié" : "Vérification retirée",
+      );
     },
     onError: (error) => {
       toast.error(getErrorMessage(error));
@@ -371,6 +406,38 @@ export const useMarkAllAdminNotificationsRead = () => {
       qc.invalidateQueries({ queryKey: ["admin-notifications"] });
       qc.invalidateQueries({ queryKey: ["admin-notifications-unread-count"] });
       toast.success("Notifications marquées comme lues");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+};
+
+// ─── Admin paiements ─────────────────────────────────────────
+
+export const useAdminPaiements = () => {
+  const axios = useAxios();
+
+  return useQuery({
+    queryKey: ["admin-paiements"],
+    queryFn: async () => {
+      return (await axios.get("/admin/paiements"))
+        .data as AdminPaiementListItem[];
+    },
+    staleTime: 1000 * 60,
+  });
+};
+
+export const useAdminPaymentReceiptUrl = () => {
+  const axios = useAxios();
+
+  return useMutation({
+    mutationFn: async (paiementId: string) => {
+      return (await axios.get(`/admin/paiements/${paiementId}/facture`))
+        .data as { receiptUrl: string };
+    },
+    onSuccess: (data) => {
+      window.open(data.receiptUrl, "_blank");
     },
     onError: (error) => {
       toast.error(getErrorMessage(error));

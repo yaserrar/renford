@@ -6,7 +6,8 @@ import CenterState from "@/components/common/center-state";
 import MissionStatusBadge from "@/components/common/mission-status-badge";
 import MissionRenfordStatusBadge from "@/components/common/mission-renford-status-badge";
 import UserMiniCard from "@/components/common/user-mini-card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +24,7 @@ import {
   User,
 } from "lucide-react";
 import { formatDate } from "@/lib/date";
-import { getInitials, getUrl } from "@/lib/utils";
+import { getInitials } from "@/lib/utils";
 import {
   DISCIPLINE_MISSION_LABELS,
   MODE_MISSION_LABELS,
@@ -193,11 +194,11 @@ export default function AdminMissionDetailPage() {
                 ) : (
                   <>
                     <Avatar className="h-12 w-12">
-                      <AvatarImage
-                        src={getUrl(
+                      <SecureAvatarImage
+                        chemin={
                           mission.etablissement.profilEtablissement
-                            ?.avatarChemin,
-                        )}
+                            ?.avatarChemin
+                        }
                       />
                       <AvatarFallback className="bg-blue-100 text-blue-700">
                         <Building2 className="h-5 w-5" />
@@ -293,7 +294,7 @@ export default function AdminMissionDetailPage() {
                       className="w-full flex items-center gap-4 py-4 px-2 hover:bg-gray-50 rounded-lg transition-colors text-left"
                     >
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={getUrl(renford.avatarChemin)} />
+                        <SecureAvatarImage chemin={renford.avatarChemin} />
                         <AvatarFallback className="bg-secondary-background text-secondary text-sm">
                           {getInitials(fullName)}
                         </AvatarFallback>
@@ -372,7 +373,7 @@ function CandidatureDetailDialog({
           {/* Renford profile */}
           <div className="flex items-center gap-4">
             <Avatar className="h-14 w-14">
-              <AvatarImage src={getUrl(renford.avatarChemin)} />
+              <SecureAvatarImage chemin={renford.avatarChemin} />
               <AvatarFallback className="bg-secondary-background text-secondary">
                 {getInitials(fullName)}
               </AvatarFallback>

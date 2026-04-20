@@ -87,14 +87,19 @@ export type AdminUserDetail = AdminUserListItem & {
     stripeConnectOnboardingComplete: boolean;
     renfordDiplomes: Array<{
       id: string;
-      intitule: string;
-      organisme: string | null;
+      typeDiplome: string;
+      justificatifDiplomeChemin: string | null;
+      mention: string | null;
       anneeObtention: number | null;
+      etablissementFormation: string | null;
+      verifie: boolean;
+      dateVerification: string | null;
     }>;
     experiencesProfessionnelles: Array<{
       id: string;
-      intitulePoste: string;
-      nomEntreprise: string | null;
+      nom: string;
+      etablissement: string;
+      missions: string;
       dateDebut: string | null;
       dateFin: string | null;
     }>;
@@ -248,4 +253,46 @@ export type AdminMissionRenford = {
     note: number;
     commentaire: string | null;
   } | null;
+};
+
+// ─── Admin paiement list item ───────────────────────────────
+
+export type AdminPaiementListItem = {
+  id: string;
+  reference: string;
+  missionId: string;
+  montantHT: number;
+  montantTVA: number;
+  montantTTC: number;
+  montantCommission: number;
+  montantNetRenford: number;
+  statut: string;
+  stripePaymentIntentId: string | null;
+  dateCreation: string;
+  dateCapture: string | null;
+  dateLiberation: string | null;
+  mission: {
+    id: string;
+    specialitePrincipale: string;
+    dateDebut: string;
+    dateFin: string | null;
+    etablissement: {
+      id: string;
+      nom: string;
+      profilEtablissement: {
+        utilisateurId: string;
+        avatarChemin: string | null;
+      } | null;
+    };
+    missionsRenford: Array<{
+      profilRenford: {
+        utilisateurId: string;
+        avatarChemin: string | null;
+        utilisateur: {
+          nom: string;
+          prenom: string;
+        };
+      };
+    }>;
+  };
 };

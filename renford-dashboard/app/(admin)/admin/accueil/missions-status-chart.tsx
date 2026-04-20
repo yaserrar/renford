@@ -86,18 +86,17 @@ const MissionsStatusChart = () => {
       <CardContent className="flex-1">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[350px] pb-0"
+          className="mx-auto aspect-square max-h-[350px] pb-0 [&>svg]:overflow-visible"
         >
-          <PieChart>
+          <PieChart margin={{ top: 24, right: 24, bottom: 0, left: 24 }}>
             <ChartTooltip content={<ChartTooltipContent hideLabel />} />
             <Pie
               data={chartData}
               dataKey="count"
               nameKey="statut"
               innerRadius={50}
-              outerRadius={100}
+              outerRadius={90}
               paddingAngle={2}
-              label={(entry) => LABELS[entry.statut] || entry.statut}
             >
               {chartData.map((slice) => (
                 <Cell key={slice.statut} fill={slice.fill} />

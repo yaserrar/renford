@@ -3,11 +3,12 @@ import {
   dateFilterFn,
   selectFilterFn,
 } from "@/components/table/filter-functions";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 import { formatDate, formatTime } from "@/lib/date";
-import { cn, getUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { AdminUserListItem } from "@/types/admin";
 import {
   STATUT_COMPTE_LABELS,
@@ -35,7 +36,7 @@ export const columns: ColumnDef<AdminUserListItem>[] = [
       return (
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={getUrl(avatarPath)} alt={name} />
+            <SecureAvatarImage chemin={avatarPath} alt={name} />
             <AvatarFallback
               className={cn(
                 "text-sm font-medium",

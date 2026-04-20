@@ -1,7 +1,13 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { AdminUserDetail } from "@/types/admin";
+import { useToggleDiplomeVerification } from "@/hooks/admin";
+import { DIPLOME_LABELS } from "@/validations/profil-renford";
+import { SecureLink } from "@/components/common/secure-file";
+import { CheckCircle, XCircle, Eye, Loader2 } from "lucide-react";
 
 type Props = {
   user: AdminUserDetail;
@@ -82,20 +88,11 @@ export default function RenfordDetails({ user }: Props) {
             </h3>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               {profil.renfordDiplomes.map((diplome) => (
-                <div
+                <DiplomeCard
                   key={diplome.id}
-                  className="rounded-lg border p-4 text-sm bg-white space-y-1"
-                >
-                  <p className="font-medium">{diplome.intitule}</p>
-                  {diplome.organisme && (
-                    <p className="text-muted-foreground">{diplome.organisme}</p>
-                  )}
-                  {diplome.anneeObtention && (
-                    <p className="text-muted-foreground">
-                      {diplome.anneeObtention}
-                    </p>
-                  )}
-                </div>
+                  diplome={diplome}
+                  userId={user.id}
+                />
               ))}
             </div>
           </CardContent>
@@ -116,10 +113,10 @@ export default function RenfordDetails({ user }: Props) {
                     key={exp.id}
                     className="rounded-lg border p-4 text-sm bg-white space-y-1"
                   >
-                    <p className="font-medium">{exp.intitulePoste}</p>
-                    {exp.nomEntreprise && (
+                    <p className="font-medium">{exp.nom}</p>
+                    {exp.etablissement && (
                       <p className="text-muted-foreground">
-                        {exp.nomEntreprise}
+                        {exp.etablissement}
                       </p>
                     )}
                     {(exp.dateDebut || exp.dateFin) && (
@@ -133,6 +130,88 @@ export default function RenfordDetails({ user }: Props) {
             </CardContent>
           </Card>
         )}
+    </div>
+  );
+}
+
+function DiplomeCard({
+  diplome,
+  userId,
+}: {
+  diplome: NonNullable<
+    AdminUserDetail["profilRenford"]
+  >["renfordDiplomes"][number];
+  userId: string;
+}) {
+  const mutation = useToggleDiplomeVerification();
+  const label =
+    DIPLOME_LABELS[diplome.typeDiplome as keyof typeof DIPLOME_LABELS] ??
+    diplome.typeDiplome.replaceAll("_", " ");
+
+  return (
+    <div className="rounded-lg border p-4 text-sm bg-white space-y-3">
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-medium truncate">{label}</p>
+          <Badge
+            variant={diplome.verifie ? "default" : "secondary"}
+            className="shrink-0"
+          >
+            {diplome.verifie ? "Vérifié" : "Non vérifié"}
+          </Badge>
+        </div>
+        {diplome.etablissementFormation && (
+          <p className="text-muted-foreground">
+            {diplome.etablissementFormation}
+          </p>
+        )}
+        {diplome.anneeObtention && (
+          <p className="text-muted-foreground">
+            Obtenu en {diplome.anneeObtention}
+          </p>
+        )}
+        {diplome.mention && (
+          <p className="text-muted-foreground">Mention : {diplome.mention}</p>
+        )}
+        {diplome.dateVerification && (
+          <p className="text-xs text-muted-foreground">
+            Vérifié le{" "}
+            {new Date(diplome.dateVerification).toLocaleDateString("fr-FR")}
+          </p>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2">
+        {diplome.justificatifDiplomeChemin && (
+          <Button variant="outline" size="sm" asChild>
+            <SecureLink chemin={diplome.justificatifDiplomeChemin}>
+              <Eye className="h-3.5 w-3.5 mr-1" />
+              Justificatif
+            </SecureLink>
+          </Button>
+        )}
+        <Button
+          variant={diplome.verifie ? "outline" : "default"}
+          size="sm"
+          disabled={mutation.isPending}
+          onClick={() =>
+            mutation.mutate({
+              diplomeId: diplome.id,
+              verifie: !diplome.verifie,
+              userId,
+            })
+          }
+        >
+          {mutation.isPending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+          ) : diplome.verifie ? (
+            <XCircle className="h-3.5 w-3.5 mr-1" />
+          ) : (
+            <CheckCircle className="h-3.5 w-3.5 mr-1" />
+          )}
+          {diplome.verifie ? "Retirer vérification" : "Vérifier"}
+        </Button>
+      </div>
     </div>
   );
 }

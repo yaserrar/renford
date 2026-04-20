@@ -16,8 +16,9 @@ import {
   STATUT_COMPTE_LABELS,
 } from "@/validations/utilisateur";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getUrl, getInitials } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SecureAvatarImage } from "@/components/common/secure-file";
+import { getInitials } from "@/lib/utils";
 import { formatDate } from "@/lib/date";
 import {
   Mail,
@@ -83,7 +84,7 @@ export default function UserDetailPage() {
               </Link>
             </Button>
             <Avatar className="h-14 w-14">
-              <AvatarImage src={getUrl(avatarPath)} />
+              <SecureAvatarImage chemin={avatarPath} />
               <AvatarFallback
                 className={cn(
                   "text-sm font-medium",
