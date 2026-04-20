@@ -2,14 +2,22 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { CalendarDays, Clock3, Lock, MapPin } from "lucide-react";
+import {
+  CalendarDays,
+  Clock3,
+  ExternalLink,
+  Lock,
+  MapPin,
+  Video,
+} from "lucide-react";
 import { toast } from "sonner";
 import DetailRow from "@/components/common/detail-row";
 import DocumentCategoryCard from "@/components/common/document-category-card";
 import MissionRenfordStatusBadge from "@/components/common/mission-renford-status-badge";
 import SignatureContratDialog from "@/components/common/signature-contrat-dialog";
 import CenterState from "@/components/common/center-state";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 import { Button } from "@/components/ui/button";
 import { H2 } from "@/components/ui/typography";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,7 +33,6 @@ import {
   formatDurationHours,
   formatFrenchDate,
   getInitials,
-  getUrl,
   canApplyForMission,
 } from "@/lib/utils";
 import {
@@ -167,6 +174,10 @@ export default function RenfordMissionDetailsPage() {
   const isOpportunite = OPPORTUNITE_STATUSES.includes(missionRenford.statut);
   const isSignable = SIGNABLE_STATUSES.includes(missionRenford.statut);
 
+  const bothSignaturesExist =
+    !!missionRenford.signatureContratPrestationRenfordId &&
+    !!missionRenford.signatureContratPrestationEtablissementId;
+
   const documentGroups = [
     {
       title: "Factures",
@@ -190,6 +201,10 @@ export default function RenfordMissionDetailsPage() {
           id: "contrat_prestation",
           label: "Contrat de prestation de services",
           date: documentDate,
+          disabled: !bothSignaturesExist,
+          disabledReason: !bothSignaturesExist
+            ? "Le contrat sera disponible une fois signé par les deux parties"
+            : undefined,
         },
       ],
     },
@@ -256,6 +271,27 @@ export default function RenfordMissionDetailsPage() {
             </div>
           )}
 
+          {missionRenford.lienVisio &&
+            missionRenford.statut === "selection_en_cours" && (
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="dark"
+                  className="px-5"
+                  onClick={() =>
+                    window.open(
+                      missionRenford.lienVisio!,
+                      "_blank",
+                      "noopener,noreferrer",
+                    )
+                  }
+                >
+                  <Video className="mr-2 h-4 w-4" />
+                  Rejoindre la visio
+                  <ExternalLink className="ml-2 h-3 w-3" />
+                </Button>
+              </div>
+            )}
+
           {isSignable && (
             <div className="flex flex-wrap items-center gap-2">
               <Button
@@ -275,12 +311,8 @@ export default function RenfordMissionDetailsPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <Avatar className="h-12 w-12 border border-input">
-                    <AvatarImage
-                      src={
-                        etablissement?.avatarChemin
-                          ? getUrl(etablissement.avatarChemin)
-                          : undefined
-                      }
+                    <SecureAvatarImage
+                      chemin={etablissement?.avatarChemin}
                       alt={etablissementName}
                     />
                     <AvatarFallback>
@@ -416,17 +448,15 @@ export default function RenfordMissionDetailsPage() {
                 key={group.title}
                 title={group.title}
                 documents={group.documents}
-                onDownload={() => {
-                  toast.error("En cours de création");
+                onDownload={(documentId) => {
+                  downloadDocumentMutation.mutate({
+                    missionId: mission.id,
+                    documentType: documentId as
+                      | "facture_prestation"
+                      | "facture_commission"
+                      | "contrat_prestation",
+                  });
                 }}
-                //      onDownload={(documentId) => {
-                // downloadDocumentMutation.mutate({
-                //   missionId: mission.id,
-                //   documentType: documentId as
-                //     | "facture_prestation"
-                //     | "facture_commission"
-                //     | "contrat_prestation",
-                // });
                 isDownloading={downloadDocumentMutation.isPending}
               />
             ))}

@@ -25,7 +25,9 @@ import TerminerMissionDialog from "./terminer-mission-dialog";
 import CloturerMissionDialog from "./cloturer-mission-dialog";
 import AnnulerMissionDialog from "./annuler-mission-dialog";
 import ConfirmRenfordResponseDialog from "./confirm-renford-response-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import VisioDialog from "./visio-dialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 import { Button } from "@/components/ui/button";
 import { H2 } from "@/components/ui/typography";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,6 +45,7 @@ import {
   useEtablissementMissionDetails,
   useMarkMissionTermineeByEtablissement,
   useRespondToMissionRenford,
+  useSetVisioLink,
   useSignContractByEtablissement,
   useTriggerManualMissionSearchByEtablissement,
 } from "@/hooks/mission";
@@ -58,7 +61,6 @@ import {
   formatDurationHours,
   formatFrenchDate,
   getInitials,
-  getUrl,
 } from "@/lib/utils";
 import {
   DISCIPLINE_MISSION_LABELS,
@@ -87,6 +89,7 @@ export default function EtablissementMissionDetailsPage() {
 
   const missionQuery = useEtablissementMissionDetails(missionId);
   const respondMutation = useRespondToMissionRenford();
+  const visioMutation = useSetVisioLink();
   const manualSearchMutation = useTriggerManualMissionSearchByEtablissement();
   const activateMutation = useActivatePendingMissions();
   const cancelMutation = useCancelMissionByEtablissement();
@@ -112,6 +115,11 @@ export default function EtablissementMissionDetailsPage() {
   const [pendingRenfordAction, setPendingRenfordAction] = useState<{
     missionRenfordId: string;
     response: "attente_de_signature" | "refuse_par_etablissement";
+  } | null>(null);
+  const [visioDialogOpen, setVisioDialogOpen] = useState(false);
+  const [visioData, setVisioData] = useState<{
+    lienVisio: string;
+    renfordNom: string;
   } | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const mission = missionQuery.data;
@@ -241,6 +249,10 @@ export default function EtablissementMissionDetailsPage() {
 
   const documentDate = formatFrenchDate(mission.dateCreation, "01/01/2025");
 
+  const bothSignaturesExist =
+    !!firstMissionRenford?.signatureContratPrestationRenfordId &&
+    !!firstMissionRenford?.signatureContratPrestationEtablissementId;
+
   const documentGroups = [
     {
       title: "Factures",
@@ -264,6 +276,10 @@ export default function EtablissementMissionDetailsPage() {
           id: "contrat_prestation",
           label: "Contrat de prestation de services",
           date: documentDate,
+          disabled: !bothSignaturesExist,
+          disabledReason: !bothSignaturesExist
+            ? "Le contrat sera disponible une fois signé par les deux parties"
+            : undefined,
         },
       ],
     },
@@ -309,7 +325,7 @@ export default function EtablissementMissionDetailsPage() {
     "archivee",
   ].includes(mission.statut);
 
-  const canRequestVisio = !isMissionStarted && mission.modeMission !== "flex";
+  const canRequestVisio = !isMissionStarted; //&& mission.modeMission !== "flex";
   const canRunManualSearch = mission.statut === "en_recherche";
   const lastSearchMs = mission.dateDerniereRechercheRenford
     ? new Date(mission.dateDerniereRechercheRenford).getTime()
@@ -506,12 +522,8 @@ export default function EtablissementMissionDetailsPage() {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
                       <Avatar className="h-12 w-12 border border-input">
-                        <AvatarImage
-                          src={
-                            assignment.profilRenford.avatarChemin
-                              ? getUrl(assignment.profilRenford.avatarChemin)
-                              : undefined
-                          }
+                        <SecureAvatarImage
+                          chemin={assignment.profilRenford.avatarChemin}
                           alt={assignmentFullName}
                         />
                         <AvatarFallback>
@@ -539,12 +551,44 @@ export default function EtablissementMissionDetailsPage() {
                         </Link>
                       </Button>
 
-                      {canRequestVisio && (
-                        <Button variant="outline" className="px-5">
-                          <Video className="mr-2 h-4 w-4" />
-                          Demander une visio
-                        </Button>
-                      )}
+                      {canRequestVisio &&
+                        assignment.statut === "selection_en_cours" && (
+                          <Button
+                            variant="outline"
+                            className="px-5"
+                            disabled={visioMutation.isPending}
+                            onClick={() => {
+                              if (assignment.lienVisio) {
+                                setVisioData({
+                                  lienVisio: assignment.lienVisio,
+                                  renfordNom: assignmentFullName,
+                                });
+                                setVisioDialogOpen(true);
+                              } else {
+                                visioMutation.mutate(
+                                  {
+                                    missionId,
+                                    missionRenfordId: assignment.id,
+                                  },
+                                  {
+                                    onSuccess: (data) => {
+                                      setVisioData({
+                                        lienVisio: data.lienVisio,
+                                        renfordNom: assignmentFullName,
+                                      });
+                                      setVisioDialogOpen(true);
+                                    },
+                                  },
+                                );
+                              }
+                            }}
+                          >
+                            <Video className="mr-2 h-4 w-4" />
+                            {assignment.lienVisio
+                              ? "Rejoindre la visio"
+                              : "Demander une visio"}
+                          </Button>
+                        )}
 
                       {assignment.statut === "selection_en_cours" && (
                         <>
@@ -778,17 +822,17 @@ export default function EtablissementMissionDetailsPage() {
                 key={group.title}
                 title={group.title}
                 documents={group.documents}
-                onDownload={() => {
-                  toast.error("En cours de création");
+                onDownload={(documentId) => {
+                  if (!firstMissionRenford) return;
+                  downloadDocumentMutation.mutate({
+                    missionId: mission.id,
+                    missionRenfordId: firstMissionRenford.id,
+                    documentType: documentId as
+                      | "facture_prestation"
+                      | "facture_commission"
+                      | "contrat_prestation",
+                  });
                 }}
-                //      onDownload={(documentId) => {
-                // downloadDocumentMutation.mutate({
-                //   missionId: mission.id,
-                //   documentType: documentId as
-                //     | "facture_prestation"
-                //     | "facture_commission"
-                //     | "contrat_prestation"
-                // });
                 isDownloading={downloadDocumentMutation.isPending}
               />
             ))}
@@ -902,6 +946,18 @@ export default function EtablissementMissionDetailsPage() {
           );
         }}
       />
+
+      {visioData && (
+        <VisioDialog
+          open={visioDialogOpen}
+          onOpenChange={(open) => {
+            setVisioDialogOpen(open);
+            if (!open) setVisioData(null);
+          }}
+          renfordNom={visioData.renfordNom}
+          lienVisio={visioData.lienVisio}
+        />
+      )}
     </main>
   );
 }
