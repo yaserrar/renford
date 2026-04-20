@@ -6,7 +6,8 @@ import { Combobox } from "@/components/ui/combobox";
 import ErrorMessage from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateRenfordProfil } from "@/hooks/onboarding";
 import { useCurrentUser } from "@/hooks/utilisateur";
@@ -30,7 +31,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { OnboardingCard } from "../-components";
-import { getUrl } from "@/lib/utils";
+import {} from "@/lib/utils";
 
 export default function Etape4RenfordPage() {
   const router = useRouter();
@@ -126,11 +127,9 @@ export default function Etape4RenfordPage() {
               onClick={() => setPhotoDialogOpen(true)}
             >
               {avatarChemin && (
-                <AvatarImage
-                  src={getUrl(avatarChemin)}
+                <SecureAvatarImage
+                  chemin={avatarChemin}
                   alt="Photo de profil"
-                  width={80}
-                  height={80}
                   className="object-cover"
                 />
               )}

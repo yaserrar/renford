@@ -136,19 +136,16 @@ export default function Etape6RenfordPage() {
             </Button>
           )}
           <div className="flex flex-col gap-3 pt-4 md:flex-row md:items-center md:justify-end">
-            {/* <Button
+            <Button
               type="button"
               variant="link"
               onClick={handleSkip}
-              // disabled={isAdvancing || isSkipping}
-              disabled
+              disabled={isAdvancing || isSkipping}
               className="text-gray-500"
             >
               {isSkipping && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Passer cette étape
-            </Button> */}
-
-            <></>
+            </Button>
 
             <div className="flex flex-col gap-3 md:flex-row md:justify-end">
               <Button

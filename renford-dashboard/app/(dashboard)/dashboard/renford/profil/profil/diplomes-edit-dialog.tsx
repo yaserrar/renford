@@ -15,7 +15,7 @@ import ErrorMessage from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUpdateProfilRenfordDiplomes } from "@/hooks/profil-renford";
-import { getUrl } from "@/lib/utils";
+import { SecureLink } from "@/components/common/secure-file";
 import { CurrentUser } from "@/types/utilisateur";
 import {
   DIPLOME_KEYS,
@@ -76,7 +76,7 @@ export default function DiplomesEditDialog({
   const activeDiplomeLabel = useMemo(() => {
     if (activeDiplomeIndexForUpload === null) return "diplome";
     const typeDiplome = getValues(
-      `renfordDiplomes.${activeDiplomeIndexForUpload}.typeDiplome`
+      `renfordDiplomes.${activeDiplomeIndexForUpload}.typeDiplome`,
     );
     if (!typeDiplome) return "diplome";
     return DIPLOME_LABELS[typeDiplome] || "diplome";
@@ -120,7 +120,7 @@ export default function DiplomesEditDialog({
         shouldDirty: true,
         shouldTouch: true,
         shouldValidate: true,
-      }
+      },
     );
 
     setActiveDiplomeIndexForUpload(null);
@@ -138,7 +138,7 @@ export default function DiplomesEditDialog({
           }
         }}
         setFileValue={handleDiplomeUploaded}
-        path="documents/diplomes"
+        path="diplomes"
         name={`justificatif-diplome-${activeDiplomeLabel
           .toLowerCase()
           .replace(/[\s_]+/g, "-")}`}
@@ -150,7 +150,9 @@ export default function DiplomesEditDialog({
         <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <DialogHeader>
-              <DialogTitle>Modifier les certifications & formations</DialogTitle>
+              <DialogTitle>
+                Modifier les certifications & formations
+              </DialogTitle>
               <DialogDescription>
                 Ajoutez ou supprimez vos diplômes et certifications.
               </DialogDescription>
@@ -189,7 +191,9 @@ export default function DiplomesEditDialog({
                       render={({ field }) => (
                         <Combobox
                           value={field.value || ""}
-                          onValueChange={(value) => field.onChange(value as string)}
+                          onValueChange={(value) =>
+                            field.onChange(value as string)
+                          }
                           options={diplomeOptions}
                           placeholder="Sélectionner un diplôme"
                           searchPlaceholder="Rechercher un diplôme"
@@ -208,12 +212,15 @@ export default function DiplomesEditDialog({
                       <Input
                         type="number"
                         placeholder="Ex: 2021"
-                        {...register(`renfordDiplomes.${index}.anneeObtention`, {
-                          setValueAs: (value) =>
-                            value === "" || value === undefined
-                              ? null
-                              : Number(value),
-                        })}
+                        {...register(
+                          `renfordDiplomes.${index}.anneeObtention`,
+                          {
+                            setValueAs: (value) =>
+                              value === "" || value === undefined
+                                ? null
+                                : Number(value),
+                          },
+                        )}
                       />
                       <ErrorMessage>
                         {
@@ -227,13 +234,13 @@ export default function DiplomesEditDialog({
                       <Label>Établissement</Label>
                       <Input
                         {...register(
-                          `renfordDiplomes.${index}.etablissementFormation`
+                          `renfordDiplomes.${index}.etablissementFormation`,
                         )}
                       />
                       <ErrorMessage>
                         {
-                          errors.renfordDiplomes?.[index]?.etablissementFormation
-                            ?.message
+                          errors.renfordDiplomes?.[index]
+                            ?.etablissementFormation?.message
                         }
                       </ErrorMessage>
                     </div>
@@ -253,18 +260,18 @@ export default function DiplomesEditDialog({
                       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         <FileText className="h-6 w-6 text-gray-400" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium">Document téléchargé</p>
-                          <a
-                            href={getUrl(diplomes[index].justificatifDiplomeChemin)}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <p className="text-sm font-medium">
+                            Document téléchargé
+                          </p>
+                          <SecureLink
+                            chemin={diplomes[index].justificatifDiplomeChemin}
                             className="text-xs text-primary inline-flex items-center gap-1 hover:underline break-all"
                           >
                             {diplomes[index].justificatifDiplomeChemin
                               .split("/")
                               .pop() || "Ouvrir le document"}
                             <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
+                          </SecureLink>
                         </div>
                         <Button
                           type="button"
@@ -285,7 +292,7 @@ export default function DiplomesEditDialog({
                                 shouldDirty: true,
                                 shouldTouch: true,
                                 shouldValidate: true,
-                              }
+                              },
                             );
                           }}
                         >

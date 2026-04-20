@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useUpdateProfilRenfordPortfolio } from "@/hooks/profil-renford";
-import { getUrl } from "@/lib/utils";
+import { useFileUrl } from "@/hooks/use-file-url";
 import { CurrentUser } from "@/types/utilisateur";
 import {
   updateProfilRenfordPortfolioSchema,
@@ -108,13 +108,7 @@ export default function PortfolioEditDialog({
                       key={`${item}-${index}`}
                       className="relative aspect-square rounded-xl border border-input overflow-hidden"
                     >
-                      <Image
-                        src={getUrl(item)}
-                        alt={`Portfolio ${index + 1}`}
-                        fill
-                        sizes="(max-width: 768px) 45vw, 180px"
-                        className="object-cover border rounded-xl"
-                      />
+                      <PortfolioEditImage chemin={item} index={index} />
                       <Button
                         type="button"
                         variant="outline-destructive"
@@ -167,5 +161,25 @@ export default function PortfolioEditDialog({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function PortfolioEditImage({
+  chemin,
+  index,
+}: {
+  chemin: string;
+  index: number;
+}) {
+  const url = useFileUrl(chemin);
+  if (!url) return null;
+  return (
+    <Image
+      src={url}
+      alt={`Portfolio ${index + 1}`}
+      fill
+      sizes="(max-width: 768px) 45vw, 180px"
+      className="object-cover border rounded-xl"
+    />
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { formatAmount, getUrl } from "@/lib/utils";
+import { SecureLink } from "@/components/common/secure-file";
+import { formatAmount } from "@/lib/utils";
 import { CurrentUser } from "@/types/utilisateur";
 import { NIVEAU_EXPERIENCE_LABELS } from "@/validations/profil-renford";
 import { ExternalLink, FileText, Pencil } from "lucide-react";
@@ -58,15 +59,13 @@ export default function QualificationSection({
               Justificatif carte professionnelle
             </p>
             {profil?.justificatifCarteProfessionnelleChemin ? (
-              <a
-                href={getUrl(profil.justificatifCarteProfessionnelleChemin)}
-                target="_blank"
-                rel="noopener noreferrer"
+              <SecureLink
+                chemin={profil.justificatifCarteProfessionnelleChemin}
                 className="text-sm text-primary hover:underline inline-flex items-center gap-1"
               >
                 {justificatifName || "Ouvrir le document"}
                 <ExternalLink className="h-3.5 w-3.5" />
-              </a>
+              </SecureLink>
             ) : (
               <p className="text-sm text-muted-foreground">-</p>
             )}

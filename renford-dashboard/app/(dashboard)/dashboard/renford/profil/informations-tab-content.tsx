@@ -9,7 +9,7 @@ import ErrorMessage from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUpdateProfilRenfordIdentite } from "@/hooks/profil-renford";
-import { getUrl } from "@/lib/utils";
+import { SecureLink } from "@/components/common/secure-file";
 import { CurrentUser } from "@/types/utilisateur";
 import {
   updateProfilRenfordIdentiteSchema,
@@ -262,15 +262,13 @@ export default function InformationsTabContent({
                   <FileText className="h-6 w-6 text-gray-400" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">Document téléchargé</p>
-                    <a
-                      href={getUrl(attestationVigilance)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <SecureLink
+                      chemin={attestationVigilance}
                       className="text-xs text-primary inline-flex items-center gap-1 hover:underline break-all"
                     >
                       {attestationFileName || "Ouvrir le document"}
                       <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
+                    </SecureLink>
                   </div>
                   <Button
                     type="button"

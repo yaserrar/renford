@@ -22,9 +22,8 @@ export const usePublicProfilRenford = (profilRenfordId?: string) => {
   return useQuery({
     queryKey: ["public-profil-renford", profilRenfordId],
     queryFn: async () => {
-      return (
-        await axios.get(`/profil-renford/public/${profilRenfordId}`)
-      ).data as PublicProfilRenford;
+      return (await axios.get(`/profil-renford/public/${profilRenfordId}`))
+        .data as PublicProfilRenford;
     },
     enabled: Boolean(profilRenfordId),
     staleTime: 1000 * 60 * 5,
@@ -155,6 +154,7 @@ export const useUpdateProfilRenfordDiplomes = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
+      queryClient.invalidateQueries({ queryKey: ["file-url"] });
       toast.success("Diplômes mis à jour");
     },
     onError: (error: any) => {
@@ -193,6 +193,7 @@ export const useUpdateProfilRenfordQualifications = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
+      queryClient.invalidateQueries({ queryKey: ["file-url"] });
       toast.success("Qualifications mises à jour");
     },
     onError: (error: any) => {
@@ -212,6 +213,7 @@ export const useUpdateProfilRenfordIdentite = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
+      queryClient.invalidateQueries({ queryKey: ["file-url"] });
       toast.success("Informations personnelles mises à jour");
     },
     onError: (error: any) => {

@@ -554,7 +554,7 @@ export default function Etape5RenfordPage() {
           }
         }}
         setFileValue={handleDiplomeUploaded}
-        path="documents/diplomes"
+        path="diplomes"
         name={`justificatif-diplome-${(activeDiplomeForUpload
           ? (DIPLOME_LABELS[
               activeDiplomeForUpload as keyof typeof DIPLOME_LABELS

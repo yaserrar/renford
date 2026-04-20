@@ -145,6 +145,8 @@ export type RenfordDiplome = {
   mention: string | null;
   anneeObtention: number | null;
   etablissementFormation: string | null;
+  verifie: boolean;
+  dateVerification: Date | null;
   dateCreation: Date;
   dateMiseAJour: Date;
 };

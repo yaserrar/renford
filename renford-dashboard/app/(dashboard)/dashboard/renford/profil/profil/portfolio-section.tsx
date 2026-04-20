@@ -8,7 +8,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { getUrl } from "@/lib/utils";
+import { useFileUrl } from "@/hooks/use-file-url";
 import { CurrentUser } from "@/types/utilisateur";
 import { Pencil } from "lucide-react";
 import Image from "next/image";
@@ -47,13 +47,7 @@ export default function PortfolioSection({ me }: PortfolioSectionProps) {
                 {(profil?.portfolio ?? []).map((item, index) => (
                   <CarouselItem key={`${item}-${index}`} className="basis-full">
                     <div className="relative w-full max-w-xl mx-auto aspect-[4/3] overflow-hidden rounded-2xl border border-input bg-muted/30">
-                      <Image
-                        src={getUrl(item)}
-                        alt={`Portfolio ${index + 1}`}
-                        fill
-                        sizes="(max-width: 768px) 90vw, 640px"
-                        className="object-cover"
-                      />
+                      <PortfolioItemImage chemin={item} index={index} />
                     </div>
                   </CarouselItem>
                 ))}
@@ -67,5 +61,25 @@ export default function PortfolioSection({ me }: PortfolioSectionProps) {
         )}
       </div>
     </>
+  );
+}
+
+function PortfolioItemImage({
+  chemin,
+  index,
+}: {
+  chemin: string;
+  index: number;
+}) {
+  const url = useFileUrl(chemin);
+  if (!url) return null;
+  return (
+    <Image
+      src={url}
+      alt={`Portfolio ${index + 1}`}
+      fill
+      sizes="(max-width: 768px) 90vw, 640px"
+      className="object-cover"
+    />
   );
 }

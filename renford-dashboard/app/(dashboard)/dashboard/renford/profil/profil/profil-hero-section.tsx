@@ -1,13 +1,14 @@
 "use client";
 
 import ImageUploadDialog from "@/components/common/image-upload-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SecureAvatarImage } from "@/components/common/secure-file";
+import { useFileUrl } from "@/hooks/use-file-url";
 import { Button } from "@/components/ui/button";
 import {
   useUpdateProfilRenfordAvatar,
   useUpdateProfilRenfordCouverture,
 } from "@/hooks/profil-renford";
-import { getUrl } from "@/lib/utils";
 import { CurrentUser } from "@/types/utilisateur";
 import { ImageUpIcon, MapPin, Pencil } from "lucide-react";
 import Image from "next/image";
@@ -29,6 +30,8 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
 
   const updateCouverture = useUpdateProfilRenfordCouverture();
   const updateAvatar = useUpdateProfilRenfordAvatar();
+
+  const coverUrl = useFileUrl(profil?.imageCouvertureChemin ?? null);
 
   const handleCouvertureUploaded = (path: string) => {
     updateCouverture.mutate({ imageCouvertureChemin: path });
@@ -66,9 +69,9 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
 
       <div className="bg-white rounded-3xl border border-input overflow-hidden">
         <div className="relative h-72 w-full bg-gray-100 overflow-hidden group/cover">
-          {profil?.imageCouvertureChemin ? (
+          {coverUrl ? (
             <Image
-              src={getUrl(profil.imageCouvertureChemin)}
+              src={coverUrl}
               alt="Couverture renford"
               className="object-cover w-full h-full"
               height={300}
@@ -94,12 +97,8 @@ export default function ProfilHeroSection({ me }: ProfilHeroSectionProps) {
           <div className="flex items-end gap-4">
             <div className="relative group/avatar">
               <Avatar className="h-26 w-26 border">
-                <AvatarImage
-                  src={
-                    profil?.avatarChemin
-                      ? getUrl(profil.avatarChemin)
-                      : undefined
-                  }
+                <SecureAvatarImage
+                  chemin={profil?.avatarChemin}
                   alt={fullName}
                 />
                 <AvatarFallback></AvatarFallback>

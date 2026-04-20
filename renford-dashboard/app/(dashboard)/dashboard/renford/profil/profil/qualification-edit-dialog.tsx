@@ -20,7 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useUpdateProfilRenfordQualifications } from "@/hooks/profil-renford";
-import { getUrl } from "@/lib/utils";
+import { SecureLink } from "@/components/common/secure-file";
 import { CurrentUser } from "@/types/utilisateur";
 import {
   NIVEAU_EXPERIENCE,
@@ -150,15 +150,13 @@ export default function QualificationEditDialog({
                   <FileText className="h-6 w-6 text-gray-400" />
                   <div className="flex-1">
                     <p className="text-sm font-medium">Document téléchargé</p>
-                    <a
-                      href={getUrl(justificatifCartePro)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <SecureLink
+                      chemin={justificatifCartePro}
                       className="text-xs text-primary inline-flex items-center gap-1 hover:underline"
                     >
                       {justificatifCarteProFileName || "Ouvrir le document"}
                       <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
+                    </SecureLink>
                   </div>
                   <Button
                     type="button"
