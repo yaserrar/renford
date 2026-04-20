@@ -7,6 +7,7 @@ export const STATUT_COMPTE = [
   'suspendu',
   'en_attente_verification',
   'onboarding',
+  'supprime',
 ] as const;
 
 export const TYPE_NOTIFICATION_PREFERENCE = [

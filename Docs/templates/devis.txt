@@ -1,0 +1,111 @@
+DEVIS POUR SERVICES ET COMMISSION -
+N°{{Numero Devis}}
+
+
+{{Raison sociale Entreprise}}
+{{Nom Entreprise}} {{Prénom Entreprise}}
+{{Adresse complète}}
+FRANCE
+Numéro SIRET: {{Numéro SIRET Entreprise}}
+
+Date du devis : ​​{{Date de création}}
+Validité du devis : 72 heures à compter de la date d’émission.
+​​{{Name}} - ​​{{Type de poste souhaité}}
+Description des services
+Nombre d’heures
+Taux horaire
+TVA
+Montant HT
+Montant TTC 
+
+Prestation temporaire d’encadrement du sport – ​​{{Type de poste souhaité}} (Renford)
+Lieu de la mission : ​​​​{{Raison sociale Entreprise}}, {{Adresse complète}}.
+Durée de la prestation :​​ {{Plage de la mission}}.
+ 
+
+{{Nombre d'heures totales BRUT}}
+
+​​{{Cout horaire Renfords}}
+{{Cout presta Renford}}€
+
+0%%
+
+{{Montant HT}}€
+
+{{Montant HT}}€
+
+Commission sur vente
+Détail des commissions : prestataire de services via la plateforme Renford.
+ 
+ 
+ 
+
+20% 
+
+{{Commission HT}} €
+
+{{Commission TTC}}€
+
+
+Récapitulatif
+Sous-total prestation TTC
+{{Montant HT}}€
+Commission sur vente TTC
+{{Commission TTC}}€
+Montant total TTC
+{{Montant total TTC}} €
+NET À PAYER
+{{Montant total TTC}} €
+
+
+ 
+Conditions de Paiement :
+Paiement intégral demandé à la réception de ce devis pour débuter le projet.
+
+ 
+ 
+
+
+Mode de paiement :
+Lien de paiement en ligne
+{{Lien stripe}}
+
+
+Ce devis est valide jusqu’à 72 heures après la date d’émission. Les services décrits débuteront une fois le paiement intégral confirmé. 
+
+
+
+
+
+1. Validation et Paiement du Devis
+1.1. Validation du Devis :
+L'Entreprise Cliente dispose de 72 heures pour valider le devis. Cette validation peut se faire soit par retour de mail, soit en effectuant le paiement intégral via le lien de paiement fourni. Passé le délai de 72 heures, l’acceptation du devis sera considérée comme tacite, et la mission démarrera dès la réception du paiement. Sans paiement préalable, la mission ne pourra pas démarrer. Elle sera considérée comme annulée si aucune réponse ni paiement n’est reçu dans les 72 heures précédant la réception du devis par email. 
+1.2. Méthode de Paiement :
+L’Entreprise Cliente règle le montant du devis via un lien de paiement Stripe fourni dans le présent devis et dans l’email contenant ce même devis. Une fois reçu, le paiement est sécurisé et stocké par Renford jusqu'à la fin de la prestation, en attente de validation par l'Entreprise Cliente. La mission ne pourra commencer qu'après réception du paiement.
+1.3. Stockage Sécurisé des Informations Bancaires :
+Les informations bancaires de l'Entreprise Cliente (RIB) sont stockées de manière sécurisée sur la plateforme Stripe pour simplifier les transactions futures. 
+
+2. Paiement de l'Auto-Entrepreneur
+Après validation de la prestation par l'Entreprise Cliente, Renford dispose de 30 jours pour verser le montant dû au Prestataire. Ce paiement est effectué après déduction des frais de service de Renford, et il est versé sur le compte bancaire spécifié par le Prestataire dans son profil Renford. L'Entreprise Cliente reçoit également une Facture Finale détaillant les services et les commissions applicables.
+
+3. Conditions d'Annulation ou de Modification
+3.1. Annulation par l'Entreprise Cliente :
+L'Entreprise Cliente peut annuler une prestation convenue avec un Prestataire via la Plateforme Renford. Les conditions d'annulation sont les suivantes :
+Annulation entre 48 heures et 24 heures avant la prestation : Si l'annulation intervient entre 48 heures et 24 heures avant le début de la prestation, et si le Prestataire avait accepté la mission depuis plus de quarante-huit (48) heures, Renford facturera à l'Entreprise Cliente 25 % du montant dû pour le premier jour de prestation. Ces frais incluent les frais de service appliqués par Renford.
+Annulation la veille de la prestation : Pour une annulation effectuée la veille de la prestation, Renford facturera 25 % du montant total pour le premier jour de la prestation. Ces frais couvrent la réservation du Prestataire et les frais de service Renford.
+Annulation le jour de la prestation : Si l'annulation intervient le jour même de la prestation, Renford facturera 50 % du montant du premier jour de la prestation, et 25 % du montant du deuxième jour, dans le cas où la prestation s’étend sur plusieurs jours. Ces frais sont destinés à indemniser le Prestataire pour le préjudice causé par l'annulation tardive, ainsi que les frais de service Renford.
+En cas d'annulation pour cause de force majeure, aucune pénalité ne sera appliquée, à condition que des justificatifs pertinents soient fournis dans un délai raisonnable.
+Modifications de la Mission :
+Les demandes de modification après la validation du devis ou après le début de la mission peuvent entraîner des frais supplémentaires. Ces frais seront communiqués à l'Entreprise Cliente pour approbation avant leur application.
+Ajustements des Coûts en Cours de Mission :
+Bien que nous nous efforcions de fournir des estimations précises, le coût final de la mission peut varier en fonction des conditions rencontrées. Tout ajustement sera communiqué à l’Entreprise Cliente pour approbation avant de procéder à toute modification du coût final.
+3.2. Désistement ou Prestation non honorée par un Renford
+Un Prestataire peut se retirer d'une prestation convenue avec une Entreprise Cliente via la Plateforme. Si le désistement a lieu plus de vingt-quatre (24) heures avant le début de la prestation, il est sans conséquence pour le Prestataire. Cependant, en cas de non-exécution de la prestation due à un désistement tardif ou une absence, les mesures suivantes seront prises :
+Suspension temporaire : Le compte du Prestataire sera suspendu temporairement pour sept (7) jours calendaires dès notification de cette suspension par Renford. Le Prestataire aura la possibilité de fournir des explications durant cette période. Selon les justifications apportées, et sous réserve de validation par Renford, le compte pourra être réactivé immédiatement ou après la période de suspension.
+Cas de force majeure : Renford reconnaît que certains désistements tardifs ou absences peuvent survenir en raison de circonstances exceptionnelles et imprévisibles qui échappent au contrôle du Prestataire, telles que des catastrophes naturelles, des actes de terrorisme, des grèves générales, ou des situations de crise sanitaire. Dans de tels cas de force majeure dûment justifiés, aucune sanction ne sera appliquée.
+Engagement de remplacement : Renford s'engage à mettre en œuvre tous les moyens nécessaires pour trouver un remplacement rapide afin de minimiser l'impact sur l'Entreprise Cliente. En cas d'échec dans la recherche d'un remplaçant, Renford ouvrira une discussion entre les parties afin de minimiser les impacts négatifs sur l'Entreprise Cliente.
+Suspension définitive : Si un Prestataire se désiste tardivement ou est absent à deux reprises sur une période de trente (30) jours, son compte sera définitivement suspendu par Renford.
+Ces mesures sont prises dans l'intérêt de maintenir la qualité et la fiabilité des services proposés par Renford et de ses Prestataires.
+3.3. En cas de Non-réalisation de la Mission
+Si le Prestataire ne se présente pas ou est dans l'impossibilité de réaliser la mission le jour J sans justification valable, le Facilitateur s'engage à rembourser intégralement l'Entreprise Cliente dans un délai de 30 jours ouvrés.
+

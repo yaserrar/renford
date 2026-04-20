@@ -85,6 +85,7 @@ export type AdminUserDetail = AdminUserListItem & {
     siret: string | null;
     siretEnCoursObtention: boolean;
     stripeConnectOnboardingComplete: boolean;
+    attestationVigilanceChemin: string | null;
     renfordDiplomes: Array<{
       id: string;
       typeDiplome: string;

@@ -81,6 +81,7 @@ enum StatutCompte {
     suspendu
     en_attente_verification
     onboarding
+    supprime
 }
 
 enum TypeNotificationPreference {

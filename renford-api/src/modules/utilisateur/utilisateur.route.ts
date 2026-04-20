@@ -3,6 +3,7 @@ import { authenticateToken } from '../../middleware/auth.middleware';
 import { validateResource } from '../../middleware/validate.resource';
 import {
   changePassword,
+  deleteAccount,
   getCurrentUser,
   updateNotificationSettings,
   updateProfile,
@@ -35,5 +36,8 @@ router.put(
   validateResource(changePasswordSchema),
   changePassword,
 );
+
+// Suppression du compte (RGPD)
+router.delete('/account', authenticateToken(), deleteAccount);
 
 export default router;

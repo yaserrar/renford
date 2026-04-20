@@ -73,6 +73,19 @@ export default function RenfordDetails({ user }: Props) {
                       : "Non configuré"
                   }
                 />
+                <div>
+                  <p className="text-gray-500">Attestation de vigilance</p>
+                  {profil.attestationVigilanceChemin ? (
+                    <Button variant="outline" size="sm" className="mt-1" asChild>
+                      <SecureLink chemin={profil.attestationVigilanceChemin}>
+                        <Eye className="h-3.5 w-3.5 mr-1" />
+                        Voir le document
+                      </SecureLink>
+                    </Button>
+                  ) : (
+                    <p className="font-medium text-destructive">Non fournie</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>

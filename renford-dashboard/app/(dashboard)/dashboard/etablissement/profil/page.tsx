@@ -8,6 +8,7 @@ import InformationsTabContent from "./informations-tab-content";
 import ProfilTabContent from "./profil-tab-content";
 import SitesTabContent from "./sites-tab-content";
 import { H2 } from "@/components/ui/typography";
+import DeleteAccountSection from "@/components/common/delete-account-section";
 
 const TABS = ["profil", "infos", "sites"] as const;
 
@@ -60,6 +61,8 @@ export default function ProfileEtablissementPage() {
           </TabsContent>
         </div>
       </Tabs>
+
+      <DeleteAccountSection />
     </main>
   );
 }

@@ -9,6 +9,7 @@ import NotificationsTabContent from "./notifications-tab-content";
 import PasswordTabContent from "./password-tab-content";
 import ProfilTabContent from "./profil/profil-tab-content";
 import { H2 } from "@/components/ui/typography";
+import DeleteAccountSection from "@/components/common/delete-account-section";
 
 const TABS = ["profil", "infos", "notifications"] as const;
 
@@ -57,6 +58,8 @@ export default function ProfileRenfordPage() {
           </TabsContent>
         </div>
       </Tabs>
+
+      <DeleteAccountSection />
     </main>
   );
 }

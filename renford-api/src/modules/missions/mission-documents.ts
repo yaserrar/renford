@@ -103,9 +103,23 @@ const sanitizeText = (text: string) =>
     .replace(/\(/g, '\\(')
     .replace(/\)/g, '\\)');
 
-const drawText = (ctx: PdfContext, text: string, x: number, y: number, size = 10, bold = false) => {
+const drawText = (
+  ctx: PdfContext,
+  text: string,
+  x: number,
+  y: number,
+  size = 10,
+  bold = false,
+  rgb?: [number, number, number],
+) => {
   const font = bold ? 'F2' : 'F1';
-  ctx.ops.push(`BT /${font} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${sanitizeText(text)}) Tj ET`);
+  if (rgb) {
+    ctx.ops.push(
+      `BT ${rgb[0]} ${rgb[1]} ${rgb[2]} rg /${font} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${sanitizeText(text)}) Tj ET`,
+    );
+  } else {
+    ctx.ops.push(`BT /${font} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${sanitizeText(text)}) Tj ET`);
+  }
 };
 
 const drawRect = (
@@ -115,15 +129,36 @@ const drawRect = (
   width: number,
   height: number,
   fillGray?: number,
+  fillRgb?: [number, number, number],
+  strokeRgb?: [number, number, number],
 ) => {
-  if (fillGray !== undefined) {
-    ctx.ops.push(`q ${fillGray} g ${x} ${y} ${width} ${height} re f Q`);
+  const stroke = strokeRgb ? `${strokeRgb[0]} ${strokeRgb[1]} ${strokeRgb[2]} RG` : '';
+  if (fillRgb) {
+    ctx.ops.push(
+      `q ${fillRgb[0]} ${fillRgb[1]} ${fillRgb[2]} rg ${stroke} ${x} ${y} ${width} ${height} re f Q`,
+    );
+    ctx.ops.push(`q ${stroke} ${x} ${y} ${width} ${height} re S Q`);
+  } else if (fillGray !== undefined) {
+    ctx.ops.push(`q ${fillGray} g ${stroke} ${x} ${y} ${width} ${height} re f Q`);
+    ctx.ops.push(`q ${stroke} ${x} ${y} ${width} ${height} re S Q`);
+  } else {
+    ctx.ops.push(`q ${stroke} ${x} ${y} ${width} ${height} re S Q`);
   }
-  ctx.ops.push(`${x} ${y} ${width} ${height} re S`);
 };
 
-const drawLine = (ctx: PdfContext, x1: number, y1: number, x2: number, y2: number) => {
-  ctx.ops.push(`${x1} ${y1} m ${x2} ${y2} l S`);
+const drawLine = (
+  ctx: PdfContext,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  rgb?: [number, number, number],
+) => {
+  if (rgb) {
+    ctx.ops.push(`q ${rgb[0]} ${rgb[1]} ${rgb[2]} RG ${x1} ${y1} m ${x2} ${y2} l S Q`);
+  } else {
+    ctx.ops.push(`${x1} ${y1} m ${x2} ${y2} l S`);
+  }
 };
 
 const wrapText = (text: string, maxChars = 85) => {
@@ -182,6 +217,10 @@ const ensureSpace = (ctx: PdfContext, needed: number) => {
   }
 };
 
+// Brand color #232e65 → RGB normalized
+const BRAND: [number, number, number] = [0.137, 0.18, 0.396];
+const WHITE: [number, number, number] = [1, 1, 1];
+
 const drawSignatureBlock = (
   ctx: PdfContext,
   title: string,
@@ -192,7 +231,7 @@ const drawSignatureBlock = (
   height = 88,
 ) => {
   drawText(ctx, title, x, y + height + 12, 10, true);
-  drawRect(ctx, x, y, width, height);
+  drawRect(ctx, x, y, width, height, undefined, undefined, BRAND);
 
   if (!image) {
     drawText(ctx, 'Signature en attente', x + 65, y + height / 2, 9, false);
@@ -342,11 +381,11 @@ const buildPdfBuffer = (ctx: PdfContext): Buffer => {
 };
 
 const drawHeader = (ctx: PdfContext, title: string, subtitle: string, docNumber: string) => {
-  drawRect(ctx, 32, 770, 531, 46, 0.94);
-  drawText(ctx, 'RENFORD', 42, 798, 16, true);
-  drawText(ctx, title.toUpperCase(), 42, 780, 11, true);
-  drawText(ctx, `N${sanitizeText('°')} ${docNumber}`, 430, 797, 10, true);
-  drawText(ctx, subtitle, 430, 782, 9, false);
+  drawRect(ctx, 32, 770, 531, 46, undefined, BRAND, BRAND);
+  drawText(ctx, 'RENFORD', 42, 798, 16, true, WHITE);
+  drawText(ctx, title.toUpperCase(), 42, 780, 11, true, WHITE);
+  drawText(ctx, `N${sanitizeText('°')} ${docNumber}`, 430, 797, 10, true, WHITE);
+  drawText(ctx, subtitle, 430, 782, 9, false, WHITE);
   ctx.cursorY = 748;
 };
 
@@ -358,8 +397,8 @@ const drawParties = (
 ) => {
   drawText(ctx, 'Emetteur', 42, ctx.cursorY, 10, true);
   drawText(ctx, 'Destinataire', 310, ctx.cursorY, 10, true);
-  drawRect(ctx, 36, ctx.cursorY - 78, 250, 72);
-  drawRect(ctx, 304, ctx.cursorY - 78, 255, 72);
+  drawRect(ctx, 36, ctx.cursorY - 78, 250, 72, undefined, undefined, BRAND);
+  drawRect(ctx, 304, ctx.cursorY - 78, 255, 72, undefined, undefined, BRAND);
 
   drawText(ctx, 'Renford SAS', 44, ctx.cursorY - 22, 10, true);
   drawText(ctx, '5 avenue de la Mission, 75001 Paris', 44, ctx.cursorY - 38, 9, false);
@@ -379,7 +418,7 @@ const drawMissionRecap = (
   totalHours: number,
 ) => {
   drawText(ctx, 'Recapitulatif mission', 42, ctx.cursorY, 10, true);
-  drawRect(ctx, 36, ctx.cursorY - 88, 523, 82);
+  drawRect(ctx, 36, ctx.cursorY - 88, 523, 82, undefined, undefined, BRAND);
   drawText(ctx, `Mission: ${mission.discipline}`, 44, ctx.cursorY - 22, 9, false);
   drawText(
     ctx,
@@ -409,16 +448,16 @@ const drawInvoiceTable = (
   const headerH = 24;
   const rowH = 30;
 
-  drawRect(ctx, tableX, tableY - headerH, tableW, headerH, 0.93);
-  drawRect(ctx, tableX, tableY - headerH - rowH, tableW, rowH);
-  drawLine(ctx, tableX + 290, tableY - headerH - rowH, tableX + 290, tableY);
-  drawLine(ctx, tableX + 360, tableY - headerH - rowH, tableX + 360, tableY);
-  drawLine(ctx, tableX + 440, tableY - headerH - rowH, tableX + 440, tableY);
+  drawRect(ctx, tableX, tableY - headerH, tableW, headerH, undefined, BRAND, BRAND);
+  drawRect(ctx, tableX, tableY - headerH - rowH, tableW, rowH, undefined, undefined, BRAND);
+  drawLine(ctx, tableX + 290, tableY - headerH - rowH, tableX + 290, tableY, BRAND);
+  drawLine(ctx, tableX + 360, tableY - headerH - rowH, tableX + 360, tableY, BRAND);
+  drawLine(ctx, tableX + 440, tableY - headerH - rowH, tableX + 440, tableY, BRAND);
 
-  drawText(ctx, 'Description', tableX + 8, tableY - 16, 9, true);
-  drawText(ctx, 'Qté', tableX + 306, tableY - 16, 9, true);
-  drawText(ctx, 'PU HT', tableX + 372, tableY - 16, 9, true);
-  drawText(ctx, 'Total HT', tableX + 452, tableY - 16, 9, true);
+  drawText(ctx, 'Description', tableX + 8, tableY - 16, 9, true, WHITE);
+  drawText(ctx, 'Qté', tableX + 306, tableY - 16, 9, true, WHITE);
+  drawText(ctx, 'PU HT', tableX + 372, tableY - 16, 9, true, WHITE);
+  drawText(ctx, 'Total HT', tableX + 452, tableY - 16, 9, true, WHITE);
 
   drawText(ctx, label, tableX + 8, tableY - 43, 9, false);
   drawText(ctx, quantity, tableX + 306, tableY - 43, 9, false);
@@ -431,7 +470,7 @@ const drawInvoiceTable = (
 const drawTotals = (ctx: PdfContext, baseHt: number, tva: number, totalTtc: number) => {
   const boxX = 336;
   const boxY = ctx.cursorY;
-  drawRect(ctx, boxX, boxY - 84, 223, 78);
+  drawRect(ctx, boxX, boxY - 84, 223, 78, undefined, undefined, BRAND);
   drawText(ctx, `Sous-total HT: ${formatAmount(baseHt)}`, boxX + 10, boxY - 20, 9, false);
   drawText(ctx, `TVA: ${formatAmount(tva)}`, boxX + 10, boxY - 38, 9, false);
   drawText(ctx, `Total TTC: ${formatAmount(totalTtc)}`, boxX + 10, boxY - 60, 11, true);
@@ -458,127 +497,211 @@ const renderDevis = (
   const commissionTtc = Number((commissionHt * 1.2).toFixed(2));
   const totalTtc = totalHt + commissionTtc;
   const adresseComplete = `${etab.adresse}, ${etab.codePostal} ${etab.ville}`;
+  const tarif = Number(mission.tarif ?? 0);
   const plage = mission.dateFin
     ? `Du ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)}`
     : `Le ${formatDate(mission.dateDebut)}`;
 
-  // Header
-  drawRect(ctx, 32, 770, 531, 46, 0.94);
-  drawText(ctx, 'RENFORD', 42, 798, 16, true);
-  drawText(ctx, 'DEVIS POUR SERVICES ET COMMISSION', 42, 780, 10, true);
-  drawText(ctx, `N${sanitizeText('°')} ${mission.id.slice(0, 8).toUpperCase()}`, 430, 797, 10, true);
-  ctx.cursorY = 748;
+  // ---- Title bar ----
+  const titleH = 52;
+  const titleY = ctx.height - 72 - titleH;
+  drawRect(ctx, 32, titleY, 531, titleH, undefined, BRAND, BRAND);
+  drawText(ctx, 'DEVIS POUR SERVICES ET COMMISSION', 105, titleY + titleH - 18, 15, true, WHITE);
+  drawText(
+    ctx,
+    `N${sanitizeText('°')}${mission.id.slice(0, 8).toUpperCase()}`,
+    230,
+    titleY + 8,
+    11,
+    true,
+    WHITE,
+  );
+  ctx.cursorY = titleY - 16;
 
-  // Destinataire block
-  drawText(ctx, etabProfil.raisonSociale, 42, ctx.cursorY, 10, true);
+  // ---- Destinataire (right side) ----
+  const destX = 320;
+  drawText(ctx, etabProfil.raisonSociale, destX, ctx.cursorY, 10, true);
   ctx.cursorY -= 14;
-  drawText(ctx, adresseComplete, 42, ctx.cursorY, 9);
+  const etabNom = `${mission.etablissement.profilEtablissement?.raisonSociale || etab.nom}`;
+  if (etabNom !== etabProfil.raisonSociale) {
+    drawText(ctx, etabNom, destX, ctx.cursorY, 9);
+    ctx.cursorY -= 14;
+  }
+  drawText(ctx, adresseComplete, destX, ctx.cursorY, 9);
   ctx.cursorY -= 14;
-  drawText(ctx, 'FRANCE', 42, ctx.cursorY, 9);
+  drawText(ctx, 'FRANCE', destX, ctx.cursorY, 9);
   ctx.cursorY -= 14;
-  drawText(ctx, `SIRET: ${etabProfil.siret}`, 42, ctx.cursorY, 9);
-  ctx.cursorY -= 20;
+  drawText(ctx, `Numero SIRET: ${etabProfil.siret || '-'}`, destX, ctx.cursorY, 9);
+  ctx.cursorY -= 24;
 
-  // Dates
+  // ---- Dates ----
   drawText(ctx, `Date du devis : ${formatDate(mission.dateCreation)}`, 42, ctx.cursorY, 9);
   ctx.cursorY -= 14;
-  drawText(ctx, 'Validite du devis : 72 heures', 42, ctx.cursorY, 9);
+  drawText(
+    ctx,
+    "Validite du devis : 72 heures a compter de la date d'emission.",
+    42,
+    ctx.cursorY,
+    9,
+  );
   ctx.cursorY -= 20;
 
-  // Mission title
+  // ---- Mission subtitle ----
   drawText(ctx, `${renfordName} - ${typeMission}`, 42, ctx.cursorY, 11, true);
   ctx.cursorY -= 22;
 
-  // Table header
-  const tableX = 36;
-  const tableW = 523;
-  const headerH = 20;
-  drawRect(ctx, tableX, ctx.cursorY - headerH, tableW, headerH, 0.93);
-  drawText(ctx, 'Description', tableX + 4, ctx.cursorY - 14, 8, true);
-  drawText(ctx, 'Heures', tableX + 260, ctx.cursorY - 14, 8, true);
-  drawText(ctx, 'Taux', tableX + 320, ctx.cursorY - 14, 8, true);
-  drawText(ctx, 'TVA', tableX + 380, ctx.cursorY - 14, 8, true);
-  drawText(ctx, 'HT', tableX + 425, ctx.cursorY - 14, 8, true);
-  drawText(ctx, 'TTC', tableX + 475, ctx.cursorY - 14, 8, true);
-  ctx.cursorY -= headerH;
+  // ---- Service table (6 columns) ----
+  const tX = 36;
+  const tW = 523;
+  const hH = 24;
+  // Column positions: Description | Nb heures | Taux horaire | TVA | Montant HT | Montant TTC
+  const cols = [tX, tX + 180, tX + 260, tX + 335, tX + 395, tX + 460];
+  const colEnd = tX + tW;
+
+  // Header row
+  drawRect(ctx, tX, ctx.cursorY - hH, tW, hH, undefined, BRAND, BRAND);
+  // Column dividers in header
+  for (let c = 1; c < cols.length; c++) {
+    drawLine(ctx, cols[c]!, ctx.cursorY, cols[c]!, ctx.cursorY - hH, BRAND);
+  }
+  const hY = ctx.cursorY - 16;
+  drawText(ctx, 'Description des services', cols[0]! + 4, hY, 7.5, true, WHITE);
+  drawText(ctx, 'Nb heures', cols[1]! + 4, hY, 7.5, true, WHITE);
+  drawText(ctx, 'Taux horaire', cols[2]! + 4, hY, 7.5, true, WHITE);
+  drawText(ctx, 'TVA', cols[3]! + 4, hY, 7.5, true, WHITE);
+  drawText(ctx, 'Montant HT', cols[4]! + 4, hY, 7.5, true, WHITE);
+  drawText(ctx, 'Montant TTC', cols[5]! + 4, hY, 7.5, true, WHITE);
+  ctx.cursorY -= hH;
 
   // Row 1: Prestation
-  const row1H = 42;
-  drawRect(ctx, tableX, ctx.cursorY - row1H, tableW, row1H);
-  const row1Y = ctx.cursorY - 14;
-  drawText(ctx, `Prestation temporaire d'encadrement`, tableX + 4, row1Y, 8);
-  drawText(ctx, `du sport - ${typeMission}`, tableX + 4, row1Y - 12, 8);
-  drawText(ctx, `Lieu: ${adresseComplete}`, tableX + 4, row1Y - 24, 7);
-  drawText(ctx, formatHours(totalHours), tableX + 260, row1Y, 8);
-  drawText(ctx, formatAmount(Number(mission.tarif ?? 0)), tableX + 320, row1Y, 8);
-  drawText(ctx, '0%', tableX + 380, row1Y, 8);
-  drawText(ctx, formatAmount(totalHt), tableX + 425, row1Y, 8);
-  drawText(ctx, formatAmount(totalHt), tableX + 475, row1Y, 8);
-  ctx.cursorY -= row1H;
+  const r1H = 58;
+  drawRect(ctx, tX, ctx.cursorY - r1H, tW, r1H, undefined, undefined, BRAND);
+  for (let c = 1; c < cols.length; c++) {
+    drawLine(ctx, cols[c]!, ctx.cursorY, cols[c]!, ctx.cursorY - r1H, BRAND);
+  }
+  const r1Y = ctx.cursorY - 12;
+  drawText(ctx, "Prestation temporaire d'encadrement", cols[0]! + 4, r1Y, 7, true);
+  drawText(ctx, `du sport - ${typeMission} (Renford)`, cols[0]! + 4, r1Y - 10, 7, true);
+  drawText(ctx, `Lieu de la mission :`, cols[0]! + 4, r1Y - 22, 6.5);
+  drawText(ctx, `${etabProfil.raisonSociale}, ${adresseComplete}`, cols[0]! + 4, r1Y - 30, 6.5);
+  drawText(ctx, `Duree de la prestation : ${plage}`, cols[0]! + 4, r1Y - 40, 6.5);
+
+  drawText(ctx, formatHours(totalHours), cols[1]! + 4, r1Y - 18, 8);
+  drawText(ctx, formatAmount(tarif), cols[2]! + 4, r1Y - 10, 8);
+  drawText(ctx, `(Cout Renford)`, cols[2]! + 4, r1Y - 22, 6.5);
+  drawText(ctx, '0%', cols[3]! + 12, r1Y - 18, 8);
+  drawText(ctx, formatAmount(totalHt), cols[4]! + 4, r1Y - 18, 8);
+  drawText(ctx, formatAmount(totalHt), cols[5]! + 4, r1Y - 18, 8);
+  ctx.cursorY -= r1H;
 
   // Row 2: Commission
-  const row2H = 28;
-  drawRect(ctx, tableX, ctx.cursorY - row2H, tableW, row2H);
-  const row2Y = ctx.cursorY - 14;
-  drawText(ctx, 'Commission sur vente (plateforme Renford)', tableX + 4, row2Y, 8);
-  drawText(ctx, '20%', tableX + 380, row2Y, 8);
-  drawText(ctx, formatAmount(commissionHt), tableX + 425, row2Y, 8);
-  drawText(ctx, formatAmount(commissionTtc), tableX + 475, row2Y, 8);
-  ctx.cursorY -= row2H + 16;
+  const r2H = 34;
+  drawRect(ctx, tX, ctx.cursorY - r2H, tW, r2H, undefined, undefined, BRAND);
+  for (let c = 1; c < cols.length; c++) {
+    drawLine(ctx, cols[c]!, ctx.cursorY, cols[c]!, ctx.cursorY - r2H, BRAND);
+  }
+  const r2Y = ctx.cursorY - 12;
+  drawText(ctx, 'Commission sur vente', cols[0]! + 4, r2Y, 7.5, true);
+  drawText(ctx, 'Detail des commissions : prestataire de', cols[0]! + 4, r2Y - 10, 6.5);
+  drawText(ctx, 'services via la plateforme Renford.', cols[0]! + 4, r2Y - 18, 6.5);
+  drawText(ctx, '20%', cols[3]! + 12, r2Y - 8, 8);
+  drawText(ctx, formatAmount(commissionHt), cols[4]! + 4, r2Y - 8, 8);
+  drawText(ctx, formatAmount(commissionTtc), cols[5]! + 4, r2Y - 8, 8);
+  ctx.cursorY -= r2H + 16;
 
-  // Recap box
-  ensureSpace(ctx, 110);
-  const boxX = 336;
-  const boxY = ctx.cursorY;
-  drawRect(ctx, boxX, boxY - 100, 223, 94);
-  drawText(ctx, 'Recapitulatif', boxX + 10, boxY - 16, 10, true);
-  drawText(ctx, `Sous-total prestation TTC: ${formatAmount(totalHt)}`, boxX + 10, boxY - 34, 9);
-  drawText(ctx, `Commission sur vente TTC: ${formatAmount(commissionTtc)}`, boxX + 10, boxY - 50, 9);
-  drawText(ctx, `Montant total TTC: ${formatAmount(totalTtc)}`, boxX + 10, boxY - 68, 10, true);
-  drawText(ctx, `NET A PAYER: ${formatAmount(totalTtc)}`, boxX + 10, boxY - 86, 10, true);
-  ctx.cursorY = boxY - 116;
+  // ---- Recap box ----
+  ensureSpace(ctx, 130);
+  const bX = 300;
+  const bW = 259;
+  const bY = ctx.cursorY;
+  const rcH = 22;
+  drawRect(ctx, bX, bY - rcH, bW, rcH, undefined, BRAND, BRAND);
+  drawText(ctx, 'Recapitulatif', bX + 80, bY - 15, 10, true, WHITE);
 
-  // Conditions de paiement
+  const rowH = 20;
+  let rY = bY - rcH;
+  const drawRecapRow = (label: string, value: string, bold = false) => {
+    drawRect(ctx, bX, rY - rowH, bW, rowH, undefined, undefined, BRAND);
+    drawText(ctx, label, bX + 6, rY - 14, 9, bold);
+    drawText(ctx, value, bX + bW - 80, rY - 14, 9, true);
+    rY -= rowH;
+  };
+  drawRecapRow('Sous-total prestation TTC', formatAmount(totalHt));
+  drawRecapRow('Commission sur vente TTC', formatAmount(commissionTtc));
+  drawRecapRow('Montant total TTC', formatAmount(totalTtc), true);
+  // NET A PAYER row
+  drawRect(ctx, bX, rY - rowH, bW, rowH, undefined, undefined, BRAND);
+  drawText(ctx, 'NET A PAYER', bX + 6, rY - 14, 10, true);
+  drawText(ctx, formatAmount(totalTtc), bX + bW - 80, rY - 14, 10, true);
+  rY -= rowH;
+  ctx.cursorY = rY - 20;
+
+  // ---- Conditions de paiement ----
   ensureSpace(ctx, 60);
-  drawText(ctx, 'Conditions de Paiement', 42, ctx.cursorY, 10, true);
+  drawText(ctx, 'Conditions de Paiement :', 42, ctx.cursorY, 10, true, BRAND);
   ctx.cursorY -= 16;
   addParagraph(
     ctx,
-    'Paiement integral demande a la reception de ce devis pour debuter le projet. Mode de paiement : Lien de paiement en ligne via Stripe.',
+    'Paiement integral demande a la reception de ce devis pour debuter le projet.',
     44,
-    510,
+    500,
     9,
     13,
   );
   ctx.cursorY -= 10;
 
-  // Validite
+  // ---- Mode de paiement ----
+  ensureSpace(ctx, 50);
+  drawText(ctx, 'Mode de paiement :', 42, ctx.cursorY, 10, true, BRAND);
+  ctx.cursorY -= 16;
+  drawText(ctx, 'Lien de paiement en ligne', 44, ctx.cursorY, 9);
+  ctx.cursorY -= 14;
+  drawText(ctx, '(Lien Stripe fourni par email)', 44, ctx.cursorY, 8);
+  ctx.cursorY -= 18;
+
+  // ---- Validity note ----
   addParagraph(
     ctx,
-    'Ce devis est valide jusqu\'a 72 heures apres la date d\'emission. Les services decrits debuteront une fois le paiement integral confirme.',
-    44,
+    "Ce devis est valide jusqu'a 72 heures apres la date d'emission. Les services decrits debuteront une fois le paiement integral confirme.",
+    42,
     510,
-    9,
-    13,
+    8,
+    12,
   );
-  ctx.cursorY -= 10;
+  ctx.cursorY -= 12;
 
-  // CGV Summary - Page 2
-  ensureSpace(ctx, 200);
+  // ---- CGV Page 2 ----
+  newPage(ctx);
+
   drawText(ctx, '1. Validation et Paiement du Devis', 42, ctx.cursorY, 10, true);
   ctx.cursorY -= 16;
+  drawText(ctx, '1.1. Validation du Devis :', 42, ctx.cursorY, 9, true);
+  ctx.cursorY -= 14;
   addParagraph(
     ctx,
-    "L'Entreprise Cliente dispose de 72 heures pour valider le devis. Cette validation peut se faire soit par retour de mail, soit en effectuant le paiement integral via le lien de paiement fourni. Passe le delai de 72 heures, l'acceptation du devis sera consideree comme tacite. Sans paiement prealable, la mission ne pourra pas demarrer.",
+    "L'Entreprise Cliente dispose de 72 heures pour valider le devis. Cette validation peut se faire soit par retour de mail, soit en effectuant le paiement integral via le lien de paiement fourni. Passe le delai de 72 heures, l'acceptation du devis sera consideree comme tacite, et la mission demarrera des la reception du paiement. Sans paiement prealable, la mission ne pourra pas demarrer. Elle sera consideree comme annulee si aucune reponse ni paiement n'est recu dans les 72 heures precedant la reception du devis par email.",
     44,
     510,
     8,
     12,
   );
   ctx.cursorY -= 8;
+  drawText(ctx, '1.2. Methode de Paiement :', 42, ctx.cursorY, 9, true);
+  ctx.cursorY -= 14;
   addParagraph(
     ctx,
-    "Le paiement est effectue via un lien Stripe securise. Une fois recu, le paiement est stocke par Renford jusqu'a la fin de la prestation, en attente de validation par l'Entreprise Cliente.",
+    "L'Entreprise Cliente regle le montant du devis via un lien de paiement Stripe fourni dans le present devis et dans l'email contenant ce meme devis. Une fois recu, le paiement est securise et stocke par Renford jusqu'a la fin de la prestation, en attente de validation par l'Entreprise Cliente. La mission ne pourra commencer qu'apres reception du paiement.",
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 8;
+  drawText(ctx, '1.3. Stockage Securise des Informations Bancaires :', 42, ctx.cursorY, 9, true);
+  ctx.cursorY -= 14;
+  addParagraph(
+    ctx,
+    "Les informations bancaires de l'Entreprise Cliente (RIB) sont stockees de maniere securisee sur la plateforme Stripe pour simplifier les transactions futures.",
     44,
     510,
     8,
@@ -591,7 +714,7 @@ const renderDevis = (
   ctx.cursorY -= 16;
   addParagraph(
     ctx,
-    "Apres validation de la prestation par l'Entreprise Cliente, Renford dispose de 30 jours pour verser le montant du au Prestataire, apres deduction des frais de service.",
+    "Apres validation de la prestation par l'Entreprise Cliente, Renford dispose de 30 jours pour verser le montant du au Prestataire. Ce paiement est effectue apres deduction des frais de service de Renford, et il est verse sur le compte bancaire specifie par le Prestataire dans son profil Renford. L'Entreprise Cliente recoit egalement une Facture Finale detaillant les services et les commissions applicables.",
     44,
     510,
     8,
@@ -599,21 +722,154 @@ const renderDevis = (
   );
   ctx.cursorY -= 12;
 
-  ensureSpace(ctx, 160);
+  ensureSpace(ctx, 80);
   drawText(ctx, "3. Conditions d'Annulation ou de Modification", 42, ctx.cursorY, 10, true);
   ctx.cursorY -= 16;
+  drawText(ctx, "3.1. Annulation par l'Entreprise Cliente :", 42, ctx.cursorY, 9, true);
+  ctx.cursorY -= 14;
   addParagraph(
     ctx,
-    "Annulation entre 48h et 24h avant la prestation : 25% du montant du premier jour. Annulation la veille : 25% du montant total du premier jour. Annulation le jour meme : 50% du montant du premier jour, 25% du deuxieme jour. En cas de force majeure, aucune penalite ne sera appliquee.",
+    "L'Entreprise Cliente peut annuler une prestation convenue avec un Prestataire via la Plateforme Renford. Les conditions d'annulation sont les suivantes :",
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 6;
+  addParagraph(
+    ctx,
+    "Annulation entre 48 heures et 24 heures avant la prestation : Si l'annulation intervient entre 48 heures et 24 heures avant le debut de la prestation, et si le Prestataire avait accepte la mission depuis plus de quarante-huit (48) heures, Renford facturera a l'Entreprise Cliente 25 % du montant du pour le premier jour de prestation. Ces frais incluent les frais de service appliques par Renford.",
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 4;
+  addParagraph(
+    ctx,
+    'Annulation la veille de la prestation : Pour une annulation effectuee la veille de la prestation, Renford facturera 25 % du montant total pour le premier jour de la prestation. Ces frais couvrent la reservation du Prestataire et les frais de service Renford.',
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 4;
+  addParagraph(
+    ctx,
+    "Annulation le jour de la prestation : Si l'annulation intervient le jour meme de la prestation, Renford facturera 50 % du montant du premier jour de la prestation, et 25 % du montant du deuxieme jour, dans le cas ou la prestation s'etend sur plusieurs jours. Ces frais sont destines a indemniser le Prestataire pour le prejudice cause par l'annulation tardive, ainsi que les frais de service Renford.",
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 4;
+  addParagraph(
+    ctx,
+    "En cas d'annulation pour cause de force majeure, aucune penalite ne sera appliquee, a condition que des justificatifs pertinents soient fournis dans un delai raisonnable.",
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 6;
+
+  ensureSpace(ctx, 50);
+  drawText(ctx, 'Modifications de la Mission :', 42, ctx.cursorY, 9, true);
+  ctx.cursorY -= 14;
+  addParagraph(
+    ctx,
+    "Les demandes de modification apres la validation du devis ou apres le debut de la mission peuvent entrainer des frais supplementaires. Ces frais seront communiques a l'Entreprise Cliente pour approbation avant leur application.",
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 4;
+
+  ensureSpace(ctx, 50);
+  drawText(ctx, 'Ajustements des Couts en Cours de Mission :', 42, ctx.cursorY, 9, true);
+  ctx.cursorY -= 14;
+  addParagraph(
+    ctx,
+    "Bien que nous nous efforcions de fournir des estimations precises, le cout final de la mission peut varier en fonction des conditions rencontrees. Tout ajustement sera communique a l'Entreprise Cliente pour approbation avant de proceder a toute modification du cout final.",
     44,
     510,
     8,
     12,
   );
   ctx.cursorY -= 8;
+
+  ensureSpace(ctx, 80);
+  drawText(
+    ctx,
+    '3.2. Desistement ou Prestation non honoree par un Renford',
+    42,
+    ctx.cursorY,
+    9,
+    true,
+  );
+  ctx.cursorY -= 14;
   addParagraph(
     ctx,
-    "En cas de desistement tardif ou absence du Prestataire : suspension temporaire de 7 jours. Deux desistements en 30 jours : suspension definitive. Renford s'engage a trouver un remplacement rapide.",
+    "Un Prestataire peut se retirer d'une prestation convenue avec une Entreprise Cliente via la Plateforme. Si le desistement a lieu plus de vingt-quatre (24) heures avant le debut de la prestation, il est sans consequence pour le Prestataire. Cependant, en cas de non-execution de la prestation due a un desistement tardif ou une absence, les mesures suivantes seront prises :",
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 4;
+  addParagraph(
+    ctx,
+    'Suspension temporaire : Le compte du Prestataire sera suspendu temporairement pour sept (7) jours calendaires des notification de cette suspension par Renford. Le Prestataire aura la possibilite de fournir des explications durant cette periode. Selon les justifications apportees, et sous reserve de validation par Renford, le compte pourra etre reactive immediatement ou apres la periode de suspension.',
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 4;
+  addParagraph(
+    ctx,
+    'Cas de force majeure : Renford reconnait que certains desistements tardifs ou absences peuvent survenir en raison de circonstances exceptionnelles et imprevisibles qui echappent au controle du Prestataire. Dans de tels cas de force majeure dument justifies, aucune sanction ne sera appliquee.',
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 4;
+  addParagraph(
+    ctx,
+    "Engagement de remplacement : Renford s'engage a mettre en oeuvre tous les moyens necessaires pour trouver un remplacement rapide afin de minimiser l'impact sur l'Entreprise Cliente. En cas d'echec dans la recherche d'un remplacant, Renford ouvrira une discussion entre les parties afin de minimiser les impacts negatifs sur l'Entreprise Cliente.",
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 4;
+  addParagraph(
+    ctx,
+    'Suspension definitive : Si un Prestataire se desiste tardivement ou est absent a deux reprises sur une periode de trente (30) jours, son compte sera definitivement suspendu par Renford.',
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 4;
+  addParagraph(
+    ctx,
+    "Ces mesures sont prises dans l'interet de maintenir la qualite et la fiabilite des services proposes par Renford et de ses Prestataires.",
+    44,
+    510,
+    8,
+    12,
+  );
+  ctx.cursorY -= 8;
+
+  ensureSpace(ctx, 50);
+  drawText(ctx, '3.3. En cas de Non-realisation de la Mission', 42, ctx.cursorY, 9, true);
+  ctx.cursorY -= 14;
+  addParagraph(
+    ctx,
+    "Si le Prestataire ne se presente pas ou est dans l'impossibilite de realiser la mission le jour J sans justification valable, le Facilitateur s'engage a rembourser integralement l'Entreprise Cliente dans un delai de 30 jours ouvres.",
     44,
     510,
     8,
@@ -700,7 +956,6 @@ const renderContrat = (
 
   const renfordUser = missionRenford.profilRenford.utilisateur;
   const renfordProfil = missionRenford.profilRenford;
-  const renfordName = `${renfordUser.prenom} ${renfordUser.nom}`;
   const etab = mission.etablissement;
   const etabProfil = etab.profilEtablissement;
 
@@ -726,8 +981,8 @@ const renderContrat = (
   };
 
   // ---- Page 1: Header ----
-  drawRect(ctx, 32, 800, 531, 30, 0.94);
-  drawText(ctx, 'CONTRAT DE PRESTATION DE SERVICE - OFFRE FLEX', 42, 810, 11, true);
+  drawRect(ctx, 32, 800, 531, 30, undefined, BRAND, BRAND);
+  drawText(ctx, 'CONTRAT DE PRESTATION DE SERVICE - OFFRE FLEX', 70, 810, 13, true, WHITE);
   ctx.cursorY = 780;
 
   addTitle('ENTRE LES SOUSSIGNES :', 10);
@@ -1008,7 +1263,7 @@ const renderAttestation = (
     15,
   );
 
-  drawRect(ctx, 36, ctx.cursorY - 96, 523, 90);
+  drawRect(ctx, 36, ctx.cursorY - 96, 523, 90, undefined, undefined, BRAND);
   drawText(ctx, `Etablissement: ${mission.etablissement.nom}`, 44, ctx.cursorY - 24, 9, false);
   drawText(ctx, `Renford: ${renfordName}`, 44, ctx.cursorY - 40, 9, false);
   drawText(

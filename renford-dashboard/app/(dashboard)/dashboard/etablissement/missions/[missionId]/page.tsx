@@ -858,7 +858,8 @@ export default function EtablissementMissionDetailsPage() {
                       | "devis"
                       | "facture_prestation"
                       | "facture_commission"
-                      | "contrat_prestation",
+                      | "contrat_prestation"
+                      | "attestation_mission",
                   });
                 }}
                 isDownloading={downloadDocumentMutation.isPending}

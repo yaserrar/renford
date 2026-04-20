@@ -8,6 +8,7 @@ import { getErrorMessage } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import useAxios from "./axios";
+import useSession from "@/stores/session-store";
 
 // Hook pour récupérer l'utilisateur courant
 export const useCurrentUser = () => {
@@ -70,6 +71,25 @@ export const useUpdateNotificationSettings = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success("Préférences de notifications mises à jour");
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
+export const useDeleteAccount = () => {
+  const axios = useAxios();
+  const { logout } = useSession();
+
+  return useMutation({
+    mutationFn: async () => {
+      return (await axios.delete("/utilisateur/account")).data;
+    },
+    onSuccess: () => {
+      toast.success("Votre compte a été supprimé");
+      logout();
     },
     onError: (error: any) => {
       const message = getErrorMessage(error?.response?.data?.message);

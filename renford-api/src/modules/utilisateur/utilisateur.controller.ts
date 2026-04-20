@@ -199,3 +199,90 @@ export const updateNotificationSettings = async (
     return next(err);
   }
 };
+
+// DELETE /user/account - Suppression du compte (RGPD – droit à l'effacement)
+export const deleteAccount = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    const utilisateur = await prisma.utilisateur.findUnique({
+      where: { id: userId },
+    });
+
+    if (!utilisateur) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    if (utilisateur.statut === 'supprime') {
+      return res.status(400).json({ message: 'Ce compte est déjà supprimé' });
+    }
+
+    const anonymised = 'Compte supprimé';
+
+    await prisma.$transaction(async (tx) => {
+      // Anonymise utilisateur fields
+      await tx.utilisateur.update({
+        where: { id: userId },
+        data: {
+          email: `supprime_${userId}@deleted.renford.fr`,
+          nom: anonymised,
+          prenom: anonymised,
+          telephone: null,
+          motDePasse: null,
+          statut: 'supprime',
+          emailVerifie: false,
+          notificationsEmail: false,
+          notificationsMobile: false,
+          codeVerificationEmail: null,
+          codeReinitialisationMdp: null,
+        },
+      });
+
+      // Anonymise profil renford if exists
+      await tx.profilRenford.updateMany({
+        where: { utilisateurId: userId },
+        data: {
+          adresse: null,
+          ville: null,
+          codePostal: null,
+          dateNaissance: null,
+          siret: null,
+          avatarChemin: null,
+          imageCouvertureChemin: null,
+          titreProfil: null,
+          descriptionProfil: null,
+          justificatifCarteProfessionnelleChemin: null,
+          attestationVigilanceChemin: null,
+        },
+      });
+
+      // Anonymise profil etablissement if exists
+      await tx.profilEtablissement.updateMany({
+        where: { utilisateurId: userId },
+        data: {
+          raisonSociale: anonymised,
+          siret: anonymised,
+          adresse: anonymised,
+          codePostal: '00000',
+          ville: anonymised,
+          aPropos: null,
+          avatarChemin: null,
+          imageCouvertureChemin: null,
+        },
+      });
+
+      // Delete firebase auth link
+      await tx.firebaseAuthInfo.deleteMany({
+        where: { utilisateurId: userId },
+      });
+    });
+
+    return res.json({ message: 'Votre compte a été supprimé avec succès' });
+  } catch (err) {
+    return next(err);
+  }
+};
