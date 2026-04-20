@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import CenterState from "@/components/common/center-state";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  SecureAvatarImage,
+  SecureImage,
+  SecureLink,
+} from "@/components/common/secure-file";
+import { useFileUrl } from "@/hooks/use-file-url";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,7 +31,6 @@ import {
   formatFrenchDate,
   formatYear,
   getInitials,
-  getUrl,
 } from "@/lib/utils";
 import {
   CRENEAUX_DISPONIBILITE,
@@ -36,9 +41,10 @@ import {
   NIVEAU_EXPERIENCE_LABELS,
   TYPE_MISSION_LABELS,
 } from "@/validations/profil-renford";
-import { Award, Eye, Heart, MapPin, Star } from "lucide-react";
+import { Award, BadgeCheck, Eye, Heart, MapPin, Star } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
+import type { RenfordDiplome } from "@/types/profil-renford";
 import ProposerMissionDialog from "../proposer-mission-dialog";
 
 export default function EtablissementPublicRenfordProfilePage() {
@@ -112,13 +118,10 @@ export default function EtablissementPublicRenfordProfilePage() {
           <div className="bg-white rounded-3xl border border-input overflow-hidden">
             <div className="relative h-72 w-full bg-gray-100 overflow-hidden">
               {profil.imageCouvertureChemin ? (
-                <Image
-                  src={getUrl(profil.imageCouvertureChemin)}
+                <SecureImage
+                  chemin={profil.imageCouvertureChemin}
                   alt={`Couverture de ${fullName}`}
-                  className="object-cover w-full"
-                  height={300}
-                  width={1300}
-                  quality={100}
+                  className="object-cover w-full h-full"
                 />
               ) : null}
             </div>
@@ -126,12 +129,8 @@ export default function EtablissementPublicRenfordProfilePage() {
             <div className="p-6 border-b border-input flex flex-wrap items-end justify-between gap-6 -mt-10">
               <div className="flex items-end gap-4">
                 <Avatar className="h-26 w-26 border-4 border-white shadow-sm">
-                  <AvatarImage
-                    src={
-                      profil.avatarChemin
-                        ? getUrl(profil.avatarChemin)
-                        : undefined
-                    }
+                  <SecureAvatarImage
+                    chemin={profil.avatarChemin}
                     alt={fullName}
                   />
                   <AvatarFallback className="text-lg font-semibold">
@@ -391,52 +390,7 @@ export default function EtablissementPublicRenfordProfilePage() {
                 {profil.renfordDiplomes.length > 0 ? (
                   <div className="space-y-3">
                     {profil.renfordDiplomes.map((diplome) => (
-                      <a
-                        key={diplome.id}
-                        href={
-                          diplome.justificatifDiplomeChemin
-                            ? getUrl(diplome.justificatifDiplomeChemin)
-                            : undefined
-                        }
-                        target={
-                          diplome.justificatifDiplomeChemin
-                            ? "_blank"
-                            : undefined
-                        }
-                        rel={
-                          diplome.justificatifDiplomeChemin
-                            ? "noopener noreferrer"
-                            : undefined
-                        }
-                        className="rounded-2xl border border-input p-4 flex items-center justify-between gap-3"
-                        aria-disabled={!diplome.justificatifDiplomeChemin}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                            <Award className="h-4 w-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-sm truncate">
-                              {DIPLOME_LABELS[diplome.typeDiplome] ??
-                                diplome.typeDiplome}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {[
-                                diplome.anneeObtention
-                                  ? `Obtenu en ${diplome.anneeObtention}`
-                                  : null,
-                                diplome.etablissementFormation,
-                              ]
-                                .filter(Boolean)
-                                .join(" · ") || "Année non renseignée"}
-                            </p>
-                          </div>
-                        </div>
-
-                        {diplome.justificatifDiplomeChemin && (
-                          <Eye className="h-4 w-4 text-muted-foreground shrink-0" />
-                        )}
-                      </a>
+                      <DiplomeLinkItem key={diplome.id} diplome={diplome} />
                     ))}
                   </div>
                 ) : (
@@ -459,12 +413,9 @@ export default function EtablissementPublicRenfordProfilePage() {
                             className="basis-full"
                           >
                             <div className="relative w-full max-w-xl mx-auto aspect-[4/3] overflow-hidden rounded-2xl border border-input bg-muted/30">
-                              <Image
-                                src={getUrl(imagePath)}
-                                alt={`Portfolio ${index + 1}`}
-                                fill
-                                sizes="(max-width: 768px) 90vw, 640px"
-                                className="object-cover"
+                              <PortfolioImage
+                                chemin={imagePath}
+                                index={index}
                               />
                             </div>
                           </CarouselItem>
@@ -490,5 +441,63 @@ export default function EtablissementPublicRenfordProfilePage() {
         renfordName={fullName}
       />
     </main>
+  );
+}
+
+/* ── Helper components for secure file URLs ── */
+
+function DiplomeLinkItem({ diplome }: { diplome: RenfordDiplome }) {
+  const url = useFileUrl(diplome.justificatifDiplomeChemin);
+  return (
+    <a
+      href={url || undefined}
+      target={url ? "_blank" : undefined}
+      rel={url ? "noopener noreferrer" : undefined}
+      className="rounded-2xl border border-input p-4 flex items-center justify-between gap-3"
+      aria-disabled={!diplome.justificatifDiplomeChemin}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          <Award className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <p className="font-semibold text-sm truncate">
+              {DIPLOME_LABELS[diplome.typeDiplome] ?? diplome.typeDiplome}
+            </p>
+            {diplome.verifie && (
+              <BadgeCheck className="h-4 w-4 text-emerald-500 shrink-0" />
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {[
+              diplome.anneeObtention
+                ? `Obtenu en ${diplome.anneeObtention}`
+                : null,
+              diplome.etablissementFormation,
+            ]
+              .filter(Boolean)
+              .join(" · ") || "Année non renseignée"}
+          </p>
+        </div>
+      </div>
+      {diplome.justificatifDiplomeChemin && (
+        <Eye className="h-4 w-4 text-muted-foreground shrink-0" />
+      )}
+    </a>
+  );
+}
+
+function PortfolioImage({ chemin, index }: { chemin: string; index: number }) {
+  const url = useFileUrl(chemin);
+  if (!url) return null;
+  return (
+    <Image
+      src={url}
+      alt={`Portfolio ${index + 1}`}
+      fill
+      sizes="(max-width: 768px) 90vw, 640px"
+      className="object-cover"
+    />
   );
 }

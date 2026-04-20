@@ -10,7 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 import { useGteEtablissementMissionsByTab } from "@/hooks/mission";
 import { useProposerMission } from "@/hooks/favoris-renford";
 import {
@@ -23,7 +24,6 @@ import {
   formatDurationHours,
   formatFrenchDate,
   getInitials,
-  getUrl,
 } from "@/lib/utils";
 import { CalendarDays, Check, Clock3, MapPin } from "lucide-react";
 import MissionStatusBadge from "@/components/common/mission-status-badge";
@@ -124,8 +124,8 @@ export default function ProposerMissionDialog({
               >
                 <div className="flex items-start gap-3">
                   <Avatar className="h-11 w-11 shrink-0 mt-0.5">
-                    <AvatarImage
-                      src={getUrl(etab?.avatarChemin)}
+                    <SecureAvatarImage
+                      chemin={etab?.avatarChemin}
                       alt={etab?.nom}
                     />
                     <AvatarFallback className="bg-secondary/10 text-secondary-dark text-xs font-medium">

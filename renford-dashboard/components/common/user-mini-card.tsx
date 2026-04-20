@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { getInitials, getUrl } from "@/lib/utils";
+import { SecureAvatarImage } from "@/components/common/secure-file";
+import { getInitials } from "@/lib/utils";
 import { TYPE_UTILISATEUR_LABELS } from "@/validations/utilisateur";
 import type { TypeUtilisateur } from "@/types/utilisateur";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,7 @@ export default function UserMiniCard({
       )}
     >
       <Avatar className="h-7 w-7 shrink-0">
-        <AvatarImage src={getUrl(avatarPath ?? null)} alt={name} />
+        <SecureAvatarImage chemin={avatarPath} alt={name} />
         <AvatarFallback
           className={cn(
             "text-xs font-medium",

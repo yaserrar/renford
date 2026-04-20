@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { Heart, Star } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { getInitials, getUrl } from "@/lib/utils";
+import { SecureAvatarImage } from "@/components/common/secure-file";
+import { getInitials } from "@/lib/utils";
 import { useRemoveFavori } from "@/hooks/favoris-renford";
 import { FavorisRenfordItem } from "@/types/favoris-renford";
 import ProposerMissionDialog from "./proposer-mission-dialog";
@@ -27,10 +28,7 @@ export default function RenfordFavoriCard({ favori }: RenfordFavoriCardProps) {
     <article className="flex flex-col items-center rounded-2xl border border-input bg-white px-6 py-6">
       <Link href={`/dashboard/etablissement/renfords/${profil.id}`}>
         <Avatar className="h-20 w-20 border-2 border-input">
-          <AvatarImage
-            src={profil.avatarChemin ? getUrl(profil.avatarChemin) : undefined}
-            alt={fullName}
-          />
+          <SecureAvatarImage chemin={profil.avatarChemin} alt={fullName} />
           <AvatarFallback className="text-lg font-semibold">
             {getInitials(fullName)}
           </AvatarFallback>

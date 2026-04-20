@@ -5,13 +5,14 @@ import { Heart, SlidersHorizontal, Star } from "lucide-react";
 import { H2 } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 import CenterState from "@/components/common/center-state";
 import InviterRenfordDialog from "@/components/common/inviter-renford-dialog";
 import { useAddFavori, useFavorisRenford } from "@/hooks/favoris-renford";
 import { useGteEtablissementMissionsByTab } from "@/hooks/mission";
 import { useFilleuls } from "@/hooks/parrainage";
-import { cn, getInitials, getUrl } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import RenfordFavoriCard from "./renford-favori-card";
 import ProposerMissionDialog from "./proposer-mission-dialog";
 import Link from "next/link";
@@ -133,12 +134,8 @@ export default function MesRenfordsPage() {
                         href={`/dashboard/etablissement/renfords/${renford.id}`}
                       >
                         <Avatar className="h-20 w-20 border-2 border-input">
-                          <AvatarImage
-                            src={
-                              renford.avatarChemin
-                                ? getUrl(renford.avatarChemin)
-                                : undefined
-                            }
+                          <SecureAvatarImage
+                            chemin={renford.avatarChemin}
                             alt={fullName}
                           />
                           <AvatarFallback className="text-lg font-semibold">
@@ -230,12 +227,8 @@ export default function MesRenfordsPage() {
                           href={`/dashboard/etablissement/renfords/${profil.id}`}
                         >
                           <Avatar className="h-20 w-20 border-2 border-input">
-                            <AvatarImage
-                              src={
-                                profil?.avatarChemin
-                                  ? getUrl(profil.avatarChemin)
-                                  : undefined
-                              }
+                            <SecureAvatarImage
+                              chemin={profil?.avatarChemin}
                               alt={fullName}
                             />
                             <AvatarFallback className="text-lg font-semibold">
@@ -271,7 +264,8 @@ export default function MesRenfordsPage() {
                             <Heart
                               className={cn(
                                 "h-4 w-4",
-                                favoriRenfordIds.has(profil.id) && "fill-current",
+                                favoriRenfordIds.has(profil.id) &&
+                                  "fill-current",
                               )}
                             />
                           </Button>

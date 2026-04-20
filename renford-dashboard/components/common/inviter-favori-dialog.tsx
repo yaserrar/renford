@@ -13,7 +13,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CenterState from "@/components/common/center-state";
 import { useFavorisRenford, useProposerMission } from "@/hooks/favoris-renford";
-import { cn, getInitials, getUrl } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
+import { SecureAvatarImage } from "@/components/common/secure-file";
 
 type InviterFavoriDialogProps = {
   open: boolean;
@@ -101,12 +102,8 @@ export default function InviterFavoriDialog({
                   onClick={() => setSelectedId(renford.id)}
                 >
                   <Avatar className="h-10 w-10 border border-input">
-                    <AvatarImage
-                      src={
-                        renford.avatarChemin
-                          ? getUrl(renford.avatarChemin)
-                          : undefined
-                      }
+                    <SecureAvatarImage
+                      chemin={renford.avatarChemin}
                       alt={fullName}
                     />
                     <AvatarFallback className="text-sm">
