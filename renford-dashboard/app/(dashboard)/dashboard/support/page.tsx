@@ -109,7 +109,16 @@ export default function SupportPage() {
             </TabsContent>
 
             <TabsContent value="contact">
-              <div className="mx-auto w-full max-w-3xl">
+              <div className="mx-auto w-full max-w-3xl space-y-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>Contactez-nous :</span>
+                  <a
+                    href="mailto:contact@renford.fr"
+                    className="font-medium text-foreground hover:underline"
+                  >
+                    contact@renford.fr
+                  </a>
+                </div>
                 <form
                   onSubmit={handleSubmit(onSubmit)}
                   className="space-y-4 rounded-lg border bg-white p-6"

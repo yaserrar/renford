@@ -482,6 +482,36 @@ export const useDownloadMissionDocumentByEtablissement = () => {
   });
 };
 
+export const useSetVisioLink = () => {
+  const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      missionId,
+      missionRenfordId,
+    }: {
+      missionId: string;
+      missionRenfordId: string;
+    }) => {
+      return (
+        await axios.post(
+          `/etablissement/missions/${missionId}/renfords/${missionRenfordId}/visio`,
+        )
+      ).data as { lienVisio: string };
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["etablissement-mission-details", variables.missionId],
+      });
+    },
+    onError: (error: any) => {
+      const message = getErrorMessage(error?.response?.data?.message);
+      toast.error(message);
+    },
+  });
+};
+
 // ─── Établissement planning hook ────────────────────────────
 
 export const useEtablissementPlanning = (

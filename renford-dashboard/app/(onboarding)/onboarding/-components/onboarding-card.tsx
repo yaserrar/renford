@@ -4,6 +4,10 @@ import { ReactNode } from "react";
 import { OnboardingProgress } from "./onboarding-progress";
 import { H2 } from "@/components/ui/typography";
 import { Logo } from "@/components/common/logo";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
+import useSession from "@/stores/session-store";
+import { useRouter } from "next/navigation";
 
 type Props = {
   children: ReactNode;
@@ -22,6 +26,14 @@ export function OnboardingCard({
   subtitle,
   description,
 }: Props) {
+  const { logout } = useSession();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/connexion");
+  };
+
   return (
     <main className="min-h-screen bg-white md:bg-secondary-background flex flex-col">
       {/* Header avec logo et barre de progression */}
@@ -29,6 +41,10 @@ export function OnboardingCard({
         <header className="w-full bg-white border-b border-gray-200 py-4 px-6">
           <div className="container mx-auto flex items-center justify-between">
             <Logo />
+            <Button variant="ghost-destructive" onClick={handleLogout}>
+              <LogOut className="w-4 h-4" />
+              Se déconnecter
+            </Button>
           </div>
         </header>
         <OnboardingProgress currentStep={currentStep} totalSteps={totalSteps} />

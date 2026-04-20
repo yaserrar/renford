@@ -38,6 +38,10 @@ export const slice = (text: string, length: number) => {
   return text.slice(0, length) + "...";
 };
 
+/**
+ * @deprecated Use `useFileUrl` hook or `<SecureImage>` / `<SecureAvatarImage>` / `<SecureLink>` components instead.
+ * Files are now stored in MinIO and require presigned URLs.
+ */
 export const getUrl = (path: string | undefined | null) => {
   if (!path) return "";
   return `${MEDIA_BASE_URL}/${path}`;
@@ -47,7 +51,7 @@ export const numberRegex = /^-?\d*\.?\d*$/;
 
 export const formatAmount = (
   value: number | string | null | undefined,
-  suffix = "€"
+  suffix = "€",
 ) => {
   if (value === null || value === undefined) return "-";
 
@@ -114,9 +118,7 @@ export const getInitials = (name?: string | null) => {
     .join("");
 };
 
-export const canApplyForMission = (
-  user: CurrentUser | undefined,
-): boolean => {
+export const canApplyForMission = (user: CurrentUser | undefined): boolean => {
   if (!user?.profilRenford) return false;
   const profil = user.profilRenford;
   return (
