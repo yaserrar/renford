@@ -155,6 +155,7 @@ model ProfilEtablissement {
     // Relations
     etablissements Etablissement[]
     favoris        FavorisRenford[]
+    abonnements    Abonnement[]
 
     @@map("profils_etablissement")
 }
@@ -301,8 +302,8 @@ model ProfilRenford {
     tarifDemiJournee   Decimal? @db.Decimal(8, 2)
 
     // Stripe Connect
-    stripeConnectAccountId          String?  @unique
-    stripeConnectOnboardingComplete Boolean  @default(false)
+    stripeConnectAccountId          String? @unique
+    stripeConnectOnboardingComplete Boolean @default(false)
 
     // Disponibilité (étape 7)
     disponibilitesLundi    CreneauDisponibilite[] @default([])
@@ -329,9 +330,9 @@ model ProfilRenford {
     // Relations
     renfordDiplomes             RenfordDiplome[]
     experiencesProfessionnelles ExperienceProfessionnelleRenford[]
-    missionsRenford              MissionRenford[]
-    favoris                      FavorisRenford[]
-    indisponibilites             IndisponibiliteRenford[]
+    missionsRenford             MissionRenford[]
+    favoris                     FavorisRenford[]
+    indisponibilites            IndisponibiliteRenford[]
 
     @@index([statutCertification])
     @@index([niveauExperience])
@@ -470,6 +471,10 @@ model RenfordDiplome {
     anneeObtention            Int?
     etablissementFormation    String?
 
+    // Vérification par l'admin
+    verifie          Boolean   @default(false)
+    dateVerification DateTime?
+
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
 
@@ -567,18 +572,18 @@ model Mission {
 
     PlageHoraireMission PlageHoraireMission[]
 
-    methodeTarification MethodeTarification @default(horaire)
-    tarif               Decimal?            @db.Decimal(10, 2) // Tarif horaire, journalier ou demi-journalier selon la méthode de tarification
-    montantHT           Decimal?            @db.Decimal(10, 2) // Montant HT stocké au moment de la création
-    montantFraisService Decimal?            @db.Decimal(10, 2) // Frais de service Renford (HT)
-    montantTTC          Decimal?            @db.Decimal(10, 2) // Total facturé = montantHT + fraisTTC (TVA 20% sur frais uniquement)
+    methodeTarification          MethodeTarification @default(horaire)
+    tarif                        Decimal?            @db.Decimal(10, 2) // Tarif horaire, journalier ou demi-journalier selon la méthode de tarification
+    montantHT                    Decimal?            @db.Decimal(10, 2) // Montant HT stocké au moment de la création
+    montantFraisService          Decimal?            @db.Decimal(10, 2) // Frais de service Renford (HT)
+    montantTTC                   Decimal?            @db.Decimal(10, 2) // Total facturé = montantHT + fraisTTC (TVA 20% sur frais uniquement)
     dateDerniereRechercheRenford DateTime? // Dernière exécution de recherche de Renfords
 
     pourcentageVariationTarif Decimal? @db.Decimal(5, 2) // Pourcentage de variation du tarif en fonction de l'expérience du Renford (ex: +20% pour un expert)
 
-   // Métadonnées
+    // Métadonnées
     dateCreation  DateTime @default(now())
-    dateMiseAJour DateTime @updatedAt 
+    dateMiseAJour DateTime @updatedAt
 
     missionsRenford MissionRenford[]
     paiements       Paiement[]
@@ -623,17 +628,17 @@ enum Discipline {
 // }
 
 enum StatutMission {
-    brouillon                  // Mission en préparation, pas encore soumise
-    ajouter_mode_paiement      // Aucun moyen de paiement valide, publication bloquée
-    en_recherche               // Mission publiée, en recherche de candidatures, pas encore reçu aucune candidature
-    candidatures_disponibles   // Un ou plusieurs Renfords ont candidaté (ils ont accepté la mission), en attente de sélection
-    attente_de_signature       // Candidature retenue, contrat en attente de signature (l'etablissement a accepté la candidature du Renford, mais le contrat n'est pas encore signé)
-    mission_en_cours           // Contrat signé, mission démarrée
-    remplacement_en_cours      // Remplacement temporaire suite à une absence
-    en_litige                  // Incident ou désaccord nécessitant arbitrage
-    mission_terminee           // Mission terminée opérationnellement
-    archivee                   // Mission clôturée et archivée
-    annulee                    // Mission annulée avant sa clôture normale
+    brouillon // Mission en préparation, pas encore soumise
+    ajouter_mode_paiement // Aucun moyen de paiement valide, publication bloquée
+    en_recherche // Mission publiée, en recherche de candidatures, pas encore reçu aucune candidature
+    candidatures_disponibles // Un ou plusieurs Renfords ont candidaté (ils ont accepté la mission), en attente de sélection
+    attente_de_signature // Candidature retenue, contrat en attente de signature (l'etablissement a accepté la candidature du Renford, mais le contrat n'est pas encore signé)
+    mission_en_cours // Contrat signé, mission démarrée
+    remplacement_en_cours // Remplacement temporaire suite à une absence
+    en_litige // Incident ou désaccord nécessitant arbitrage
+    mission_terminee // Mission terminée opérationnellement
+    archivee // Mission clôturée et archivée
+    annulee // Mission annulée avant sa clôture normale
 }
 
 enum MethodeTarification {
@@ -694,10 +699,10 @@ model MissionRenford {
     tarifNegocie Decimal? @db.Decimal(8, 2)
 
     // Signature – Contrat de prestation
-    signatureContratPrestationRenfordId        String? @unique
-    signatureContratPrestationRenford          SignatureContrat? @relation("SignatureContratRenford", fields: [signatureContratPrestationRenfordId], references: [id])
-    signatureContratPrestationEtablissementId  String? @unique
-    signatureContratPrestationEtablissement    SignatureContrat? @relation("SignatureContratEtablissement", fields: [signatureContratPrestationEtablissementId], references: [id])
+    signatureContratPrestationRenfordId       String?           @unique
+    signatureContratPrestationRenford         SignatureContrat? @relation("SignatureContratRenford", fields: [signatureContratPrestationRenfordId], references: [id])
+    signatureContratPrestationEtablissementId String?           @unique
+    signatureContratPrestationEtablissement   SignatureContrat? @relation("SignatureContratEtablissement", fields: [signatureContratPrestationEtablissementId], references: [id])
 
     // Évaluation laissée par l'établissement
     evaluation EvaluationRenford?
@@ -723,7 +728,7 @@ model SignatureContrat {
     cheminImage String
 
     // Nom complet du signataire
-    nomSignataire  String
+    nomSignataire   String
     emailSignataire String
 
     // Rôle du signataire (renford ou etablissement)
@@ -736,8 +741,8 @@ model SignatureContrat {
     source SourceSignature @default(web)
 
     // Informations techniques
-    adresseIp  String
-    userAgent  String    @db.Text
+    adresseIp String
+    userAgent String @db.Text
 
     // Dates
     dateCreation DateTime @default(now())
@@ -768,7 +773,7 @@ enum SourceSignature {
 model EvaluationRenford {
     id String @id @default(uuid())
 
-    missionRenfordId String           @unique
+    missionRenfordId String         @unique
     missionRenford   MissionRenford @relation(fields: [missionRenfordId], references: [id], onDelete: Cascade)
 
     // Note globale (1 à 5 étoiles)
@@ -784,19 +789,18 @@ model EvaluationRenford {
     @@map("evaluations_renfords")
 }
 
-
 // Enum utilisée par MissionRenford
 enum StatutMissionRenford {
-    nouveau                  // Opportunité nouvellement proposée au Renford, pas encore consultée
-    vu                       // Opportunité consultée par le Renford, en attente d'une action
-    refuse_par_renford       // Le Renford a refusé l'opportunité ou la proposition
-    selection_en_cours       // Le Renford a accepté la mission, en attente de décision de l'établissement (file d'attente ordonnée par ordreShortlist)
-    attente_de_signature     // Le Renford est retenu, contrat en préparation ou à signer
+    nouveau // Opportunité nouvellement proposée au Renford, pas encore consultée
+    vu // Opportunité consultée par le Renford, en attente d'une action
+    refuse_par_renford // Le Renford a refusé l'opportunité ou la proposition
+    selection_en_cours // Le Renford a accepté la mission, en attente de décision de l'établissement (file d'attente ordonnée par ordreShortlist)
+    attente_de_signature // Le Renford est retenu, contrat en préparation ou à signer
     refuse_par_etablissement // Le profil n'est finalement pas retenu par l'établissement
-    contrat_signe            // Le contrat est signé, la mission est confirmée pour ce Renford
-    mission_en_cours         // La prestation a démarré
-    mission_terminee         // La prestation est terminée
-    annule                   // L'assignation est annulée avant sa fin normale
+    contrat_signe // Le contrat est signé, la mission est confirmée pour ce Renford
+    mission_en_cours // La prestation a démarré
+    mission_terminee // La prestation est terminée
+    annule // L'assignation est annulée avant sa fin normale
 }
 
 // ============================================================================
@@ -826,14 +830,14 @@ model FavorisRenford {
 // ============================================================================
 
 model IndisponibiliteRenford {
-    id              String @id @default(uuid())
+    id              String        @id @default(uuid())
     profilRenfordId String
     profilRenford   ProfilRenford @relation(fields: [profilRenfordId], references: [id], onDelete: Cascade)
 
-    date       DateTime @db.Date   // Le jour précis de l'indisponibilité
-    heureDebut Int?                // Minutes depuis minuit (ex: 540 = 09:00). null si journée entière
-    heureFin   Int?                // Minutes depuis minuit. null si journée entière
-    journeeEntiere Boolean @default(true)
+    date           DateTime @db.Date // Le jour précis de l'indisponibilité
+    heureDebut     Int? // Minutes depuis minuit (ex: 540 = 09:00). null si journée entière
+    heureFin       Int? // Minutes depuis minuit. null si journée entière
+    journeeEntiere Boolean  @default(true)
 
     dateCreation DateTime @default(now())
 
@@ -880,7 +884,7 @@ model Notification {
     titre       String
     description String
     source      SourceNotification
-    lu          Boolean @default(false)
+    lu          Boolean            @default(false)
 
     // sourceId contient l'identifiant de l'entité source (mission, missionRenford, etc.)
     sourceId String?
@@ -1159,10 +1163,10 @@ model Paiement {
     statut StatutPaiement @default(en_attente)
 
     // Intégration Stripe
-    stripePaymentIntentId  String? @unique
+    stripePaymentIntentId   String? @unique
     stripeCheckoutSessionId String? @unique
-    stripeChargeId         String?
-    stripeTransferId       String? // Transfer vers le compte Connect du Renford
+    stripeChargeId          String?
+    stripeTransferId        String? // Transfer vers le compte Connect du Renford
 
     // Dates
     dateCreation   DateTime  @default(now())
@@ -1186,6 +1190,110 @@ enum StatutPaiement {
     rembourse
     echoue
     conteste
+}
+
+// ============================================================================
+// TABLE: Abonnement (Subscription plans for établissements)
+// ============================================================================
+
+enum PlanAbonnement {
+    echauffement // 10 missions/mois - 99€/mois
+    performance // 25 missions/mois - 199€/mois
+    competition // Missions illimitées - Tarif sur mesure
+}
+
+enum StatutAbonnement {
+    actif
+    annule
+    expire
+    en_pause
+    en_attente // En attente de paiement initial
+}
+
+model Abonnement {
+    id String @id @default(uuid())
+
+    profilEtablissementId String
+    profilEtablissement   ProfilEtablissement @relation(fields: [profilEtablissementId], references: [id], onDelete: Cascade)
+
+    plan   PlanAbonnement
+    statut StatutAbonnement @default(en_attente)
+
+    // Quota
+    quotaMissions     Int // Nombre de missions incluses (0 = illimité pour competition)
+    missionsUtilisees Int @default(0) // Missions consommées dans la période courante
+
+    // Tarification (mensuel uniquement)
+    prixMensuelHT Decimal @db.Decimal(10, 2)
+
+    // Période
+    dateDebut                  DateTime
+    dateFin                    DateTime?
+    dateProchainRenouvellement DateTime?
+
+    // Stripe
+    stripeSubscriptionId     String?   @unique
+    stripePriceId            String?
+    stripeCurrentPeriodStart DateTime?
+    stripeCurrentPeriodEnd   DateTime?
+
+    // Métadonnées
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    // Relations
+    evenements AbonnementEvenement[]
+
+    @@index([profilEtablissementId])
+    @@index([statut])
+    @@index([plan])
+    @@map("abonnements")
+}
+
+// ============================================================================
+// TABLE: Évènements d'abonnement (audit trail)
+// ============================================================================
+
+enum TypeEvenementAbonnement {
+    creation
+    activation
+    renouvellement
+    annulation
+    expiration
+    mise_en_pause
+    reprise
+    changement_plan
+    paiement_reussi
+    paiement_echoue
+    remboursement
+}
+
+model AbonnementEvenement {
+    id String @id @default(uuid())
+
+    abonnementId String
+    abonnement   Abonnement @relation(fields: [abonnementId], references: [id], onDelete: Cascade)
+
+    type            TypeEvenementAbonnement
+    ancienStatut    StatutAbonnement?
+    nouveauStatut   StatutAbonnement?
+    montantCentimes Int? // Montant de la transaction (pour paiement_reussi/paiement_echoue)
+
+    // Stripe
+    stripeEventId        String? // ID de l'événement Stripe
+    stripeEventType      String? // ex: customer.subscription.updated
+    stripeSubscriptionId String? // Pour facilité de recherche
+
+    details Json? // Détails supplémentaires (ex: ancien plan, nouveau plan)
+
+    occurredAt   DateTime @default(now())
+    dateCreation DateTime @default(now())
+
+    @@index([abonnementId])
+    @@index([stripeSubscriptionId])
+    @@index([type])
+    @@index([occurredAt])
+    @@map("abonnements_evenements")
 }
 
 // enum MotifAjustementDuree {
