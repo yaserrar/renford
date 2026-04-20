@@ -9,6 +9,10 @@ const parsedCommissionPercent = Number(
   process.env.NEXT_PUBLIC_PLATFORM_COMMISSION_PERCENT ?? 15,
 );
 
-export const PLATFORM_COMMISSION_PERCENT = Number.isFinite(parsedCommissionPercent)
+export const PLATFORM_COMMISSION_PERCENT = Number.isFinite(
+  parsedCommissionPercent,
+)
   ? parsedCommissionPercent
   : 15;
+
+export const COACH_FEE_HT = Number(process.env.NEXT_PUBLIC_COACH_FEE_HT ?? 375);

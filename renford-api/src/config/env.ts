@@ -24,6 +24,23 @@ const EnvSchema = z.object({
   STRIPE_SECRET_KEY: z.string({ required_error: 'STRIPE_SECRET_KEY is required' }),
   STRIPE_WEBHOOK_SECRET: z.string({ required_error: 'STRIPE_WEBHOOK_SECRET is required' }),
   STRIPE_COMMISSION_PERCENT: z.coerce.number().min(0).max(100).default(15),
+  COACH_FEE_HT: z.coerce.number().min(0).default(375),
+
+  // Firebase
+  FIREBASE_PROJECT_ID: z.string({ required_error: 'FIREBASE_PROJECT_ID is required' }),
+  FIREBASE_CLIENT_EMAIL: z.string({ required_error: 'FIREBASE_CLIENT_EMAIL is required' }),
+  FIREBASE_PRIVATE_KEY: z.string({ required_error: 'FIREBASE_PRIVATE_KEY is required' }),
+
+  // MinIO
+  MINIO_ENDPOINT: z.string().default('localhost'),
+  MINIO_PORT: z.coerce.number().int().positive().default(9000),
+  MINIO_ACCESS_KEY: z.string().default('minioadmin'),
+  MINIO_SECRET_KEY: z.string().default('minioadmin'),
+  MINIO_BUCKET: z.string().default('renford'),
+  MINIO_USE_SSL: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

@@ -11,6 +11,8 @@ type MissionPricingInput = {
   methodeTarification: PricingMethod;
   tarif: number;
   commissionPercent: number;
+  modeMission?: 'flex' | 'coach';
+  coachFeeHT?: number;
 };
 
 export type MissionPricingBreakdown = {
@@ -70,6 +72,8 @@ export const computeMissionPricing = ({
   methodeTarification,
   tarif,
   commissionPercent,
+  modeMission = 'flex',
+  coachFeeHT = 375,
 }: MissionPricingInput): MissionPricingBreakdown => {
   const normalizedTarif = Number(tarif);
   const normalizedCommissionPercent = Number(commissionPercent);
@@ -91,7 +95,10 @@ export const computeMissionPricing = ({
   }
 
   const montantHT = roundCurrency(safeTarif * totalUnites);
-  const montantFraisService = roundCurrency(montantHT * (safeCommissionPercent / 100));
+  const montantFraisService =
+    modeMission === 'coach'
+      ? roundCurrency(coachFeeHT)
+      : roundCurrency(montantHT * (safeCommissionPercent / 100));
   const montantFraisTTC = roundCurrency(montantFraisService * 1.2);
   const montantTTC = roundCurrency(montantHT + montantFraisTTC);
 

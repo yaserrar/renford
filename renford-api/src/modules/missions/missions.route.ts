@@ -12,6 +12,7 @@ import {
   getEtablissementPendingMissionsCount,
   markMissionAsTermineeByEtablissement,
   respondToMissionRenfordByEtablissement,
+  setVisioLinkByEtablissement,
   signContractByEtablissement,
   triggerManualMissionSearchByEtablissement,
 } from './missions.controller';
@@ -95,6 +96,13 @@ router.post(
     body: respondToMissionRenfordByEtablissementSchema,
   }),
   respondToMissionRenfordByEtablissement,
+);
+
+router.post(
+  '/etablissement/missions/:missionId/renfords/:missionRenfordId/visio',
+  authenticateToken(['etablissement']),
+  validateResource({ params: missionRenfordIdParamsSchema }),
+  setVisioLinkByEtablissement,
 );
 
 router.post(

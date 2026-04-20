@@ -24,6 +24,7 @@ import adminStatistiquesRouter from '../modules-admin/statistiques/statistiques.
 import adminMessagesContactRouter from '../modules-admin/messages-contact/messages-contact.route';
 import adminNotificationsRouter from '../modules-admin/notifications/notifications.route';
 import adminMissionsRouter from '../modules-admin/missions/admin-missions.route';
+import adminPaiementsRouter from '../modules-admin/paiements/admin-paiements.route';
 
 const router = Router();
 
@@ -53,6 +54,7 @@ router.use('/', adminStatistiquesRouter);
 router.use('/', adminMessagesContactRouter);
 router.use('/', adminNotificationsRouter);
 router.use('/', adminMissionsRouter);
+router.use('/', adminPaiementsRouter);
 
 router.use('/upload', uploadsRouter);
 

@@ -1,4 +1,4 @@
-import { PLATFORM_COMMISSION_PERCENT } from "@/lib/env";
+import { PLATFORM_COMMISSION_PERCENT, COACH_FEE_HT } from "@/lib/env";
 
 type PricingSlot = {
   date: Date | string;
@@ -11,6 +11,7 @@ type ComputeMissionPricingInput = {
   methodeTarification: "horaire" | "journee" | "demi_journee";
   tarif?: number | null;
   commissionPercent?: number;
+  modeMission?: "flex" | "coach";
 };
 
 export type MissionPricingBreakdown = {
@@ -75,6 +76,7 @@ export const computeMissionPricing = ({
   methodeTarification,
   tarif,
   commissionPercent = PLATFORM_COMMISSION_PERCENT,
+  modeMission = "flex",
 }: ComputeMissionPricingInput): MissionPricingBreakdown => {
   const normalizedTarif = Number(tarif ?? 0);
   const normalizedCommissionPercent = Number(commissionPercent);
@@ -100,9 +102,10 @@ export const computeMissionPricing = ({
   }
 
   const montantHT = roundCurrency(safeTarif * totalUnites);
-  const montantFraisService = roundCurrency(
-    montantHT * (safeCommissionPercent / 100),
-  );
+  const montantFraisService =
+    modeMission === "coach"
+      ? roundCurrency(COACH_FEE_HT)
+      : roundCurrency(montantHT * (safeCommissionPercent / 100));
   const montantFraisTTC = roundCurrency(montantFraisService * 1.2);
   const montantTTC = roundCurrency(montantHT + montantFraisTTC);
 
