@@ -1,6 +1,5 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { v4 as uuid } from 'uuid';
+import { minioClient, MINIO_BUCKET } from '../config/minio';
 
 const DATA_URL_REGEX = /^data:image\/(png|jpeg|jpg);base64,(.+)$/;
 
@@ -25,12 +24,13 @@ export const saveSignatureDataUrl = async (
     throw new Error('INVALID_SIGNATURE_DATA_URL');
   }
 
-  const uploadDir = path.join(process.cwd(), 'uploads', folder);
-  await fs.mkdir(uploadDir, { recursive: true });
-
   const filename = `${prefix}-${uuid().split('-')[0]}.${ext}`;
-  const absoluteFilePath = path.join(uploadDir, filename);
-  await fs.writeFile(absoluteFilePath, fileBuffer);
+  const objectKey = `uploads/${folder}/${filename}`;
 
-  return `uploads/${folder}/${filename}`;
+  const contentType = ext === 'png' ? 'image/png' : 'image/jpeg';
+  await minioClient.putObject(MINIO_BUCKET, objectKey, fileBuffer, fileBuffer.length, {
+    'Content-Type': contentType,
+  });
+
+  return objectKey;
 };

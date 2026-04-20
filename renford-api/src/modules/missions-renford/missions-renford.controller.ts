@@ -2,7 +2,10 @@ import type { NextFunction, Request, Response } from 'express';
 import type { StatutMissionRenford } from '@prisma/client';
 import prisma from '../../config/prisma';
 import { mail } from '../../config/mail';
-import { getSignatureConfirmationEmail } from '../../config/email-templates';
+import {
+  getSignatureConfirmationEmail,
+  getContratASignerEtablissementEmail,
+} from '../../config/email-templates';
 import { logger } from '../../config/logger';
 import { registerMissionRenfordResponse } from '../../jobs/missions-matching';
 import {
@@ -17,6 +20,7 @@ import type {
   RenfordMissionsTab,
   RespondToMissionProposalSchema,
 } from './missions-renford.schema';
+import { env } from '../../config/env';
 
 const RENFORD_TAB_STATUS_MAP: Record<RenfordMissionsTab, StatutMissionRenford[]> = {
   opportunites: ['nouveau', 'vu'],
@@ -349,7 +353,7 @@ export const signContractByRenford = async (
       req.socket.remoteAddress ||
       'unknown';
     const userAgent = req.headers['user-agent'] || 'unknown';
-    const lienCgu = `${req.protocol}://${req.get('host')?.replace('/api', '')}/conditions`;
+    const lienCgu = `${env.PLATFORM_URL}/conditions`;
 
     const signature = await prisma.signatureContrat.create({
       data: {
@@ -373,6 +377,28 @@ export const signContractByRenford = async (
         dateContratSigne: new Date(),
       },
     });
+
+    // Send "contrat à signer" email to etablissement
+    const etabUser = missionRenford.mission.etablissement?.profilEtablissement?.utilisateur;
+    if (etabUser?.email) {
+      const contratPayload = getContratASignerEtablissementEmail({
+        prenomEtablissement: etabUser.prenom,
+        prenomRenford: profilRenford.utilisateur.prenom,
+        modeMission: missionRenford.mission.modeMission,
+        espaceUrl: `${env.PLATFORM_URL}/dashboard/etablissement/missions/${missionRenford.mission.id}`,
+      });
+
+      try {
+        await mail.sendMail({
+          to: etabUser.email,
+          subject: contratPayload.subject,
+          html: contratPayload.html,
+          text: contratPayload.text,
+        });
+      } catch (emailError) {
+        logger.error({ err: emailError }, 'Échec envoi email contrat à signer établissement');
+      }
+    }
 
     // Send confirmation email to renford
 
@@ -439,6 +465,8 @@ export const downloadMissionDocumentByRenford = async (
         profilRenford: {
           include: { utilisateur: true },
         },
+        signatureContratPrestationRenford: true,
+        signatureContratPrestationEtablissement: true,
         mission: {
           include: {
             PlageHoraireMission: true,

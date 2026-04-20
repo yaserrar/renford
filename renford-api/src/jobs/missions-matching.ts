@@ -8,7 +8,10 @@ import prisma from '../config/prisma';
 import { env } from '../config/env';
 import {
   getConfirmationMissionRenfordEmail,
+  getContratASignerRenfordEmail,
   getNewMissionRenfordEmail,
+  getProfilAccepteEtablissementCoachEmail,
+  getProfilNonRetenuRenfordEmail,
   getRenfordTrouveCoachEmail,
   getRenfordTrouveFlexEmail,
 } from '../config/email-templates';
@@ -1057,6 +1060,16 @@ export const registerEtablissementMissionRenfordResponse = async (params: {
           select: {
             modeMission: true,
             specialitePrincipale: true,
+            etablissement: {
+              select: {
+                profilEtablissement: {
+                  select: {
+                    raisonSociale: true,
+                    utilisateur: { select: { email: true, prenom: true } },
+                  },
+                },
+              },
+            },
           },
         },
         profilRenford: {
@@ -1089,21 +1102,24 @@ export const registerEtablissementMissionRenfordResponse = async (params: {
     });
 
     const renfordUser = selectedAssignment.profilRenford.utilisateur;
+    const missionUrlBase = env.PLATFORM_URL.replace(/\/$/, '');
+    const etabProfile = selectedAssignment.mission.etablissement?.profilEtablissement;
+
     if (renfordUser.email) {
-      const missionUrlBase = env.PLATFORM_URL.replace(/\/$/, '');
-      const payload = getConfirmationMissionRenfordEmail({
+      // Send "contrat à signer" email to renford
+      const contratPayload = getContratASignerRenfordEmail({
         prenomRenford: renfordUser.prenom,
-        typeMission: getTypeMissionLabel(selectedAssignment.mission.specialitePrincipale),
-        confirmationUrl: `${missionUrlBase}/dashboard/renford/missions/${selectedAssignment.missionId}`,
-        includeCoachInSubject: selectedAssignment.mission.modeMission === 'coach',
+        raisonSociale: etabProfile?.raisonSociale ?? '',
+        modeMission: selectedAssignment.mission.modeMission,
+        espaceUrl: `${missionUrlBase}/dashboard/renford/missions/${selectedAssignment.missionId}`,
       });
 
       try {
         await mail.sendMail({
           to: renfordUser.email,
-          subject: payload.subject,
-          html: payload.html,
-          text: payload.text,
+          subject: contratPayload.subject,
+          html: contratPayload.html,
+          text: contratPayload.text,
         });
       } catch (error) {
         logger.error(
@@ -1112,7 +1128,33 @@ export const registerEtablissementMissionRenfordResponse = async (params: {
             missionId: selectedAssignment.missionId,
             missionRenfordId: missionRenford.id,
           },
-          "Échec d'envoi de l'email de confirmation de mission au Renford",
+          "Échec d'envoi de l'email contrat à signer au Renford",
+        );
+      }
+    }
+
+    // Send "profil accepté" email to établissement (coach mode only)
+    if (selectedAssignment.mission.modeMission === 'coach' && etabProfile?.utilisateur?.email) {
+      const profilPayload = getProfilAccepteEtablissementCoachEmail({
+        prenomEtablissement: etabProfile.utilisateur.prenom,
+        prenomRenford: renfordUser.prenom,
+        espaceUrl: `${missionUrlBase}/dashboard/etablissement/missions/${selectedAssignment.missionId}`,
+      });
+
+      try {
+        await mail.sendMail({
+          to: etabProfile.utilisateur.email,
+          subject: profilPayload.subject,
+          html: profilPayload.html,
+          text: profilPayload.text,
+        });
+      } catch (error) {
+        logger.error(
+          {
+            err: error,
+            missionId: selectedAssignment.missionId,
+          },
+          "Échec d'envoi de l'email profil accepté à l'établissement",
         );
       }
     }
@@ -1164,6 +1206,59 @@ export const registerEtablissementMissionRenfordResponse = async (params: {
           statut: 'candidatures_disponibles',
         },
       });
+    }
+
+    // Send rejection email to the renford
+    const rejectedRenford = await prisma.missionRenford.findUnique({
+      where: { id: missionRenford.id },
+      select: {
+        mission: {
+          select: {
+            specialitePrincipale: true,
+            etablissement: {
+              select: {
+                nom: true,
+                ville: true,
+                profilEtablissement: { select: { raisonSociale: true } },
+              },
+            },
+          },
+        },
+        profilRenford: {
+          select: {
+            utilisateur: { select: { email: true, prenom: true } },
+          },
+        },
+      },
+    });
+
+    if (rejectedRenford) {
+      const renfordUser = rejectedRenford.profilRenford.utilisateur;
+      if (renfordUser.email) {
+        const etab = rejectedRenford.mission.etablissement;
+        const villeRaisonSociale =
+          etab.profilEtablissement.raisonSociale || etab.nom || etab.ville || '';
+
+        const payload = getProfilNonRetenuRenfordEmail({
+          prenomRenford: renfordUser.prenom,
+          typeMission: getTypeMissionLabel(rejectedRenford.mission.specialitePrincipale),
+          villeRaisonSociale,
+        });
+
+        mail
+          .sendMail({
+            to: renfordUser.email,
+            subject: payload.subject,
+            html: payload.html,
+            text: payload.text,
+          })
+          .catch((err) =>
+            logger.error(
+              { err, missionRenfordId: missionRenford.id },
+              "Échec d'envoi de l'email de refus au Renford",
+            ),
+          );
+      }
     }
   }
 

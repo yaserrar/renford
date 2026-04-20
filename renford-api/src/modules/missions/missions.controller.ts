@@ -8,7 +8,16 @@ import {
   getMissionDemandeConfirmeeCoachEmail,
   getMissionDemandeConfirmeeFlexEmail,
   getSignatureConfirmationEmail,
+  getVisioInvitationRenfordEmail,
+  getFinMissionRenfordCoachEmail,
+  getFinMissionRenfordFlexEmail,
+  getFinMissionEtablissementCoachEmail,
+  getFinMissionEtablissementFlexEmail,
+  getMissionAnnuleeRenfordEmail,
+  getContratSigneEtablissementCoachEmail,
+  getContratSigneEtablissementFlexEmail,
 } from '../../config/email-templates';
+import { createNotification } from '../../config/notification';
 import { computeMissionPricing } from '../../lib/mission-pricing';
 import {
   registerEtablissementMissionRenfordResponse,
@@ -365,6 +374,8 @@ export const createMission = async (
       methodeTarification: req.body.methodeTarification,
       tarif: normalizedTarif,
       commissionPercent: env.STRIPE_COMMISSION_PERCENT,
+      modeMission: req.body.modeMission,
+      coachFeeHT: env.COACH_FEE_HT,
     });
 
     const mission = await prisma.mission.create({
@@ -683,6 +694,7 @@ export const signContractByEtablissement = async (
       select: {
         id: true,
         statut: true,
+        modeMission: true,
         discipline: true,
         dateDebut: true,
         etablissement: {
@@ -702,6 +714,11 @@ export const signContractByEtablissement = async (
 
     const missionRenford = await prisma.missionRenford.findUnique({
       where: { id: req.params.missionRenfordId },
+      include: {
+        profilRenford: {
+          select: { utilisateur: { select: { prenom: true } } },
+        },
+      },
     });
 
     if (!missionRenford || missionRenford.missionId !== mission.id) {
@@ -755,7 +772,7 @@ export const signContractByEtablissement = async (
       req.socket.remoteAddress ||
       'unknown';
     const userAgentStr = req.headers['user-agent'] || 'unknown';
-    const lienCgu = `${req.protocol}://${req.get('host')?.replace('/api', '')}/conditions`;
+    const lienCgu = `${env.PLATFORM_URL}/conditions`;
 
     // Create signature record
     const signature = await prisma.signatureContrat.create({
@@ -825,6 +842,32 @@ export const signContractByEtablissement = async (
       logger.error({ err: emailError }, 'Échec envoi email confirmation signature établissement');
     }
 
+    // Send "contrat signé par les deux parties" email to établissement
+    const renfordPrenom = missionRenford.profilRenford?.utilisateur?.prenom ?? '';
+    const contratSignePayload =
+      mission.modeMission === 'coach'
+        ? getContratSigneEtablissementCoachEmail({
+            prenomEtablissement: etablissementUser.prenom,
+            prenomRenford: renfordPrenom,
+            espaceUrl: `${env.PLATFORM_URL}/dashboard/etablissement/missions/${mission.id}`,
+          })
+        : getContratSigneEtablissementFlexEmail({
+            prenomEtablissement: etablissementUser.prenom,
+            prenomRenford: renfordPrenom,
+            espaceUrl: `${env.PLATFORM_URL}/dashboard/etablissement/missions/${mission.id}`,
+          });
+
+    try {
+      await mail.sendMail({
+        to: etablissementUser.email,
+        subject: contratSignePayload.subject,
+        html: contratSignePayload.html,
+        text: contratSignePayload.text,
+      });
+    } catch (emailError) {
+      logger.error({ err: emailError }, 'Échec envoi email contrat signé établissement');
+    }
+
     return res.json({
       missionRenfordId: missionRenford.id,
       statut: 'mission_en_cours',
@@ -878,6 +921,8 @@ export const downloadMissionDocumentByEtablissement = async (
             utilisateur: true,
           },
         },
+        signatureContratPrestationRenford: true,
+        signatureContratPrestationEtablissement: true,
       },
     });
 
@@ -925,7 +970,32 @@ export const markMissionAsTermineeByEtablissement = async (
           },
         },
       },
-      select: { id: true, statut: true },
+      select: {
+        id: true,
+        statut: true,
+        modeMission: true,
+        etablissement: {
+          select: {
+            nom: true,
+            profilEtablissement: {
+              select: {
+                raisonSociale: true,
+                utilisateur: { select: { email: true, prenom: true } },
+              },
+            },
+          },
+        },
+        missionsRenford: {
+          where: { statut: { in: ['mission_en_cours', 'contrat_signe'] } },
+          select: {
+            profilRenford: {
+              select: {
+                utilisateur: { select: { email: true, prenom: true } },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!mission) {
@@ -951,6 +1021,70 @@ export const markMissionAsTermineeByEtablissement = async (
         data: { statut: 'mission_terminee' },
       }),
     ]);
+
+    // Send end-of-mission emails
+    const urlBase = env.PLATFORM_URL.replace(/\/$/, '');
+    const etabUser = mission.etablissement.profilEtablissement.utilisateur;
+    const raisonSociale =
+      mission.etablissement.profilEtablissement.raisonSociale || mission.etablissement.nom;
+
+    for (const mr of mission.missionsRenford) {
+      const renfordUser = mr.profilRenford.utilisateur;
+      if (!renfordUser.email) continue;
+
+      const renfordPayload =
+        mission.modeMission === 'coach'
+          ? getFinMissionRenfordCoachEmail({
+              prenomRenford: renfordUser.prenom,
+              raisonSociale,
+              espaceUrl: `${urlBase}/dashboard/renford/missions`,
+            })
+          : getFinMissionRenfordFlexEmail({
+              prenomRenford: renfordUser.prenom,
+              raisonSociale,
+              espaceUrl: `${urlBase}/dashboard/renford/missions`,
+            });
+
+      mail
+        .sendMail({
+          to: renfordUser.email,
+          subject: renfordPayload.subject,
+          html: renfordPayload.html,
+          text: renfordPayload.text,
+        })
+        .catch((err) =>
+          logger.error({ err, missionId: mission.id }, 'Échec envoi email fin de mission Renford'),
+        );
+    }
+
+    if (etabUser.email) {
+      const etabPayload =
+        mission.modeMission === 'coach'
+          ? getFinMissionEtablissementCoachEmail({
+              prenomEtablissement: etabUser.prenom,
+              prenomRenford: mission.missionsRenford[0]?.profilRenford.utilisateur.prenom || '',
+              espaceUrl: `${urlBase}/dashboard/etablissement/missions/${mission.id}`,
+            })
+          : getFinMissionEtablissementFlexEmail({
+              prenomEtablissement: etabUser.prenom,
+              prenomRenford: mission.missionsRenford[0]?.profilRenford.utilisateur.prenom || '',
+              espaceUrl: `${urlBase}/dashboard/etablissement/missions/${mission.id}`,
+            });
+
+      mail
+        .sendMail({
+          to: etabUser.email,
+          subject: etabPayload.subject,
+          html: etabPayload.html,
+          text: etabPayload.text,
+        })
+        .catch((err) =>
+          logger.error(
+            { err, missionId: mission.id },
+            'Échec envoi email fin de mission Établissement',
+          ),
+        );
+    }
 
     return res.json({ id: mission.id, statut: 'mission_terminee' });
   } catch (err) {
@@ -1031,7 +1165,32 @@ export const cancelMissionByEtablissement = async (
           },
         },
       },
-      select: { id: true, statut: true },
+      select: {
+        id: true,
+        statut: true,
+        modeMission: true,
+        specialitePrincipale: true,
+        etablissement: {
+          select: {
+            nom: true,
+            profilEtablissement: { select: { raisonSociale: true } },
+          },
+        },
+        missionsRenford: {
+          where: {
+            statut: {
+              in: ['nouveau', 'vu', 'selection_en_cours', 'attente_de_signature', 'contrat_signe'],
+            },
+          },
+          select: {
+            profilRenford: {
+              select: {
+                utilisateur: { select: { email: true, prenom: true } },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!mission) {
@@ -1071,7 +1230,142 @@ export const cancelMissionByEtablissement = async (
       }),
     ]);
 
+    // Send cancellation email to all affected renfords
+    const raisonSociale =
+      mission.etablissement.profilEtablissement.raisonSociale || mission.etablissement.nom;
+
+    for (const mr of mission.missionsRenford) {
+      const renfordUser = mr.profilRenford.utilisateur;
+      if (!renfordUser.email) continue;
+
+      const payload = getMissionAnnuleeRenfordEmail({
+        prenomRenford: renfordUser.prenom,
+        typeMission: getTypeMissionLabel(mission.specialitePrincipale),
+        raisonSociale,
+      });
+
+      mail
+        .sendMail({
+          to: renfordUser.email,
+          subject: payload.subject,
+          html: payload.html,
+          text: payload.text,
+        })
+        .catch((err) =>
+          logger.error({ err, missionId: mission.id }, 'Échec envoi email annulation Renford'),
+        );
+    }
+
     return res.json({ id: mission.id, statut: 'annulee' });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const setVisioLinkByEtablissement = async (
+  req: Request<MissionRenfordIdParamsSchema>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.userId!;
+    const { missionId, missionRenfordId } = req.params;
+
+    const mission = await prisma.mission.findFirst({
+      where: {
+        id: missionId,
+        etablissement: {
+          profilEtablissement: {
+            utilisateurId: userId,
+          },
+        },
+      },
+      select: { id: true, modeMission: true, discipline: true, dateDebut: true },
+    });
+
+    if (!mission) {
+      return res.status(404).json({ message: 'Mission non trouvée' });
+    }
+
+    // if (mission.modeMission === 'flex') {
+    //   return res.status(400).json({
+    //     message: "La visio n'est pas disponible pour les missions Flex",
+    //   });
+    // }
+
+    const missionRenford = await prisma.missionRenford.findFirst({
+      where: {
+        id: missionRenfordId,
+        missionId,
+        statut: 'selection_en_cours',
+      },
+      select: {
+        id: true,
+        lienVisio: true,
+        profilRenford: {
+          select: {
+            utilisateur: {
+              select: { id: true, prenom: true, email: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!missionRenford) {
+      return res.status(404).json({
+        message: 'Candidature non trouvée ou non en cours de sélection',
+      });
+    }
+
+    const lienVisio = missionRenford.lienVisio ?? `https://meet.jit.si/renford-${missionRenfordId}`;
+    const isFirstGeneration = !missionRenford.lienVisio;
+
+    if (isFirstGeneration) {
+      await prisma.missionRenford.update({
+        where: { id: missionRenfordId },
+        data: { lienVisio },
+      });
+
+      const renfordUser = missionRenford.profilRenford.utilisateur;
+      const etablissement = await prisma.etablissement.findFirst({
+        where: {
+          profilEtablissement: { utilisateurId: userId },
+        },
+        select: { nom: true },
+      });
+      const etablissementNom = etablissement?.nom ?? "L'établissement";
+      const missionDescription = `${mission.discipline} – ${new Date(mission.dateDebut).toLocaleDateString('fr-FR')}`;
+      const missionUrl = `${env.PLATFORM_URL}/dashboard/renford/missions/${missionId}`;
+
+      const emailPayload = getVisioInvitationRenfordEmail({
+        prenom: renfordUser.prenom,
+        missionDescription,
+        etablissementNom,
+        lienVisio,
+        missionUrl,
+      });
+
+      Promise.all([
+        mail
+          .sendMail({
+            to: renfordUser.email,
+            subject: emailPayload.subject,
+            html: emailPayload.html,
+            text: emailPayload.text,
+          })
+          .catch((err) => logger.error({ err }, 'Échec envoi email invitation visio Renford')),
+        createNotification({
+          utilisateurId: renfordUser.id,
+          source: 'mission_renfords',
+          sourceId: missionRenfordId,
+          titre: 'Invitation à une visioconférence',
+          description: `${etablissementNom} vous invite à une visio avant votre mission.`,
+        }).catch((err) => logger.error({ err }, 'Échec création notification visio Renford')),
+      ]);
+    }
+
+    return res.json({ lienVisio });
   } catch (err) {
     return next(err);
   }
