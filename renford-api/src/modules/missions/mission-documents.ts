@@ -54,6 +54,11 @@ type MissionDocumentContext = {
   missionRenford: MissionRenford & { profilRenford: ProfilRenford & { utilisateur: Utilisateur } };
 };
 
+type MissionRenfordWithSignatures = MissionDocumentContext['missionRenford'] & {
+  signatureContratPrestationRenford?: { cheminImage?: string | null } | null;
+  signatureContratPrestationEtablissement?: { cheminImage?: string | null } | null;
+};
+
 const computeFinancialsFromMission = (mission: MissionDocumentContext['mission']) => {
   const totalHours = mission.PlageHoraireMission.reduce(
     (acc: number, slot: PlageHoraireMission) => {
@@ -97,8 +102,9 @@ const formatHours = (value: number) => {
 
 const sanitizeText = (text: string) =>
   text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    // Keep French accents; only normalize punctuation/spaces that can break PDF literal strings.
+    .replace(/[\u2019]/g, "'")
+    .replace(/[\u00a0\u202f]/g, ' ')
     .replace(/\\/g, '\\\\')
     .replace(/\(/g, '\\(')
     .replace(/\)/g, '\\)');
@@ -114,8 +120,9 @@ const drawText = (
 ) => {
   const font = bold ? 'F2' : 'F1';
   if (rgb) {
+    // Wrap in q/Q to prevent the rg color change from leaking to subsequent text ops
     ctx.ops.push(
-      `BT ${rgb[0]} ${rgb[1]} ${rgb[2]} rg /${font} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${sanitizeText(text)}) Tj ET`,
+      `q BT ${rgb[0]} ${rgb[1]} ${rgb[2]} rg /${font} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${sanitizeText(text)}) Tj ET Q`,
     );
   } else {
     ctx.ops.push(`BT /${font} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${sanitizeText(text)}) Tj ET`);
@@ -283,14 +290,14 @@ const buildPdfBuffer = (ctx: PdfContext): Buffer => {
     {
       id: 4,
       data: Buffer.from(
-        '4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n',
+        '4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>\nendobj\n',
         'ascii',
       ),
     },
     {
       id: 5,
       data: Buffer.from(
-        '5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj\n',
+        '5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>\nendobj\n',
         'ascii',
       ),
     },
@@ -298,7 +305,8 @@ const buildPdfBuffer = (ctx: PdfContext): Buffer => {
 
   for (let i = 0; i < pageCount; i++) {
     const pageOps = ctx.pages[i]!.ops;
-    const stream = Buffer.from(`${pageOps.join('\n')}\n`, 'ascii');
+    // Use latin1 so WinAnsi accented characters are preserved in text streams.
+    const stream = Buffer.from(`${pageOps.join('\n')}\n`, 'latin1');
     const pageObjId = pageObjectIds[i]!;
     const contentObjId = contentObjectIds[i]!;
 
@@ -417,7 +425,7 @@ const drawMissionRecap = (
   mission: MissionDocumentContext['mission'],
   totalHours: number,
 ) => {
-  drawText(ctx, 'Recapitulatif mission', 42, ctx.cursorY, 10, true);
+  drawText(ctx, 'Récapitulatif mission', 42, ctx.cursorY, 10, true);
   drawRect(ctx, 36, ctx.cursorY - 88, 523, 82, undefined, undefined, BRAND);
   drawText(ctx, `Mission: ${mission.discipline}`, 44, ctx.cursorY - 22, 9, false);
   drawText(
@@ -479,8 +487,8 @@ const drawTotals = (ctx: PdfContext, baseHt: number, tva: number, totalTtc: numb
 
 const drawFooter = (ctx: PdfContext) => {
   drawLine(ctx, 36, 56, 559, 56);
-  drawText(ctx, 'Document genere automatiquement par Renford', 36, 40, 8, false);
-  drawText(ctx, `Date generation: ${formatDate(new Date())}`, 390, 40, 8, false);
+  drawText(ctx, 'Document généré automatiquement par Renford', 36, 40, 8, false);
+  drawText(ctx, `Date de génération : ${formatDate(new Date())}`, 390, 40, 8, false);
 };
 
 const renderDevis = (
@@ -531,7 +539,7 @@ const renderDevis = (
   ctx.cursorY -= 14;
   drawText(ctx, 'FRANCE', destX, ctx.cursorY, 9);
   ctx.cursorY -= 14;
-  drawText(ctx, `Numero SIRET: ${etabProfil.siret || '-'}`, destX, ctx.cursorY, 9);
+  drawText(ctx, `Numéro SIRET : ${etabProfil.siret || '-'}`, destX, ctx.cursorY, 9);
   ctx.cursorY -= 24;
 
   // ---- Dates ----
@@ -556,7 +564,6 @@ const renderDevis = (
   const hH = 24;
   // Column positions: Description | Nb heures | Taux horaire | TVA | Montant HT | Montant TTC
   const cols = [tX, tX + 180, tX + 260, tX + 335, tX + 395, tX + 460];
-  const colEnd = tX + tW;
 
   // Header row
   drawRect(ctx, tX, ctx.cursorY - hH, tW, hH, undefined, BRAND, BRAND);
@@ -616,7 +623,7 @@ const renderDevis = (
   const bY = ctx.cursorY;
   const rcH = 22;
   drawRect(ctx, bX, bY - rcH, bW, rcH, undefined, BRAND, BRAND);
-  drawText(ctx, 'Recapitulatif', bX + 80, bY - 15, 10, true, WHITE);
+  drawText(ctx, 'Récapitulatif', bX + 80, bY - 15, 10, true, WHITE);
 
   const rowH = 20;
   let rY = bY - rcH;
@@ -888,7 +895,7 @@ const renderFacturePrestation = (
 ) => {
   drawHeader(
     ctx,
-    'Facture de prestation',
+    'Facture de la prestation',
     'Prestation mission',
     mission.id.slice(0, 8).toUpperCase(),
   );
@@ -920,8 +927,8 @@ const renderFactureCommission = (
 ) => {
   drawHeader(
     ctx,
-    'Facture commission',
-    'Frais de service plateforme',
+    'Facture des frais de service Renford',
+    'Frais de service plateforme Renford',
     mission.id.slice(0, 8).toUpperCase(),
   );
   drawParties(
@@ -950,8 +957,7 @@ const renderContrat = (
   sigRenfordImage: PdfImage | null,
   sigEtabImage: PdfImage | null,
 ) => {
-  const { totalHt, commissionHt, prestationTtc, commissionTtc } =
-    computeFinancialsFromMission(mission);
+  const { totalHt, prestationTtc, commissionTtc } = computeFinancialsFromMission(mission);
   const totalTtc = prestationTtc + commissionTtc;
 
   const renfordUser = missionRenford.profilRenford.utilisateur;
@@ -981,9 +987,20 @@ const renderContrat = (
   };
 
   // ---- Page 1: Header ----
-  drawRect(ctx, 32, 800, 531, 30, undefined, BRAND, BRAND);
-  drawText(ctx, 'CONTRAT DE PRESTATION DE SERVICE - OFFRE FLEX', 70, 810, 13, true, WHITE);
-  ctx.cursorY = 780;
+  const contratTitleH = 46;
+  const contratTitleY = ctx.height - 32 - contratTitleH; // 764
+  drawRect(ctx, 32, contratTitleY, 531, contratTitleH, undefined, BRAND, BRAND);
+  // Center text horizontally: page width=595, text approx 45chars * 7px = 315px, start at (595-315)/2 = 140
+  drawText(
+    ctx,
+    'CONTRAT DE PRESTATION DE SERVICE - OFFRE FLEX',
+    115,
+    contratTitleY + contratTitleH - 16,
+    13,
+    true,
+    WHITE,
+  );
+  ctx.cursorY = contratTitleY - 16;
 
   addTitle('ENTRE LES SOUSSIGNES :', 10);
   addBody('1. La Plateforme : Renford.');
@@ -1197,35 +1214,6 @@ const renderContrat = (
   drawSignatureBlock(ctx, 'Signature Etablissement', sigEtabImage, 312, ctx.cursorY - 110);
   ctx.cursorY -= 140;
 
-  // Annexe 1
-  ensureSpace(ctx, 200);
-  addGap(12);
-  addTitle('ANNEXE 1 - Details de la mission', 11);
-  addBody(`Mission: ${sanitizeText(mission.discipline)}`);
-  addBody(`Specialite: ${sanitizeText(mission.specialitePrincipale)}`);
-  addBody(
-    mission.dateFin
-      ? `Periode: ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)}`
-      : `Date: ${formatDate(mission.dateDebut)}`,
-  );
-  addBody(`Volume horaire: ${formatHours(totalHours)}`);
-  addBody(`Tarif: ${formatAmount(Number(mission.tarif ?? 0))} HT`);
-  addBody(`Commission Renford: ${formatAmount(commissionHt)} HT`);
-  addBody(`Total TTC: ${formatAmount(totalTtc)}`);
-  addGap();
-
-  // Annexe 2 - Schedule
-  addTitle('ANNEXE 2 - Planning des creneaux', 11);
-  const sortedSlots = [...mission.PlageHoraireMission].sort((a, b) => {
-    const d = new Date(a.date).getTime() - new Date(b.date).getTime();
-    return d !== 0 ? d : a.heureDebut.localeCompare(b.heureDebut);
-  });
-  for (const slot of sortedSlots) {
-    ensureSpace(ctx, 14);
-    const dateStr = formatDate(new Date(slot.date));
-    addBody(`${dateStr} : ${slot.heureDebut} - ${slot.heureFin}`);
-  }
-
   drawFooter(ctx);
 };
 
@@ -1320,12 +1308,13 @@ const decodePngToRawRgb = (pngData: Buffer): { rgb: Buffer; hasAlpha: boolean } 
 
     const hasAlpha = colorType === 6; // RGBA
     const isRgb = colorType === 2; // RGB
-    if (!hasAlpha && !isRgb) return null; // only RGB/RGBA
+    const isGray = colorType === 0; // Grayscale
+    if (!hasAlpha && !isRgb && !isGray) return null;
 
     const compressed = Buffer.concat(idatChunks);
     const raw = zlib.inflateSync(compressed);
 
-    const channels = hasAlpha ? 4 : 3;
+    const channels = hasAlpha ? 4 : isGray ? 1 : 3;
     const bytesPerRow = width * channels;
     const rgb = Buffer.alloc(width * height * 3);
     let rgbIdx = 0;
@@ -1373,11 +1362,24 @@ const decodePngToRawRgb = (pngData: Buffer): { rgb: Buffer; hasAlpha: boolean } 
       }
       // filterByte === 0 means None, no transformation needed
 
-      // Extract RGB (skip Alpha if RGBA)
+      // Extract RGB, compositing against white for RGBA, expanding grayscale
       for (let x = 0; x < width; x++) {
-        rgb[rgbIdx++] = row[x * channels]!;
-        rgb[rgbIdx++] = row[x * channels + 1]!;
-        rgb[rgbIdx++] = row[x * channels + 2]!;
+        if (isGray) {
+          const v = row[x]!;
+          rgb[rgbIdx++] = v;
+          rgb[rgbIdx++] = v;
+          rgb[rgbIdx++] = v;
+        } else if (hasAlpha) {
+          // Pre-composite against white: result = alpha*color + (1-alpha)*255
+          const a = row[x * 4 + 3]! / 255;
+          rgb[rgbIdx++] = Math.round(row[x * 4]! * a + 255 * (1 - a));
+          rgb[rgbIdx++] = Math.round(row[x * 4 + 1]! * a + 255 * (1 - a));
+          rgb[rgbIdx++] = Math.round(row[x * 4 + 2]! * a + 255 * (1 - a));
+        } else {
+          rgb[rgbIdx++] = row[x * 3]!;
+          rgb[rgbIdx++] = row[x * 3 + 1]!;
+          rgb[rgbIdx++] = row[x * 3 + 2]!;
+        }
       }
 
       prevRow = row;
@@ -1448,8 +1450,9 @@ export const buildMissionDocumentPdf = (
   }
 
   if (type === 'contrat_prestation') {
-    const sigRenford = (missionRenford as any).signatureContratPrestationRenford;
-    const sigEtab = (missionRenford as any).signatureContratPrestationEtablissement;
+    const missionRenfordWithSignatures = missionRenford as MissionRenfordWithSignatures;
+    const sigRenford = missionRenfordWithSignatures.signatureContratPrestationRenford;
+    const sigEtab = missionRenfordWithSignatures.signatureContratPrestationEtablissement;
     const maxImgId = 100;
     const sigRenfordImage = loadSignatureImage(sigRenford?.cheminImage, 'SigR', maxImgId);
     const sigEtabImage = loadSignatureImage(sigEtab?.cheminImage, 'SigE', maxImgId + 1);
