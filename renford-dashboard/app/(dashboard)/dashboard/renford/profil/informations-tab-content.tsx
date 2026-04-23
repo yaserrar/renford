@@ -49,6 +49,7 @@ export default function InformationsTabContent({
       siret: profil?.siret || "",
       siretEnCoursObtention: profil?.siretEnCoursObtention || false,
       attestationAutoEntrepreneur: profil?.attestationAutoEntrepreneur || false,
+      telephone: me?.telephone || "",
       adresse: profil?.adresse || "",
       codePostal: profil?.codePostal || "",
       ville: profil?.ville || "",
@@ -143,6 +144,16 @@ export default function InformationsTabContent({
                 <Label htmlFor="attestationAutoEntrepreneur" className="mb-0">
                   J&apos;atteste être auto-entrepreneur/ EI/ EIRL/ SASU/ EURL
                 </Label>
+              </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor="telephone">Numéro de téléphone</Label>
+                <Input
+                  id="telephone"
+                  placeholder="+33 6 12 34 56 78"
+                  {...register("telephone")}
+                />
+                <ErrorMessage>{errors.telephone?.message}</ErrorMessage>
               </div>
 
               <div className="md:col-span-2">

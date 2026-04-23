@@ -195,6 +195,19 @@ export const updateIdentiteProfilSchema = z
     siret: z.string().optional(),
     siretEnCoursObtention: z.boolean(),
     attestationAutoEntrepreneur: z.boolean(),
+    telephone: z.preprocess(
+      (value) => {
+        if (value === '' || value === null || value === undefined) return null;
+        return typeof value === 'string' ? value.trim() : value;
+      },
+      z
+        .string()
+        .min(10, 'Le numéro de téléphone doit contenir au moins 10 caractères')
+        .max(20, 'Le numéro de téléphone ne peut pas dépasser 20 caractères')
+        .regex(/^[+0-9()\s.-]+$/, 'Le numéro de téléphone est invalide')
+        .nullable()
+        .optional(),
+    ),
     adresse: z
       .string()
       .min(5, "L'adresse doit contenir au moins 5 caractères")
