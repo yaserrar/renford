@@ -23,8 +23,18 @@ const EnvSchema = z.object({
   // Stripe
   STRIPE_SECRET_KEY: z.string({ required_error: 'STRIPE_SECRET_KEY is required' }),
   STRIPE_WEBHOOK_SECRET: z.string({ required_error: 'STRIPE_WEBHOOK_SECRET is required' }),
+  STRIPE_WEBHOOK_SECRET_ABONNEMENTS: z.string({
+    required_error: 'STRIPE_WEBHOOK_SECRET_ABONNEMENTS is required',
+  }),
   STRIPE_COMMISSION_PERCENT: z.coerce.number().min(0).max(100).default(15),
   COACH_FEE_HT: z.coerce.number().min(0).default(375),
+
+  // Stripe Subscription Plans
+  STRIPE_PRICE_ECHAUFFEMENT: z.string({ required_error: 'STRIPE_PRICE_ECHAUFFEMENT is required' }),
+  STRIPE_PRICE_PERFORMANCE: z.string({ required_error: 'STRIPE_PRICE_PERFORMANCE is required' }),
+  STRIPE_PRODUCT_COMPETITION: z.string({
+    required_error: 'STRIPE_PRODUCT_COMPETITION is required',
+  }),
 
   // Firebase
   FIREBASE_PROJECT_ID: z.string({ required_error: 'FIREBASE_PROJECT_ID is required' }),

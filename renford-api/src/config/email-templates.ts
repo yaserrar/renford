@@ -2104,3 +2104,151 @@ L'équipe Renford`;
     text,
   };
 };
+
+// ─── Subscription emails ──────────────────────────────────────────────────────
+
+type AbonnementActivationInput = {
+  prenom: string;
+  plan: string;
+  quotaMissions: number;
+  prixMensuelHT: number;
+  periodStart: Date;
+  periodEnd: Date;
+};
+
+export const getAbonnementActivationEmail = ({
+  prenom,
+  plan,
+  quotaMissions,
+  prixMensuelHT,
+  periodStart,
+  periodEnd,
+}: AbonnementActivationInput) => {
+  const firstName = prenom.trim() || 'Cher client';
+  const quotaLabel = quotaMissions === 0 ? 'Missions illimitées' : `${quotaMissions} missions`;
+  const dateDebut = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(periodStart);
+  const dateFin = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(periodEnd);
+  const dashboardUrl = `${getBrandBaseUrl()}/dashboard/etablissement/abonnement`;
+
+  const html = renderBaseEmailTemplate({
+    preheader: `Votre abonnement ${plan} est activé ! ${quotaLabel} à votre disposition.`,
+    title: `🎉 Votre abonnement ${plan} est activé !`,
+    intro: `Bonjour ${firstName},\n\nVotre abonnement Renford est maintenant actif. Vous pouvez dès à présent publier vos missions.`,
+    bulletPoints: [
+      `Plan : ${plan}`,
+      `Quota : ${quotaLabel} par période de facturation`,
+      `Prix mensuel HT : ${prixMensuelHT.toFixed(2)} €`,
+      `Période en cours : du ${dateDebut} au ${dateFin}`,
+    ],
+    ctaLabel: 'Accéder à mon espace abonnement',
+    ctaUrl: dashboardUrl,
+    closing: 'Pour toute question, contactez notre support. À très bientôt sur Renford !',
+  });
+
+  const text = `Bonjour ${firstName},\n\nVotre abonnement ${plan} est actif.\nQuota : ${quotaLabel}\nPrix : ${prixMensuelHT.toFixed(2)} € HT/mois\nPériode : du ${dateDebut} au ${dateFin}\n\nAccédez à votre espace : ${dashboardUrl}\n\nL'équipe Renford`;
+
+  return { subject: `🎉 Votre abonnement ${plan} est activé !`, html, text };
+};
+
+type AbonnementRenewalInput = {
+  prenom: string;
+  plan: string;
+  montantCentimes: number;
+  periodEnd: Date;
+};
+
+export const getAbonnementRenewalEmail = ({
+  prenom,
+  plan,
+  montantCentimes,
+  periodEnd,
+}: AbonnementRenewalInput) => {
+  const firstName = prenom.trim() || 'Cher client';
+  const montant = (montantCentimes / 100).toFixed(2);
+  const dateFin = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(periodEnd);
+  const dashboardUrl = `${getBrandBaseUrl()}/dashboard/etablissement/abonnement`;
+
+  const html = renderBaseEmailTemplate({
+    preheader: `Votre abonnement ${plan} a été renouvelé pour ${montant} €.`,
+    title: `✅ Renouvellement de votre abonnement ${plan}`,
+    intro: `Bonjour ${firstName},\n\nVotre abonnement Renford a été renouvelé avec succès.`,
+    bulletPoints: [
+      `Plan : ${plan}`,
+      `Montant prélevé : ${montant} € TTC`,
+      `Prochaine échéance : ${dateFin}`,
+    ],
+    ctaLabel: 'Consulter mon abonnement',
+    ctaUrl: dashboardUrl,
+    closing: "Merci pour votre confiance. L'équipe Renford.",
+  });
+
+  const text = `Bonjour ${firstName},\n\nVotre abonnement ${plan} a été renouvelé.\nMontant : ${montant} € TTC\nProchaine échéance : ${dateFin}\n\nL'équipe Renford`;
+
+  return { subject: `✅ Renouvellement abonnement ${plan} — ${montant} €`, html, text };
+};
+
+type AbonnementCancellationInput = {
+  prenom: string;
+  plan: string;
+  dateFin: Date;
+};
+
+export const getAbonnementCancellationEmail = ({
+  prenom,
+  plan,
+  dateFin,
+}: AbonnementCancellationInput) => {
+  const firstName = prenom.trim() || 'Cher client';
+  const dateFinLabel = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(dateFin);
+  const dashboardUrl = `${getBrandBaseUrl()}/dashboard/etablissement/abonnement`;
+
+  const html = renderBaseEmailTemplate({
+    preheader: `Votre abonnement ${plan} a été annulé.`,
+    title: `Votre abonnement ${plan} a été annulé`,
+    intro: `Bonjour ${firstName},\n\nVotre abonnement Renford a été annulé. Vous conservez l'accès à vos missions en cours.`,
+    bulletPoints: [
+      `Plan annulé : ${plan}`,
+      `Date effective d'annulation : ${dateFinLabel}`,
+      'Vos missions existantes restent accessibles',
+    ],
+    ctaLabel: 'Voir les offres disponibles',
+    ctaUrl: dashboardUrl,
+    closing: "Si cette annulation est une erreur, contactez-nous. L'équipe Renford.",
+  });
+
+  const text = `Bonjour ${firstName},\n\nVotre abonnement ${plan} a été annulé au ${dateFinLabel}.\n\nL'équipe Renford`;
+
+  return { subject: `Votre abonnement ${plan} a été annulé`, html, text };
+};
+
+type AbonnementPaymentFailedInput = {
+  prenom: string;
+  montantCentimes: number;
+};
+
+export const getAbonnementPaymentFailedEmail = ({
+  prenom,
+  montantCentimes,
+}: AbonnementPaymentFailedInput) => {
+  const firstName = prenom.trim() || 'Cher client';
+  const montant = (montantCentimes / 100).toFixed(2);
+  const dashboardUrl = `${getBrandBaseUrl()}/dashboard/etablissement/abonnement`;
+
+  const html = renderBaseEmailTemplate({
+    preheader: `Échec du paiement de votre abonnement Renford — ${montant} €.`,
+    title: '⚠️ Échec du paiement de votre abonnement',
+    intro: `Bonjour ${firstName},\n\nLe prélèvement de ${montant} € pour votre abonnement Renford a échoué. Votre compte est temporairement suspendu.`,
+    bulletPoints: [
+      `Montant dû : ${montant} € TTC`,
+      'Vérifiez que votre moyen de paiement est valide',
+      'Mettez à jour votre carte sur le portail Stripe',
+    ],
+    ctaLabel: 'Mettre à jour mon moyen de paiement',
+    ctaUrl: dashboardUrl,
+    closing: "Si le problème persiste, contactez notre support. L'équipe Renford.",
+  });
+
+  const text = `Bonjour ${firstName},\n\nLe paiement de ${montant} € pour votre abonnement a échoué. Mettez à jour votre moyen de paiement : ${dashboardUrl}\n\nL'équipe Renford`;
+
+  return { subject: '⚠️ Échec du paiement de votre abonnement Renford', html, text };
+};

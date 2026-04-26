@@ -10,6 +10,7 @@ import { logger } from './config/logger';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import routes from './routes/index';
 import { webhookHandler } from './modules/paiement/paiement.route';
+import { handleAbonnementWebhook } from './modules/abonnements/abonnement.webhook';
 
 // const __dirname = path.resolve();
 
@@ -19,8 +20,13 @@ app.use(helmet());
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(compression());
 
-// Stripe webhook needs raw body for signature verification - mount BEFORE express.json()
+// Stripe webhooks need raw body for signature verification - mount BEFORE express.json()
 app.post('/api/paiement/webhook', express.raw({ type: 'application/json' }), webhookHandler);
+app.post(
+  '/api/abonnements/webhook',
+  express.raw({ type: 'application/json' }),
+  handleAbonnementWebhook,
+);
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));

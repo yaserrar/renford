@@ -25,6 +25,9 @@ import adminMessagesContactRouter from '../modules-admin/messages-contact/messag
 import adminNotificationsRouter from '../modules-admin/notifications/notifications.route';
 import adminMissionsRouter from '../modules-admin/missions/admin-missions.route';
 import adminPaiementsRouter from '../modules-admin/paiements/admin-paiements.route';
+import abonnementsRouter from '../modules/abonnements/abonnement.route';
+import adminAbonnementsRouter from '../modules-admin/abonnements/admin-abonnements.route';
+import adminEmailTemplatesRouter from '../modules-admin/email-templates/email-templates.route';
 
 const router = Router();
 
@@ -45,6 +48,7 @@ router.use('/', contactRouter);
 router.use('/', notificationsRouter);
 router.use('/', paiementRouter);
 router.use('/', evaluationsRouter);
+router.use('/', abonnementsRouter);
 
 // ── Admin modules ───────────────────────────────────────────
 router.use('/', adminAuthRouter);
@@ -55,6 +59,8 @@ router.use('/', adminMessagesContactRouter);
 router.use('/', adminNotificationsRouter);
 router.use('/', adminMissionsRouter);
 router.use('/', adminPaiementsRouter);
+router.use('/', adminAbonnementsRouter);
+router.use('/', adminEmailTemplatesRouter);
 
 router.use('/upload', uploadsRouter);
 

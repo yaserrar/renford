@@ -149,6 +149,9 @@ model ProfilEtablissement {
     // Stripe Customer
     stripeCustomerId String? @unique
 
+    // Devis Compétition négocié par l'admin (null = pas encore défini)
+    prixCompetitionNegocie Decimal? @db.Decimal(10, 2)
+
     // Métadonnées
     dateCreation  DateTime @default(now())
     dateMiseAJour DateTime @updatedAt
@@ -1305,6 +1308,80 @@ model AbonnementEvenement {
     @@index([type])
     @@index([occurredAt])
     @@map("abonnements_evenements")
+}
+
+// ============================================================================
+// TABLE: Email Templates (personnalisation admin des emails)
+// ============================================================================
+
+enum TypeEmailTemplate {
+    favori_invitation
+    welcome_etablissement
+    welcome_renford
+    signup_verification_code
+    reset_password_code
+    new_verification_code
+    mission_demande_confirmee_flex
+    mission_demande_confirmee_coach
+    incomplete_renford_profile_reminder
+    renford_trouve_flex
+    renford_trouve_coach
+    new_mission_renford
+    confirmation_mission_renford
+    visio_invitation_renford
+    signature_confirmation
+    account_deleted
+    fin_mission_renford_coach
+    fin_mission_renford_flex
+    fin_mission_etablissement_flex
+    fin_mission_etablissement_coach
+    rappel_mission_j1_etablissement
+    rappel_mission_j1_renford
+    rappel_mission_72h_renford
+    rappel_mission_72h_etablissement
+    mission_annulee_renford
+    profil_non_retenu_renford
+    profil_suspect
+    profil_suspect_2
+    contrat_a_signer_etablissement
+    contrat_a_signer_renford
+    contrat_signe_etablissement_coach
+    contrat_signe_etablissement_flex
+    profil_accepte_etablissement_coach
+    programmer_echange_etablissement
+    profils_tous_refuses_etablissement
+    apres_visio_etablissement
+    apres_visio_renford
+    apres_confirmation_renford_coach
+    refus_renford_coach
+    profil_annule_etablissement
+    mission_annulee_par_renford_etablissement
+    changement_signale_etablissement
+    changement_signale_renford
+    abonnement_activation
+    abonnement_renewal
+    abonnement_cancellation
+    abonnement_payment_failed
+}
+
+model EmailTemplate {
+    id   String            @id @default(uuid())
+    type TypeEmailTemplate @unique
+
+    // Tous les champs sont optionnels — null = utiliser le texte par défaut du code
+    sujet    String? // Objet du mail, supporte {{variables}}
+    titre    String? // Titre H1, supporte {{variables}}
+    intro    String? // Paragraphe d'intro, supporte {{variables}}
+    corps    String? // Remplace les puces / customHtml, supporte {{variables}}
+    closing  String? // Paragraphe de fermeture, supporte {{variables}}
+    ctaLabel String? // Texte du bouton CTA
+
+    actif Boolean @default(true)
+
+    dateCreation  DateTime @default(now())
+    dateMiseAJour DateTime @updatedAt
+
+    @@map("email_templates")
 }
 
 // enum MotifAjustementDuree {
