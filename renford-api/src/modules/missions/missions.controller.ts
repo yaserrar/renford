@@ -20,6 +20,7 @@ import {
 } from '../../config/email-templates';
 import { createNotification } from '../../config/notification';
 import { computeMissionPricing } from '../../lib/mission-pricing';
+import { checkQuotaExceeded } from '../../lib/abonnement-quota';
 import {
   registerEtablissementMissionRenfordResponse,
   syncMissionMatches,
@@ -351,6 +352,18 @@ export const createMission = async (
       return res.status(404).json({ message: 'Profil établissement non trouvé' });
     }
 
+    // ── Subscription quota check ─────────────────────────────────────────────
+    const quotaCheck = await checkQuotaExceeded(profilEtablissement.id);
+    if (quotaCheck.hasSubscription && quotaCheck.exceeded) {
+      return res.status(402).json({
+        error: 'QUOTA_EXCEEDED',
+        message: 'Vous avez atteint votre quota mensuel de missions pour votre abonnement',
+        remaining: 0,
+        plan: quotaCheck.plan,
+        quotaMissions: quotaCheck.quotaMissions,
+      });
+    }
+
     const etablissementAppartientAuProfil = profilEtablissement.etablissements.some(
       (etablissement) => etablissement.id === req.body.etablissementId,
     );
@@ -379,6 +392,18 @@ export const createMission = async (
       coachFeeHT: env.COACH_FEE_HT,
     });
 
+    // When the établissement has an active subscription and is within quota,
+    // no service fees apply — they pay only the base mission amount.
+    const withinSubscription = quotaCheck.hasSubscription && !quotaCheck.exceeded;
+    const effectivePricing = withinSubscription
+      ? {
+          ...pricing,
+          montantFraisService: 0,
+          montantFraisTTC: 0,
+          montantTTC: pricing.montantHT,
+        }
+      : pricing;
+
     const mission = await prisma.mission.create({
       data: {
         statut: missionStatut,
@@ -395,9 +420,9 @@ export const createMission = async (
         dateFin: req.body.dateFin ?? null,
         methodeTarification: req.body.methodeTarification,
         tarif: normalizedTarif,
-        montantHT: pricing.montantHT,
-        montantFraisService: pricing.montantFraisService,
-        montantTTC: pricing.montantTTC,
+        montantHT: effectivePricing.montantHT,
+        montantFraisService: effectivePricing.montantFraisService,
+        montantTTC: effectivePricing.montantTTC,
         pourcentageVariationTarif: req.body.pourcentageVariationTarif,
         PlageHoraireMission: {
           createMany: {
@@ -411,6 +436,18 @@ export const createMission = async (
         specialitePrincipale: true,
       },
     });
+
+    // Increment the subscription's mission counter (used for admin dashboard display)
+    if (quotaCheck.hasSubscription) {
+      await prisma.abonnement
+        .updateMany({
+          where: { profilEtablissementId: profilEtablissement.id, statut: 'actif' },
+          data: { missionsUtilisees: { increment: 1 } },
+        })
+        .catch((e: unknown) => {
+          logger.error({ err: e }, 'Failed to increment missionsUtilisees');
+        });
+    }
 
     const user = await prisma.utilisateur.findUnique({
       where: { id: userId },

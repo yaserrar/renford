@@ -81,12 +81,31 @@ const computeFinancialsFromMission = (mission: MissionDocumentContext['mission']
     0,
   );
 
+  const roundCurrency = (value: number) => Math.round(value * 100) / 100;
+
   const tarif = Number(mission.tarif ?? 0);
-  const totalHt = Math.max(0, tarif * totalHours);
-  const commissionHt = Number((totalHt * 0.2).toFixed(2));
-  const prestationTtc = totalHt;
-  const commissionTtc = commissionHt;
-  return { totalHours, totalHt, commissionHt, prestationTtc, commissionTtc };
+  const computedTotalHt = Math.max(0, tarif * totalHours);
+
+  const totalHt = Number(mission.montantHT ?? computedTotalHt);
+  const commissionHt = Number(
+    mission.montantFraisService ?? roundCurrency(Math.max(0, totalHt) * 0.2),
+  );
+  const commissionVat = roundCurrency(Math.max(0, commissionHt) * 0.2);
+  const commissionTtc = roundCurrency(Math.max(0, commissionHt) + commissionVat);
+  const prestationTtc = Math.max(0, totalHt);
+  const totalTtc = Number(mission.montantTTC ?? roundCurrency(prestationTtc + commissionTtc));
+  const commissionRatePercent = totalHt > 0 ? roundCurrency((commissionHt / totalHt) * 100) : 0;
+
+  return {
+    totalHours,
+    totalHt,
+    totalTtc,
+    commissionHt,
+    commissionVat,
+    commissionTtc,
+    commissionRatePercent,
+    prestationTtc,
+  };
 };
 
 const formatDate = (value: Date | null | undefined) => {
@@ -95,6 +114,13 @@ const formatDate = (value: Date | null | undefined) => {
 };
 
 const formatAmount = (value: number) => `${value.toFixed(2)} EUR`;
+
+const formatPercent = (value: number) => {
+  const normalized = Number.isFinite(value) ? value : 0;
+  const rounded = Number(normalized.toFixed(2));
+  const isInteger = Math.abs(rounded - Math.round(rounded)) < 0.00001;
+  return `${isInteger ? Math.round(rounded) : rounded.toFixed(2)}%`;
+};
 
 const formatHours = (value: number) => {
   return `${value.toFixed(2)} h`;
@@ -127,6 +153,19 @@ const drawText = (
   } else {
     ctx.ops.push(`BT /${font} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${sanitizeText(text)}) Tj ET`);
   }
+};
+
+const drawCenteredText = (
+  ctx: PdfContext,
+  text: string,
+  y: number,
+  size = 10,
+  bold = false,
+  rgb?: [number, number, number],
+) => {
+  const approxWidth = text.length * size * 0.5;
+  const x = Math.max(36, (ctx.width - approxWidth) / 2);
+  drawText(ctx, text, x, y, size, bold, rgb);
 };
 
 const drawRect = (
@@ -397,98 +436,24 @@ const drawHeader = (ctx: PdfContext, title: string, subtitle: string, docNumber:
   ctx.cursorY = 748;
 };
 
-const drawParties = (
-  ctx: PdfContext,
-  etablissementName: string,
-  etablissementAddress: string,
-  renfordName: string,
-) => {
-  drawText(ctx, 'Emetteur', 42, ctx.cursorY, 10, true);
-  drawText(ctx, 'Destinataire', 310, ctx.cursorY, 10, true);
-  drawRect(ctx, 36, ctx.cursorY - 78, 250, 72, undefined, undefined, BRAND);
-  drawRect(ctx, 304, ctx.cursorY - 78, 255, 72, undefined, undefined, BRAND);
-
-  drawText(ctx, 'Renford SAS', 44, ctx.cursorY - 22, 10, true);
-  drawText(ctx, '5 avenue de la Mission, 75001 Paris', 44, ctx.cursorY - 38, 9, false);
-  drawText(ctx, 'support@renford.fr', 44, ctx.cursorY - 52, 9, false);
-
-  drawText(ctx, etablissementName, 312, ctx.cursorY - 22, 10, true);
-  addParagraph(ctx, etablissementAddress, 312, 240, 9, 12);
-  ctx.cursorY = ctx.cursorY - 20;
-  drawText(ctx, `Intervenant: ${renfordName}`, 312, ctx.cursorY - 34, 9, false);
-
-  ctx.cursorY -= 96;
-};
-
-const drawMissionRecap = (
-  ctx: PdfContext,
-  mission: MissionDocumentContext['mission'],
-  totalHours: number,
-) => {
-  drawText(ctx, 'Récapitulatif mission', 42, ctx.cursorY, 10, true);
-  drawRect(ctx, 36, ctx.cursorY - 88, 523, 82, undefined, undefined, BRAND);
-  drawText(ctx, `Mission: ${mission.discipline}`, 44, ctx.cursorY - 22, 9, false);
-  drawText(
-    ctx,
-    mission.dateFin
-      ? `Periode: ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)}`
-      : `Date: ${formatDate(mission.dateDebut)}`,
-    44,
-    ctx.cursorY - 36,
-    9,
-    false,
-  );
-  drawText(ctx, `Statut: ${mission.statut}`, 44, ctx.cursorY - 50, 9, false);
-  drawText(ctx, `Volume horaire: ${formatHours(totalHours)}`, 44, ctx.cursorY - 64, 9, false);
-  ctx.cursorY -= 104;
-};
-
-const drawInvoiceTable = (
-  ctx: PdfContext,
-  label: string,
-  quantity: string,
-  unitPrice: string,
-  total: string,
-) => {
-  const tableX = 36;
-  const tableY = ctx.cursorY;
-  const tableW = 523;
-  const headerH = 24;
-  const rowH = 30;
-
-  drawRect(ctx, tableX, tableY - headerH, tableW, headerH, undefined, BRAND, BRAND);
-  drawRect(ctx, tableX, tableY - headerH - rowH, tableW, rowH, undefined, undefined, BRAND);
-  drawLine(ctx, tableX + 290, tableY - headerH - rowH, tableX + 290, tableY, BRAND);
-  drawLine(ctx, tableX + 360, tableY - headerH - rowH, tableX + 360, tableY, BRAND);
-  drawLine(ctx, tableX + 440, tableY - headerH - rowH, tableX + 440, tableY, BRAND);
-
-  drawText(ctx, 'Description', tableX + 8, tableY - 16, 9, true, WHITE);
-  drawText(ctx, 'Qté', tableX + 306, tableY - 16, 9, true, WHITE);
-  drawText(ctx, 'PU HT', tableX + 372, tableY - 16, 9, true, WHITE);
-  drawText(ctx, 'Total HT', tableX + 452, tableY - 16, 9, true, WHITE);
-
-  drawText(ctx, label, tableX + 8, tableY - 43, 9, false);
-  drawText(ctx, quantity, tableX + 306, tableY - 43, 9, false);
-  drawText(ctx, unitPrice, tableX + 372, tableY - 43, 9, false);
-  drawText(ctx, total, tableX + 452, tableY - 43, 9, true);
-
-  ctx.cursorY = tableY - headerH - rowH - 20;
-};
-
-const drawTotals = (ctx: PdfContext, baseHt: number, tva: number, totalTtc: number) => {
-  const boxX = 336;
-  const boxY = ctx.cursorY;
-  drawRect(ctx, boxX, boxY - 84, 223, 78, undefined, undefined, BRAND);
-  drawText(ctx, `Sous-total HT: ${formatAmount(baseHt)}`, boxX + 10, boxY - 20, 9, false);
-  drawText(ctx, `TVA: ${formatAmount(tva)}`, boxX + 10, boxY - 38, 9, false);
-  drawText(ctx, `Total TTC: ${formatAmount(totalTtc)}`, boxX + 10, boxY - 60, 11, true);
-  ctx.cursorY = boxY - 98;
-};
-
 const drawFooter = (ctx: PdfContext) => {
-  drawLine(ctx, 36, 56, 559, 56);
-  drawText(ctx, 'Document généré automatiquement par Renford', 36, 40, 8, false);
-  drawText(ctx, `Date de génération : ${formatDate(new Date())}`, 390, 40, 8, false);
+  drawCenteredText(ctx, 'RENFORD', 44, 8.5, true, BRAND);
+  drawCenteredText(
+    ctx,
+    'SAS immatriculée au 76 rue Voltaire, 92150 SURESNES',
+    35,
+    6.8,
+    false,
+    BRAND,
+  );
+  drawCenteredText(
+    ctx,
+    'Numéro SIRET 93065704400010 - Numéro TVA Intracommunautaire FR65930657044 - contact@renford.fr',
+    26,
+    6.4,
+    false,
+    BRAND,
+  );
 };
 
 const renderDevis = (
@@ -501,9 +466,12 @@ const renderDevis = (
 ) => {
   const etab = mission.etablissement;
   const etabProfil = etab.profilEtablissement;
-  const typeMission = getTypeMissionLabel(mission.specialitePrincipale);
-  const commissionTtc = Number((commissionHt * 1.2).toFixed(2));
-  const totalTtc = totalHt + commissionTtc;
+  const typeMission = getTypeMissionLabel(mission.specialitePrincipale || mission.discipline);
+  const commissionRatePercent =
+    totalHt > 0 ? Number(((commissionHt / totalHt) * 100).toFixed(2)) : 0;
+  const commissionVat = Number((commissionHt * 0.2).toFixed(2));
+  const commissionTtc = Number((commissionHt + commissionVat).toFixed(2));
+  const totalTtc = Number((totalHt + commissionTtc).toFixed(2));
   const adresseComplete = `${etab.adresse}, ${etab.codePostal} ${etab.ville}`;
   const tarif = Number(mission.tarif ?? 0);
   const plage = mission.dateFin
@@ -547,10 +515,11 @@ const renderDevis = (
   ctx.cursorY -= 14;
   drawText(
     ctx,
-    "Validite du devis : 72 heures a compter de la date d'emission.",
+    'Validité du devis : 72 heures à compter de la date d’émission.',
     42,
     ctx.cursorY,
-    9,
+    10,
+    true,
   );
   ctx.cursorY -= 20;
 
@@ -608,7 +577,14 @@ const renderDevis = (
     drawLine(ctx, cols[c]!, ctx.cursorY, cols[c]!, ctx.cursorY - r2H, BRAND);
   }
   const r2Y = ctx.cursorY - 12;
-  drawText(ctx, 'Commission sur vente', cols[0]! + 4, r2Y, 7.5, true);
+  drawText(
+    ctx,
+    `Frais de service Renford (${formatPercent(commissionRatePercent)})`,
+    cols[0]! + 4,
+    r2Y,
+    7.5,
+    true,
+  );
   drawText(ctx, 'Detail des commissions : prestataire de', cols[0]! + 4, r2Y - 10, 6.5);
   drawText(ctx, 'services via la plateforme Renford.', cols[0]! + 4, r2Y - 18, 6.5);
   drawText(ctx, '20%', cols[3]! + 12, r2Y - 8, 8);
@@ -644,242 +620,36 @@ const renderDevis = (
   ctx.cursorY = rY - 20;
 
   // ---- Conditions de paiement ----
-  ensureSpace(ctx, 60);
-  drawText(ctx, 'Conditions de Paiement :', 42, ctx.cursorY, 10, true, BRAND);
+  ensureSpace(ctx, 46);
+  drawText(ctx, 'Conditions de paiement :', 42, ctx.cursorY, 10, true, BRAND);
   ctx.cursorY -= 16;
-  addParagraph(
-    ctx,
-    'Paiement integral demande a la reception de ce devis pour debuter le projet.',
-    44,
-    500,
-    9,
-    13,
-  );
-  ctx.cursorY -= 10;
-
-  // ---- Mode de paiement ----
-  ensureSpace(ctx, 50);
-  drawText(ctx, 'Mode de paiement :', 42, ctx.cursorY, 10, true, BRAND);
-  ctx.cursorY -= 16;
-  drawText(ctx, 'Lien de paiement en ligne', 44, ctx.cursorY, 9);
-  ctx.cursorY -= 14;
-  drawText(ctx, '(Lien Stripe fourni par email)', 44, ctx.cursorY, 8);
-  ctx.cursorY -= 18;
-
-  // ---- Validity note ----
-  addParagraph(
-    ctx,
-    "Ce devis est valide jusqu'a 72 heures apres la date d'emission. Les services decrits debuteront une fois le paiement integral confirme.",
-    42,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 12;
-
-  // ---- CGV Page 2 ----
-  newPage(ctx);
-
-  drawText(ctx, '1. Validation et Paiement du Devis', 42, ctx.cursorY, 10, true);
-  ctx.cursorY -= 16;
-  drawText(ctx, '1.1. Validation du Devis :', 42, ctx.cursorY, 9, true);
-  ctx.cursorY -= 14;
-  addParagraph(
-    ctx,
-    "L'Entreprise Cliente dispose de 72 heures pour valider le devis. Cette validation peut se faire soit par retour de mail, soit en effectuant le paiement integral via le lien de paiement fourni. Passe le delai de 72 heures, l'acceptation du devis sera consideree comme tacite, et la mission demarrera des la reception du paiement. Sans paiement prealable, la mission ne pourra pas demarrer. Elle sera consideree comme annulee si aucune reponse ni paiement n'est recu dans les 72 heures precedant la reception du devis par email.",
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 8;
-  drawText(ctx, '1.2. Methode de Paiement :', 42, ctx.cursorY, 9, true);
-  ctx.cursorY -= 14;
-  addParagraph(
-    ctx,
-    "L'Entreprise Cliente regle le montant du devis via un lien de paiement Stripe fourni dans le present devis et dans l'email contenant ce meme devis. Une fois recu, le paiement est securise et stocke par Renford jusqu'a la fin de la prestation, en attente de validation par l'Entreprise Cliente. La mission ne pourra commencer qu'apres reception du paiement.",
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 8;
-  drawText(ctx, '1.3. Stockage Securise des Informations Bancaires :', 42, ctx.cursorY, 9, true);
-  ctx.cursorY -= 14;
-  addParagraph(
-    ctx,
-    "Les informations bancaires de l'Entreprise Cliente (RIB) sont stockees de maniere securisee sur la plateforme Stripe pour simplifier les transactions futures.",
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 12;
-
-  ensureSpace(ctx, 100);
-  drawText(ctx, "2. Paiement de l'Auto-Entrepreneur", 42, ctx.cursorY, 10, true);
-  ctx.cursorY -= 16;
-  addParagraph(
-    ctx,
-    "Apres validation de la prestation par l'Entreprise Cliente, Renford dispose de 30 jours pour verser le montant du au Prestataire. Ce paiement est effectue apres deduction des frais de service de Renford, et il est verse sur le compte bancaire specifie par le Prestataire dans son profil Renford. L'Entreprise Cliente recoit egalement une Facture Finale detaillant les services et les commissions applicables.",
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 12;
-
-  ensureSpace(ctx, 80);
-  drawText(ctx, "3. Conditions d'Annulation ou de Modification", 42, ctx.cursorY, 10, true);
-  ctx.cursorY -= 16;
-  drawText(ctx, "3.1. Annulation par l'Entreprise Cliente :", 42, ctx.cursorY, 9, true);
-  ctx.cursorY -= 14;
-  addParagraph(
-    ctx,
-    "L'Entreprise Cliente peut annuler une prestation convenue avec un Prestataire via la Plateforme Renford. Les conditions d'annulation sont les suivantes :",
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 6;
-  addParagraph(
-    ctx,
-    "Annulation entre 48 heures et 24 heures avant la prestation : Si l'annulation intervient entre 48 heures et 24 heures avant le debut de la prestation, et si le Prestataire avait accepte la mission depuis plus de quarante-huit (48) heures, Renford facturera a l'Entreprise Cliente 25 % du montant du pour le premier jour de prestation. Ces frais incluent les frais de service appliques par Renford.",
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 4;
-  addParagraph(
-    ctx,
-    'Annulation la veille de la prestation : Pour une annulation effectuee la veille de la prestation, Renford facturera 25 % du montant total pour le premier jour de la prestation. Ces frais couvrent la reservation du Prestataire et les frais de service Renford.',
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 4;
-  addParagraph(
-    ctx,
-    "Annulation le jour de la prestation : Si l'annulation intervient le jour meme de la prestation, Renford facturera 50 % du montant du premier jour de la prestation, et 25 % du montant du deuxieme jour, dans le cas ou la prestation s'etend sur plusieurs jours. Ces frais sont destines a indemniser le Prestataire pour le prejudice cause par l'annulation tardive, ainsi que les frais de service Renford.",
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 4;
-  addParagraph(
-    ctx,
-    "En cas d'annulation pour cause de force majeure, aucune penalite ne sera appliquee, a condition que des justificatifs pertinents soient fournis dans un delai raisonnable.",
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 6;
-
-  ensureSpace(ctx, 50);
-  drawText(ctx, 'Modifications de la Mission :', 42, ctx.cursorY, 9, true);
-  ctx.cursorY -= 14;
-  addParagraph(
-    ctx,
-    "Les demandes de modification apres la validation du devis ou apres le debut de la mission peuvent entrainer des frais supplementaires. Ces frais seront communiques a l'Entreprise Cliente pour approbation avant leur application.",
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 4;
-
-  ensureSpace(ctx, 50);
-  drawText(ctx, 'Ajustements des Couts en Cours de Mission :', 42, ctx.cursorY, 9, true);
-  ctx.cursorY -= 14;
-  addParagraph(
-    ctx,
-    "Bien que nous nous efforcions de fournir des estimations precises, le cout final de la mission peut varier en fonction des conditions rencontrees. Tout ajustement sera communique a l'Entreprise Cliente pour approbation avant de proceder a toute modification du cout final.",
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 8;
-
-  ensureSpace(ctx, 80);
   drawText(
     ctx,
-    '3.2. Desistement ou Prestation non honoree par un Renford',
-    42,
+    'Paiement intégral demandé à la réception de ce devis pour débuter le projet.',
+    44,
     ctx.cursorY,
-    9,
+    10,
     true,
+    BRAND,
   );
-  ctx.cursorY -= 14;
-  addParagraph(
-    ctx,
-    "Un Prestataire peut se retirer d'une prestation convenue avec une Entreprise Cliente via la Plateforme. Si le desistement a lieu plus de vingt-quatre (24) heures avant le debut de la prestation, il est sans consequence pour le Prestataire. Cependant, en cas de non-execution de la prestation due a un desistement tardif ou une absence, les mesures suivantes seront prises :",
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 4;
-  addParagraph(
-    ctx,
-    'Suspension temporaire : Le compte du Prestataire sera suspendu temporairement pour sept (7) jours calendaires des notification de cette suspension par Renford. Le Prestataire aura la possibilite de fournir des explications durant cette periode. Selon les justifications apportees, et sous reserve de validation par Renford, le compte pourra etre reactive immediatement ou apres la periode de suspension.',
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 4;
-  addParagraph(
-    ctx,
-    'Cas de force majeure : Renford reconnait que certains desistements tardifs ou absences peuvent survenir en raison de circonstances exceptionnelles et imprevisibles qui echappent au controle du Prestataire. Dans de tels cas de force majeure dument justifies, aucune sanction ne sera appliquee.',
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 4;
-  addParagraph(
-    ctx,
-    "Engagement de remplacement : Renford s'engage a mettre en oeuvre tous les moyens necessaires pour trouver un remplacement rapide afin de minimiser l'impact sur l'Entreprise Cliente. En cas d'echec dans la recherche d'un remplacant, Renford ouvrira une discussion entre les parties afin de minimiser les impacts negatifs sur l'Entreprise Cliente.",
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 4;
-  addParagraph(
-    ctx,
-    'Suspension definitive : Si un Prestataire se desiste tardivement ou est absent a deux reprises sur une periode de trente (30) jours, son compte sera definitivement suspendu par Renford.',
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 4;
-  addParagraph(
-    ctx,
-    "Ces mesures sont prises dans l'interet de maintenir la qualite et la fiabilite des services proposes par Renford et de ses Prestataires.",
-    44,
-    510,
-    8,
-    12,
-  );
-  ctx.cursorY -= 8;
+  ctx.cursorY -= 18;
 
-  ensureSpace(ctx, 50);
-  drawText(ctx, '3.3. En cas de Non-realisation de la Mission', 42, ctx.cursorY, 9, true);
+  // ---- Mode de paiement ----
+  ensureSpace(ctx, 70);
+  drawText(ctx, 'Mode de paiement :', 42, ctx.cursorY, 10, true, BRAND);
   ctx.cursorY -= 14;
+  drawRect(ctx, 42, ctx.cursorY - 22, 176, 22, undefined, undefined, BRAND);
+  drawText(ctx, 'Lien de paiement en ligne', 48, ctx.cursorY - 14, 9, true);
+  drawRect(ctx, 218, ctx.cursorY - 22, 341, 22, undefined, undefined, BRAND);
+  drawText(ctx, 'Lien Stripe fourni par email', 224, ctx.cursorY - 14, 9, true, BRAND);
+  ctx.cursorY -= 36;
+
   addParagraph(
     ctx,
-    "Si le Prestataire ne se presente pas ou est dans l'impossibilite de realiser la mission le jour J sans justification valable, le Facilitateur s'engage a rembourser integralement l'Entreprise Cliente dans un delai de 30 jours ouvres.",
-    44,
-    510,
-    8,
+    'Ce devis est valide jusqu’à 72 heures après la date d’émission. Les services décrits débuteront une fois le paiement intégral confirmé.',
+    42,
+    520,
+    8.5,
     12,
   );
 
@@ -893,27 +663,229 @@ const renderFacturePrestation = (
   totalHours: number,
   totalHt: number,
 ) => {
-  drawHeader(
+  const etab = mission.etablissement;
+  const etabProfil = etab.profilEtablissement;
+  const typeMission = getTypeMissionLabel(mission.specialitePrincipale || mission.discipline);
+  const tarif = Number(mission.tarif ?? 0);
+  const commissionHt = Number(mission.montantFraisService ?? Number((totalHt * 0.2).toFixed(2)));
+  const commissionVat = Number((commissionHt * 0.2).toFixed(2));
+  const commissionTtc = Number((commissionHt + commissionVat).toFixed(2));
+  const commissionRatePercent =
+    totalHt > 0 ? Number(((commissionHt / totalHt) * 100).toFixed(2)) : 0;
+  const totalMontantHt = Number((totalHt + commissionHt).toFixed(2));
+  const totalTtc = Number((totalHt + commissionTtc).toFixed(2));
+  const adresseComplete = `${etab.adresse}, ${etab.codePostal} ${etab.ville}`;
+  const plage = mission.dateFin
+    ? `Du ${formatDate(mission.dateDebut)} au ${formatDate(mission.dateFin)}`
+    : `Le ${formatDate(mission.dateDebut)}`;
+
+  // ---- Title bar ----
+  const titleH = 52;
+  const titleY = ctx.height - 72 - titleH;
+  drawRect(ctx, 32, titleY, 531, titleH, undefined, BRAND, BRAND);
+  drawText(
     ctx,
-    'Facture de la prestation',
-    'Prestation mission',
-    mission.id.slice(0, 8).toUpperCase(),
+    'FACTURE FINALE POUR SERVICES & COMMISSION - RENFORD FLEX',
+    42,
+    titleY + titleH - 14,
+    10,
+    true,
+    WHITE,
   );
-  drawParties(
+  drawText(
     ctx,
-    mission.etablissement.nom,
-    `${mission.etablissement.adresse}, ${mission.etablissement.codePostal} ${mission.etablissement.ville}`,
-    renfordName,
+    `Facture N${sanitizeText('°')} : ${mission.id.slice(0, 8).toUpperCase()}`,
+    42,
+    titleY + titleH - 28,
+    9,
+    false,
+    WHITE,
   );
-  drawMissionRecap(ctx, mission, totalHours);
-  drawInvoiceTable(
+  drawText(ctx, `Date : ${formatDate(new Date())}`, 42, titleY + titleH - 42, 9, false, WHITE);
+  ctx.cursorY = titleY - 16;
+
+  // ---- Emetteur (left) / Destinataire (right) ----
+  const colL = 42;
+  const colR = 320;
+  const topY = ctx.cursorY;
+
+  // Emetteur block
+  drawText(ctx, 'RENFORD', colL, topY, 11, true, BRAND);
+  ctx.cursorY -= 14;
+  drawText(ctx, '76 rue Voltaire, 92150 Suresnes', colL, ctx.cursorY, 9);
+  ctx.cursorY -= 12;
+  drawText(ctx, `N${sanitizeText('°')} Siret : 90196093000013`, colL, ctx.cursorY, 9);
+  ctx.cursorY -= 12;
+  drawText(
     ctx,
-    `Intervention ${mission.discipline}`,
-    formatHours(totalHours),
-    formatAmount(Number(mission.tarif ?? 0)),
-    formatAmount(totalHt),
+    `N${sanitizeText('°')}TVA Intracommunautaire : FR65930657044`,
+    colL,
+    ctx.cursorY,
+    9,
   );
-  drawTotals(ctx, totalHt, 0, totalHt);
+  ctx.cursorY -= 12;
+  drawText(ctx, '06 64 39 25 28 / contact@renford.fr', colL, ctx.cursorY, 9);
+
+  // Destinataire block (aligned to top)
+  drawText(ctx, etabProfil.raisonSociale, colR, topY, 10, true);
+  drawText(ctx, etab.nom, colR, topY - 14, 9);
+  drawText(ctx, adresseComplete, colR, topY - 26, 9);
+  drawText(ctx, `N${sanitizeText('°')}SIRET : ${etabProfil.siret || '-'}`, colR, topY - 38, 9);
+  // drawText(ctx, `N${sanitizeText('°')}TVA : -`, colR, topY - 50, 9);
+
+  ctx.cursorY -= 24;
+
+  // ---- Reference line ----
+  ensureSpace(ctx, 30);
+  const refText = `Reference : Paiement integral recu pour le devis N${sanitizeText('°')} ${mission.id.slice(0, 8).toUpperCase()} du ${formatDate(mission.dateCreation)},`;
+  drawText(ctx, refText, colL, ctx.cursorY, 8.5, false);
+  ctx.cursorY -= 12;
+  drawText(
+    ctx,
+    `couvrant la prestation de services par ${renfordName} et la commission de mise en relation.`,
+    colL,
+    ctx.cursorY,
+    8.5,
+    false,
+  );
+  ctx.cursorY -= 22;
+
+  // ---- Main table ----
+  // 6 columns: Description | Nb heures | Tarification | Montant HT | TVA | Montant TTC
+  const tX = 36;
+  const tW = 523;
+  const hH = 24;
+  const cols = [tX, tX + 170, tX + 250, tX + 320, tX + 390, tX + 455];
+
+  ensureSpace(ctx, hH + 68 + 40);
+
+  // Header row
+  drawRect(ctx, tX, ctx.cursorY - hH, tW, hH, undefined, BRAND, BRAND);
+  for (let c = 1; c < cols.length; c++) {
+    drawLine(ctx, cols[c]!, ctx.cursorY, cols[c]!, ctx.cursorY - hH, BRAND);
+  }
+  const hY = ctx.cursorY - 16;
+  drawText(ctx, 'Description des services convenus', cols[0]! + 4, hY, 7, true, WHITE);
+  drawText(ctx, "Nombre d'heures", cols[1]! + 4, hY, 6.5, true, WHITE);
+  drawText(ctx, 'Tarification', cols[2]! + 4, hY, 7, true, WHITE);
+  drawText(ctx, 'Montant HT', cols[3]! + 4, hY, 7, true, WHITE);
+  drawText(ctx, 'TVA', cols[4]! + 4, hY, 7, true, WHITE);
+  drawText(ctx, 'Montant TTC', cols[5]! + 4, hY, 7, true, WHITE);
+  ctx.cursorY -= hH;
+
+  // Row 1: Prestation temporaire
+  const r1H = 68;
+  drawRect(ctx, tX, ctx.cursorY - r1H, tW, r1H, undefined, undefined, BRAND);
+  for (let c = 1; c < cols.length; c++) {
+    drawLine(ctx, cols[c]!, ctx.cursorY, cols[c]!, ctx.cursorY - r1H, BRAND);
+  }
+  const r1Y = ctx.cursorY - 11;
+  drawText(ctx, "Prestation temporaire d'encadrement", cols[0]! + 4, r1Y, 7, true);
+  drawText(ctx, `du sport - ${typeMission} (Renford)`, cols[0]! + 4, r1Y - 10, 7, true);
+  drawText(ctx, `Lieu de realisation : ${adresseComplete}`, cols[0]! + 4, r1Y - 22, 6, false);
+  drawText(ctx, `Duree de la prestation : ${plage}`, cols[0]! + 4, r1Y - 32, 6, false);
+  drawText(ctx, `Nom : ${renfordName}`, cols[0]! + 4, r1Y - 42, 6, false);
+  drawText(ctx, `SIRET : ${etabProfil.siret || '-'}`, cols[0]! + 4, r1Y - 52, 6, false);
+
+  drawText(ctx, formatHours(totalHours), cols[1]! + 4, r1Y - 20, 8);
+  drawText(ctx, formatAmount(tarif), cols[2]! + 4, r1Y - 20, 8);
+  drawText(ctx, formatAmount(totalHt), cols[3]! + 4, r1Y - 20, 8);
+  drawText(ctx, '0%', cols[4]! + 8, r1Y - 20, 8);
+  drawText(ctx, formatAmount(totalHt), cols[5]! + 4, r1Y - 20, 8);
+  ctx.cursorY -= r1H;
+
+  // Row 2: Commission sur vente
+  const r2H = 40;
+  drawRect(ctx, tX, ctx.cursorY - r2H, tW, r2H, undefined, undefined, BRAND);
+  for (let c = 1; c < cols.length; c++) {
+    drawLine(ctx, cols[c]!, ctx.cursorY, cols[c]!, ctx.cursorY - r2H, BRAND);
+  }
+  const r2Y = ctx.cursorY - 11;
+  drawText(
+    ctx,
+    `Frais de service Renford (${formatPercent(commissionRatePercent)})`,
+    cols[0]! + 4,
+    r2Y,
+    7.5,
+    true,
+  );
+  drawText(ctx, 'Detail des commissions : prestataire de service via', cols[0]! + 4, r2Y - 12, 6.5);
+  drawText(ctx, 'la plateforme Renford.', cols[0]! + 4, r2Y - 22, 6.5);
+  drawText(ctx, formatAmount(commissionHt), cols[3]! + 4, r2Y - 12, 8);
+  drawText(ctx, '20%', cols[4]! + 8, r2Y - 12, 8);
+  drawText(ctx, formatAmount(commissionTtc), cols[5]! + 4, r2Y - 12, 8);
+  ctx.cursorY -= r2H + 16;
+
+  // ---- Recap box (right-aligned) ----
+  ensureSpace(ctx, 110);
+  const bX = 310;
+  const bW = 249;
+  const bY = ctx.cursorY;
+  const rcH = 22;
+  drawRect(ctx, bX, bY - rcH, bW, rcH, undefined, BRAND, BRAND);
+  drawText(ctx, 'Récapitulatif', bX + 75, bY - 15, 10, true, WHITE);
+
+  const rowH2 = 20;
+  let rY = bY - rcH;
+  const drawRecapRow = (label: string, value: string, bold = false) => {
+    drawRect(ctx, bX, rY - rowH2, bW, rowH2, undefined, undefined, BRAND);
+    drawText(ctx, label, bX + 6, rY - 14, 9, bold);
+    drawText(ctx, value, bX + bW - 85, rY - 14, 9, true);
+    rY -= rowH2;
+  };
+  drawRecapRow('Montant total HT', formatAmount(totalMontantHt));
+  drawRecapRow('Montant total TTC', formatAmount(totalTtc), true);
+  drawRecapRow('Paiement recu', formatAmount(totalTtc));
+  // SOLDE DU row
+  drawRect(ctx, bX, rY - rowH2, bW, rowH2, undefined, undefined, BRAND);
+  drawText(ctx, 'SOLDE DU', bX + 6, rY - 14, 10, true);
+  drawText(ctx, '0 EUR', bX + bW - 85, rY - 14, 10, true);
+  rY -= rowH2;
+  ctx.cursorY = rY - 20;
+
+  // ---- Mode de paiement ----
+  ensureSpace(ctx, 80);
+  drawText(ctx, 'Mode de paiement :', 42, ctx.cursorY, 10, true, BRAND);
+  ctx.cursorY -= 14;
+  addParagraph(
+    ctx,
+    "Tout retard de paiement donnera droit a une indemnite pour frais de recouvrement s'elevant a 40 euros.",
+    44,
+    510,
+    8.5,
+    13,
+  );
+  ctx.cursorY -= 8;
+  drawText(ctx, 'Par virement bancaire :', 44, ctx.cursorY, 9, true);
+  ctx.cursorY -= 13;
+  drawText(ctx, 'IBAN : FR76 1870 7000 4932 4211 4172 579', 44, ctx.cursorY, 9);
+  ctx.cursorY -= 13;
+  drawText(ctx, 'BIC : CCBPFRPPVER  |  Banque : Banque Populaire', 44, ctx.cursorY, 9);
+  ctx.cursorY -= 16;
+  drawText(ctx, 'Par lien de paiement STRIPE :', 44, ctx.cursorY, 9, true);
+  ctx.cursorY -= 13;
+  drawText(
+    ctx,
+    'https://buy.stripe.com/6oU5kEb2v5Du8fm14Q4800c',
+    44,
+    ctx.cursorY,
+    8.5,
+    false,
+    BRAND,
+  );
+  ctx.cursorY -= 20;
+
+  // ---- Thank you note ----
+  ensureSpace(ctx, 50);
+  addParagraph(
+    ctx,
+    'Nous vous remercions pour votre prompt paiement et restons a votre disposition pour toute question ou information complementaire. Nous sommes impatients de la reussite du projet.',
+    42,
+    510,
+    9,
+    13,
+  );
+
   drawFooter(ctx);
 };
 
@@ -925,27 +897,146 @@ const renderFactureCommission = (
   totalHt: number,
   commissionHt: number,
 ) => {
-  drawHeader(
+  const etab = mission.etablissement;
+  const etabProfil = etab.profilEtablissement;
+  const commissionRatePercent =
+    totalHt > 0 ? Number(((commissionHt / totalHt) * 100).toFixed(2)) : 0;
+  const montantTva = Number((commissionHt * 0.2).toFixed(2));
+  const commissionTtc = Number((commissionHt + montantTva).toFixed(2));
+  const adresseComplete = `${etab.adresse}, ${etab.codePostal} ${etab.ville}`;
+
+  // ---- Title bar ----
+  const titleH = 52;
+  const titleY = ctx.height - 72 - titleH;
+  drawRect(ctx, 32, titleY, 531, titleH, undefined, BRAND, BRAND);
+  drawText(ctx, 'FACTURE DES FRAIS DE SERVICE RENFORD', 42, titleY + titleH - 14, 10, true, WHITE);
+  drawText(
     ctx,
-    'Facture des frais de service Renford',
-    'Frais de service plateforme Renford',
-    mission.id.slice(0, 8).toUpperCase(),
+    `Facture N${sanitizeText('°')} : ${mission.id.slice(0, 8).toUpperCase()}`,
+    42,
+    titleY + titleH - 28,
+    9,
+    false,
+    WHITE,
   );
-  drawParties(
+  drawText(ctx, `Date : ${formatDate(new Date())}`, 42, titleY + titleH - 42, 9, false, WHITE);
+  ctx.cursorY = titleY - 16;
+
+  // ---- Emetteur (left) / Destinataire (right) ----
+  const colL = 42;
+  const colR = 320;
+  const topY = ctx.cursorY;
+
+  drawText(ctx, 'RENFORD', colL, topY, 11, true, BRAND);
+  ctx.cursorY -= 14;
+  drawText(ctx, '76 rue Voltaire, 92150 Suresnes', colL, ctx.cursorY, 9);
+  ctx.cursorY -= 12;
+  drawText(ctx, `N${sanitizeText('°')} Siret : 90196093000013`, colL, ctx.cursorY, 9);
+  ctx.cursorY -= 12;
+  drawText(
     ctx,
-    mission.etablissement.nom,
-    `${mission.etablissement.adresse}, ${mission.etablissement.codePostal} ${mission.etablissement.ville}`,
-    renfordName,
+    `N${sanitizeText('°')}TVA Intracommunautaire : FR65930657044`,
+    colL,
+    ctx.cursorY,
+    9,
   );
-  drawMissionRecap(ctx, mission, totalHours);
-  drawInvoiceTable(
+  ctx.cursorY -= 12;
+  drawText(ctx, '06 64 39 25 28 / contact@renford.fr', colL, ctx.cursorY, 9);
+
+  drawText(ctx, etabProfil.raisonSociale, colR, topY, 10, true);
+  drawText(ctx, etab.nom, colR, topY - 14, 9);
+  drawText(ctx, adresseComplete, colR, topY - 26, 9);
+  drawText(ctx, `N${sanitizeText('°')}SIRET : ${etabProfil.siret || '-'}`, colR, topY - 38, 9);
+  drawText(ctx, `N${sanitizeText('°')}TVA : -`, colR, topY - 50, 9);
+
+  ctx.cursorY -= 24;
+
+  ensureSpace(ctx, 30);
+  drawText(
     ctx,
-    'Commission Renford (20%)',
-    '1',
-    formatAmount(commissionHt),
-    formatAmount(commissionHt),
+    `Référence : frais de service liés à la mission ${mission.id.slice(0, 8).toUpperCase()} (${formatHours(totalHours)} / assiette ${formatAmount(totalHt)} HT).`,
+    colL,
+    ctx.cursorY,
+    8.5,
+    false,
   );
-  drawTotals(ctx, commissionHt, 0, commissionHt);
+  ctx.cursorY -= 24;
+
+  // ---- Table ----
+  const tX = 36;
+  const tW = 523;
+  const hH = 24;
+  const cols = [tX, tX + 250, tX + 345, tX + 420, tX + 470];
+
+  ensureSpace(ctx, hH + 50 + 40);
+  drawRect(ctx, tX, ctx.cursorY - hH, tW, hH, undefined, BRAND, BRAND);
+  for (let c = 1; c < cols.length; c++) {
+    drawLine(ctx, cols[c]!, ctx.cursorY, cols[c]!, ctx.cursorY - hH, BRAND);
+  }
+  const hY = ctx.cursorY - 16;
+  drawText(ctx, 'Description', cols[0]! + 4, hY, 8, true, WHITE);
+  drawText(ctx, 'Montant HT', cols[1]! + 4, hY, 8, true, WHITE);
+  drawText(ctx, 'TVA', cols[2]! + 4, hY, 8, true, WHITE);
+  drawText(ctx, 'Taux', cols[3]! + 4, hY, 8, true, WHITE);
+  drawText(ctx, 'Montant TTC', cols[4]! + 4, hY, 8, true, WHITE);
+  ctx.cursorY -= hH;
+
+  const rowH = 50;
+  drawRect(ctx, tX, ctx.cursorY - rowH, tW, rowH, undefined, undefined, BRAND);
+  for (let c = 1; c < cols.length; c++) {
+    drawLine(ctx, cols[c]!, ctx.cursorY, cols[c]!, ctx.cursorY - rowH, BRAND);
+  }
+  const rY = ctx.cursorY - 14;
+  drawText(
+    ctx,
+    `Frais de service Renford (${formatPercent(commissionRatePercent)})`,
+    cols[0]! + 4,
+    rY,
+    8.5,
+    true,
+  );
+  drawText(ctx, 'Commission de mise en relation', cols[0]! + 4, rY - 13, 7.5, false);
+  drawText(ctx, formatAmount(commissionHt), cols[1]! + 4, rY - 6, 8.5, true);
+  drawText(ctx, formatAmount(montantTva), cols[2]! + 4, rY - 6, 8.5, true);
+  drawText(ctx, '20%', cols[3]! + 8, rY - 6, 8.5, true);
+  drawText(ctx, formatAmount(commissionTtc), cols[4]! + 4, rY - 6, 8.5, true);
+  ctx.cursorY -= rowH + 18;
+
+  // ---- Recap ----
+  const bX = 320;
+  const bW = 239;
+  const bY = ctx.cursorY;
+  const rcH = 22;
+  drawRect(ctx, bX, bY - rcH, bW, rcH, undefined, BRAND, BRAND);
+  drawText(ctx, 'Récapitulatif', bX + 70, bY - 15, 10, true, WHITE);
+
+  const rrH = 20;
+  let recapY = bY - rcH;
+  const drawRecapRow = (label: string, value: string, bold = false) => {
+    drawRect(ctx, bX, recapY - rrH, bW, rrH, undefined, undefined, BRAND);
+    drawText(ctx, label, bX + 6, recapY - 14, 9, bold);
+    drawText(ctx, value, bX + bW - 85, recapY - 14, 9, true);
+    recapY -= rrH;
+  };
+  drawRecapRow('Sous-total HT', formatAmount(commissionHt));
+  drawRecapRow('TVA 20%', formatAmount(montantTva));
+  drawRecapRow('Montant TTC', formatAmount(commissionTtc), true);
+
+  drawRect(ctx, bX, recapY - rrH, bW, rrH, undefined, undefined, BRAND);
+  drawText(ctx, 'SOLDE DU', bX + 6, recapY - 14, 10, true);
+  drawText(ctx, '0 EUR', bX + bW - 85, recapY - 14, 10, true);
+  ctx.cursorY = recapY - rrH - 22;
+
+  ensureSpace(ctx, 40);
+  addParagraph(
+    ctx,
+    'Paiement reçu. Merci pour votre confiance. Cette facture correspond uniquement aux frais de service Renford.',
+    42,
+    510,
+    9,
+    13,
+  );
+
   drawFooter(ctx);
 };
 
