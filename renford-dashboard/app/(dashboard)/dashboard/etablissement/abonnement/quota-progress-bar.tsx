@@ -20,9 +20,8 @@ export default function QuotaProgressBar({
 
   return (
     <div className="py-3 space-y-3">
-      <p className="text-sm text-muted-foreground">
-        Volume de missions :{" "}
-        <span className="font-semibold text-foreground">{planName}</span>
+      <p className="text-xl text-foreground font-bold">
+        Volume de missions : {planName}
       </p>
       <div className="flex items-center gap-3">
         <div className="h-4 w-full rounded-full bg-gray-100 overflow-hidden flex-1">

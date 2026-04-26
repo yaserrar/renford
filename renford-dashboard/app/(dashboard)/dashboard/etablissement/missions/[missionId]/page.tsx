@@ -258,16 +258,16 @@ export default function EtablissementMissionDetailsPage() {
     !!firstMissionRenford?.signatureContratPrestationEtablissementId;
 
   const documentGroups = [
-    {
-      title: "Devis",
-      documents: [
-        {
-          id: "devis",
-          label: "Devis pour services et commission",
-          date: documentDate,
-        },
-      ],
-    },
+    // {
+    //   title: "Devis",
+    //   documents: [
+    //     {
+    //       id: "devis",
+    //       label: "Devis pour services et commission",
+    //       date: documentDate,
+    //     },
+    //   ],
+    // },
     {
       title: "Factures",
       documents: [
@@ -824,16 +824,29 @@ export default function EtablissementMissionDetailsPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-muted-foreground">
-                    <span>
-                      Frais de service HT ({PLATFORM_COMMISSION_PERCENT}
-                      %)
-                    </span>
-                    <span>{formatAmount(fraisHt)}</span>
+                    {fraisHt === 0 ? (
+                      <>
+                        <span>Frais de service</span>
+                        <span className="text-xs font-medium text-green-700 bg-green-100 rounded-full px-2 py-0.5">
+                          Inclus dans l&apos;abonnement
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span>
+                          Frais de service HT ({PLATFORM_COMMISSION_PERCENT}
+                          %)
+                        </span>
+                        <span>{formatAmount(fraisHt)}</span>
+                      </>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between gap-4 text-muted-foreground">
-                    <span>TVA sur frais de service (20%)</span>
-                    <span>{formatAmount(tvaFrais)}</span>
-                  </div>
+                  {fraisHt > 0 && (
+                    <div className="flex items-center justify-between gap-4 text-muted-foreground">
+                      <span>TVA sur frais de service (20%)</span>
+                      <span>{formatAmount(tvaFrais)}</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between gap-4 text-muted-foreground">
                     <span>Total TTC</span>
                     <span>{formatAmount(totalTtc)}</span>

@@ -35,7 +35,7 @@ export default function EtablissementIndicatorsSection({ indicators }: Props) {
     {
       title: "Paiements",
       ctaLabel: "Suivre mes paiements",
-      ctaHref: "#",
+      ctaHref: "/dashboard/etablissement/paiement",
       metrics: [
         {
           value: String(indicators?.paiementsARegler ?? 0),

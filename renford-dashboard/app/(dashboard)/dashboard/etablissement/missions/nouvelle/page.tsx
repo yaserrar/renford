@@ -26,6 +26,7 @@ import { MissionEtablissement } from "@/types/mission";
 import { useCurrentUser } from "@/hooks/utilisateur";
 import { cn } from "@/lib/utils";
 import { computeMissionPricing } from "@/lib/mission-pricing";
+import { useAbonnementActif } from "@/hooks/abonnement";
 import {
   createMissionFormSchema,
   createMissionPayloadSchema,
@@ -361,11 +362,17 @@ export default function NouvelleMissionPage() {
         ? "demi-journée"
         : "horaire";
 
+  const { data: abonnementData } = useAbonnementActif();
+  const withinSubscription =
+    (abonnementData?.quota?.hasSubscription ?? false) &&
+    !(abonnementData?.quota?.exceeded ?? true);
+
   const pricing = computeMissionPricing({
     plagesHoraires: selectedPlagesHoraires || [],
     methodeTarification: selectedMethodeTarification ?? "horaire",
     tarif: hasValidTarif ? selectedTarif : 0,
     modeMission: selectedMode ?? "flex",
+    withinSubscription,
   });
 
   const totalHT = pricing.montantHT;
@@ -1532,24 +1539,37 @@ export default function NouvelleMissionPage() {
                         {formatEuroAmount(totalHT)}
                       </p>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-muted-foreground">
-                        {selectedMode === "coach"
-                          ? "Frais de mise en relation HT"
-                          : `Frais de service HT (${PLATFORM_COMMISSION_PERCENT}%)`}
-                      </p>
-                      <p className="text-muted-foreground">
-                        {formatEuroAmount(fraisHT)}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-muted-foreground">
-                        TVA sur frais de service (20%)
-                      </p>
-                      <p className="text-muted-foreground">
-                        {formatEuroAmount(tvaFrais)}
-                      </p>
-                    </div>
+                    {withinSubscription ? (
+                      <div className="flex items-center justify-between">
+                        <p className="text-muted-foreground">
+                          Frais de service
+                        </p>
+                        <span className="text-xs font-medium text-green-700 bg-green-100 rounded-full px-2 py-0.5">
+                          Inclus dans l&apos;abonnement
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <p className="text-muted-foreground">
+                            {selectedMode === "coach"
+                              ? "Frais de mise en relation HT"
+                              : `Frais de service HT (${PLATFORM_COMMISSION_PERCENT}%)`}
+                          </p>
+                          <p className="text-muted-foreground">
+                            {formatEuroAmount(fraisHT)}
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-muted-foreground">
+                            TVA sur frais de service (20%)
+                          </p>
+                          <p className="text-muted-foreground">
+                            {formatEuroAmount(tvaFrais)}
+                          </p>
+                        </div>
+                      </>
+                    )}
                     <div className="flex items-center justify-between">
                       <p className="text-muted-foreground">Total TTC</p>
                       <p className="text-muted-foreground">

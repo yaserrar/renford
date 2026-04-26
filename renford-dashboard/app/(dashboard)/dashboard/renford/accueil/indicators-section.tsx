@@ -35,7 +35,7 @@ export default function RenfordIndicatorsSection({ indicators }: Props) {
     {
       title: "Paiements",
       ctaLabel: "Suivre mes paiements",
-      ctaHref: "#",
+      ctaHref: "/dashboard/renford/paiement",
       metrics: [
         {
           value: String(indicators?.paiementsEnCours ?? 0),

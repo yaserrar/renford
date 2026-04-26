@@ -12,6 +12,8 @@ type ComputeMissionPricingInput = {
   tarif?: number | null;
   commissionPercent?: number;
   modeMission?: "flex" | "coach";
+  /** When true (active subscription within quota), fees are zeroed out */
+  withinSubscription?: boolean;
 };
 
 export type MissionPricingBreakdown = {
@@ -77,6 +79,7 @@ export const computeMissionPricing = ({
   tarif,
   commissionPercent = PLATFORM_COMMISSION_PERCENT,
   modeMission = "flex",
+  withinSubscription = false,
 }: ComputeMissionPricingInput): MissionPricingBreakdown => {
   const normalizedTarif = Number(tarif ?? 0);
   const normalizedCommissionPercent = Number(commissionPercent);
@@ -102,11 +105,15 @@ export const computeMissionPricing = ({
   }
 
   const montantHT = roundCurrency(safeTarif * totalUnites);
-  const montantFraisService =
-    modeMission === "coach"
+
+  const montantFraisService = withinSubscription
+    ? 0
+    : modeMission === "coach"
       ? roundCurrency(COACH_FEE_HT)
       : roundCurrency(montantHT * (safeCommissionPercent / 100));
-  const montantFraisTTC = roundCurrency(montantFraisService * 1.2);
+  const montantFraisTTC = withinSubscription
+    ? 0
+    : roundCurrency(montantFraisService * 1.2);
   const montantTTC = roundCurrency(montantHT + montantFraisTTC);
 
   return {

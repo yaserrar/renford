@@ -1,14 +1,15 @@
 "use client";
 
 import { MapPin, Receipt, Clock, type LucideIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import Link from "next/link";
 
 interface OptionCardProps {
   name: string;
   icon: React.ReactNode;
   details: { icon: LucideIcon; label: string; highlight?: boolean }[];
   buttonLabel: string;
-  onButtonClick?: () => void;
+  href: string;
 }
 
 export default function OptionCard({
@@ -16,7 +17,7 @@ export default function OptionCard({
   icon,
   details,
   buttonLabel,
-  onButtonClick,
+  href,
 }: OptionCardProps) {
   return (
     <div className="flex flex-col gap-4 rounded-3xl border border-input bg-card p-6">
@@ -36,10 +37,12 @@ export default function OptionCard({
         ))}
       </div>
 
-      {/* Button */}
-      <Button variant="dark" onClick={onButtonClick} className="w-fit md:px-10">
+      <Link
+        className={buttonVariants({ variant: "dark" }) + " w-fit md:px-10"}
+        href={href}
+      >
         {buttonLabel}
-      </Button>
+      </Link>
     </div>
   );
 }

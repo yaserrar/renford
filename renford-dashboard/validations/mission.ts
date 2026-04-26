@@ -407,9 +407,11 @@ export const createMissionStep3Schema = z
     ),
     dateFin: z.preprocess(
       parseDateField,
-      z.date({
-        invalid_type_error: "Veuillez sélectionner une date de fin valide",
-      }).optional(),
+      z
+        .date({
+          invalid_type_error: "Veuillez sélectionner une date de fin valide",
+        })
+        .optional(),
     ),
     plagesHoraires: z
       .array(
@@ -461,8 +463,6 @@ export const createMissionStep3Schema = z
     ),
   })
   .superRefine((values, ctx) => {
-    const effectiveDateFin = values.dateFin ?? values.dateDebut;
-
     if (values.dateFin && values.dateFin < values.dateDebut) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -473,7 +473,10 @@ export const createMissionStep3Schema = z
     }
 
     values.plagesHoraires.forEach((slot, index) => {
-      if (slot.date < values.dateDebut || slot.date > effectiveDateFin) {
+      if (
+        slot.date < values.dateDebut ||
+        (values.dateFin && slot.date > values.dateFin)
+      ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["plagesHoraires", index, "date"],
@@ -498,13 +501,23 @@ export const createMissionFormSchema = createMissionStep1Schema
 
 const toUtcNoonFromCalendarDate = (value: Date): Date =>
   new Date(
-    Date.UTC(value.getFullYear(), value.getMonth(), value.getDate(), 12, 0, 0, 0),
+    Date.UTC(
+      value.getFullYear(),
+      value.getMonth(),
+      value.getDate(),
+      12,
+      0,
+      0,
+      0,
+    ),
   );
 
 export const createMissionPayloadSchema = createMissionFormSchema.transform(
   (values) => {
     const normalizedDateDebut = toUtcNoonFromCalendarDate(values.dateDebut);
-    const normalizedDateFin = values.dateFin ? toUtcNoonFromCalendarDate(values.dateFin) : null;
+    const normalizedDateFin = values.dateFin
+      ? toUtcNoonFromCalendarDate(values.dateFin)
+      : null;
 
     return {
       ...values,

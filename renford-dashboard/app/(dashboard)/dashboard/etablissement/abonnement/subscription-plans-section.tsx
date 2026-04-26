@@ -1,9 +1,9 @@
 "use client";
 
 import SubscriptionPlanCard from "./subscription-plan-card";
-import type { DebugPlan } from "./debug-controls";
 import QuotaProgressBar from "./quota-progress-bar";
 import { PLAN_LABELS } from "./page";
+import { Button } from "@/components/ui/button";
 
 const PLANS = [
   {
@@ -43,17 +43,42 @@ const PLANS = [
 ];
 
 interface SubscriptionPlansSectionProps {
-  activePlan?: DebugPlan;
+  activePlan?: string | null;
   missionsUsed?: number;
   quota?: number;
+  competitionPrice?: number | null;
+  onSubscribe?: (plan: "echauffement" | "performance" | "competition") => void;
+  onCancel?: () => void;
+  isLoading?: boolean;
 }
 
 export default function SubscriptionPlansSection({
-  activePlan = "none",
+  activePlan = null,
   missionsUsed = 0,
   quota = 0,
+  competitionPrice = null,
+  onSubscribe,
+  onCancel,
+  isLoading = false,
 }: SubscriptionPlansSectionProps) {
-  const hasSubscription = activePlan !== "none";
+  const hasSubscription = !!activePlan;
+
+  const handleCardButton = (
+    planKey: "echauffement" | "performance" | "competition",
+  ) => {
+    if (planKey === "competition") {
+      if (competitionPrice) {
+        onSubscribe?.(planKey);
+      } else {
+        window.open(
+          "mailto:contact@renford.fr?subject=Plan%20Compétition",
+          "_blank",
+        );
+      }
+      return;
+    }
+    onSubscribe?.(planKey);
+  };
 
   return (
     <section className="space-y-4 p-4 bg-white rounded-3xl">
@@ -61,27 +86,79 @@ export default function SubscriptionPlansSection({
         <QuotaProgressBar
           missionsUsed={missionsUsed}
           quotaTotal={quota}
-          planName={PLAN_LABELS[activePlan]}
+          planName={
+            activePlan
+              ? (PLAN_LABELS[activePlan] ?? activePlan.toUpperCase())
+              : ""
+          }
         />
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {PLANS.map((plan) => (
-          <SubscriptionPlanCard
-            key={plan.name}
-            name={plan.name}
-            missions={plan.missions}
-            price={plan.price}
-            priceLabel={plan.priceLabel}
-            description={plan.description}
-            buttonLabel={plan.buttonLabel}
-            recommended={plan.recommended}
-            badgeLabel={plan.badgeLabel}
-            variant={plan.variant}
-            isCurrentPlan={activePlan === plan.key}
-          />
-        ))}
+        {PLANS.map((plan) => {
+          const isCompetition = plan.key === "competition";
+          const competitionPriceLabel = competitionPrice
+            ? `${competitionPrice.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}`
+            : undefined;
+
+          const resolvedPrice =
+            isCompetition && competitionPrice
+              ? competitionPriceLabel!
+              : plan.price;
+
+          const resolvedPriceLabel =
+            isCompetition && competitionPrice ? "/ mois HT" : plan.priceLabel;
+
+          const resolvedVariant =
+            isCompetition && competitionPrice
+              ? ("default" as const)
+              : plan.variant;
+
+          const resolvedButtonLabel = (() => {
+            if (activePlan === plan.key) return "Plan actuel";
+            if (isCompetition && competitionPrice)
+              return "Souscrire au plan COMPÉTITION";
+            if (isCompetition) return plan.buttonLabel;
+            if (activePlan) return `Changer pour ${plan.name}`;
+            return plan.buttonLabel;
+          })();
+
+          return (
+            <SubscriptionPlanCard
+              key={plan.name}
+              name={plan.name}
+              missions={plan.missions}
+              price={resolvedPrice}
+              priceLabel={resolvedPriceLabel}
+              description={plan.description}
+              buttonLabel={resolvedButtonLabel}
+              onButtonClick={
+                activePlan === plan.key
+                  ? undefined
+                  : () => handleCardButton(plan.key)
+              }
+              recommended={plan.recommended}
+              badgeLabel={plan.badgeLabel}
+              variant={resolvedVariant}
+              isCurrentPlan={activePlan === plan.key}
+            />
+          );
+        })}
       </div>
+
+      {/* Cancel subscription button */}
+      {onCancel && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="ghost-destructive"
+            size="sm"
+            onClick={onCancel}
+            disabled={isLoading}
+          >
+            Annuler mon abonnement
+          </Button>
+        </div>
+      )}
     </section>
   );
 }

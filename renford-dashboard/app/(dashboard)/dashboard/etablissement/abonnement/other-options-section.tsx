@@ -13,6 +13,7 @@ const OPTIONS = [
       { icon: Clock, label: "État : [Par défaut]", highlight: true },
     ],
     buttonLabel: "Lancer une mission",
+    href: "/dashboard/etablissement/missions/nouvelle",
   },
   {
     name: "Renford COACH",
@@ -23,6 +24,7 @@ const OPTIONS = [
       { icon: Clock, label: "État : [Par défaut]", highlight: true },
     ],
     buttonLabel: "Trouver un coach",
+    href: "/dashboard/etablissement/missions/nouvelle",
   },
 ];
 
