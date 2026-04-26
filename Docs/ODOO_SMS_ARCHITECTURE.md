@@ -10,8 +10,9 @@ Every email sent through the backend mail transport now triggers an equivalent S
 2. Email is sent through Resend.
 3. The same call automatically triggers SMS dispatch logic.
 4. Recipient phone numbers are resolved from:
-   - `Utilisateur.telephone` by matching recipient email
-   - `Etablissement.telephonePrincipal` by matching recipient email
+
+- `Utilisateur.telephone` by matching recipient email
+
 5. SMS payload is built from the email subject + plain text body (or HTML stripped to text).
 6. SMS is sent to Odoo using one of these modes:
    - Mode A: direct endpoint (`ODOO_SMS_ENDPOINT`)
@@ -42,9 +43,16 @@ ODOO_BASE_URL=
 ODOO_DB=
 ODOO_USERNAME=
 ODOO_PASSWORD=
-ODOO_SMS_MODEL=sms.api
-ODOO_SMS_METHOD=send_sms
+ODOO_SMS_MODEL=sms.sms
+ODOO_SMS_METHOD=create_and_send
 ```
+
+Recommended for Odoo Online:
+
+- `ODOO_SMS_MODEL=sms.sms`
+- `ODOO_SMS_METHOD=create_and_send`
+
+The backend creates an `sms.sms` record and then automatically tries send methods (`send`, `_send`, `action_send`).
 
 ## Runtime Behavior
 

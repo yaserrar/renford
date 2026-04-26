@@ -12,20 +12,22 @@ This document describes the complete subscription system for établissements: ho
 
 Plans are defined in the database (`PlanAbonnement` enum) with both static and dynamic pricing:
 
-| Plan | DB Key | Quota | Price | Mode | Admin Control |
-|------|--------|-------|-------|------|---------------|
-| **Échauffement** | `echauffement` | 10 missions/month | 99€/month | Self-serve (Stripe Checkout) | Read-only |
-| **Performance** | `performance` | 25 missions/month | 199€/month | Self-serve (Stripe Checkout) | Read-only |
-| **Compétition** | `competition` | Unlimited (0) | Custom (per-client) | Manual (admin + negotiation) | **Full control** |
+| Plan             | DB Key         | Quota             | Price               | Mode                         | Admin Control    |
+| ---------------- | -------------- | ----------------- | ------------------- | ---------------------------- | ---------------- |
+| **Échauffement** | `echauffement` | 10 missions/month | 99€/month           | Self-serve (Stripe Checkout) | Read-only        |
+| **Performance**  | `performance`  | 25 missions/month | 199€/month          | Self-serve (Stripe Checkout) | Read-only        |
+| **Compétition**  | `competition`  | Unlimited (0)     | Custom (per-client) | Manual (admin + negotiation) | **Full control** |
 
 ### 1.2 Static vs. Dynamic Plans
 
 **Static Plans (Échauffement / Performance):**
+
 - Price is fixed and stored in Stripe Dashboard as a Product/Price object
 - Price IDs are stored in environment variables (`STRIPE_PRICE_ECHAUFFEMENT`, `STRIPE_PRICE_PERFORMANCE`)
 - No admin intervention needed — établissements self-subscribe via Stripe Checkout
 
 **Dynamic Plans (Compétition):**
+
 - Price is negotiated between the sales team and the client
 - Admin creates the subscription via a backoffice endpoint: `POST /api/admin/abonnements/competition`
 - Backend passes `price_data` inline to Stripe, which generates a unique Price ID for that client
@@ -34,6 +36,7 @@ Plans are defined in the database (`PlanAbonnement` enum) with both static and d
 ### 1.3 Admin Management Capabilities
 
 Admins can:
+
 - **Create custom subscriptions** for Compétition clients with any price (e.g., 600€/month)
 - **Cancel or pause subscriptions** for any plan
 - **Resume paused subscriptions**
@@ -102,6 +105,7 @@ ProfilEtablissement
 ### 2.3 Environment Variables
 
 **Backend (renford-api/.env):**
+
 ```
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
@@ -113,6 +117,7 @@ STRIPE_PRODUCT_COMPETITION=prod_ccc
 ```
 
 **Frontend (renford-dashboard/.env):**
+
 ```
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
@@ -199,6 +204,7 @@ When Stripe renews the subscription:
 ### 4.1 No Automatic Overage Billing
 
 **For subscribed établissements:**
+
 - If quota is reached, mission creation is **blocked** (HTTP 402)
 - No automatic pay-per-mission overage charge
 - Must upgrade to a higher plan or switch to Compétition (unlimited)
@@ -207,10 +213,10 @@ When Stripe renews the subscription:
 
 Établissements without an active subscription can still create missions at any time:
 
-| Mode | Fee | Per |
-|------|-----|-----|
-| FLEX | 15% | Mission HT amount |
-| COACH | 375€ HT | Per introduction |
+| Mode  | Fee     | Per               |
+| ----- | ------- | ----------------- |
+| FLEX  | 15%     | Mission HT amount |
+| COACH | 375€ HT | Per introduction  |
 
 In this mode, `checkQuotaExceeded` returns `hasSubscription: false`, `exceeded: false`, `remaining: Infinity` — **no blocking**.
 
@@ -229,31 +235,31 @@ In this mode, `checkQuotaExceeded` returns `hasSubscription: false`, `exceeded: 
 CREATE TABLE abonnements (
   id UUID PRIMARY KEY,
   profilEtablissementId UUID NOT NULL REFERENCES profils_etablissements(id),
-  
+
   -- Plan metadata
   plan ENUM ('echauffement', 'performance', 'competition'),
   statut ENUM ('en_attente', 'actif', 'annule', 'expire', 'en_pause'),
   quotaMissions INT,                    -- 0 = unlimited
   missionsUtilisees INT DEFAULT 0,      -- dénormalisé (optionnel, pour affichage rapide)
-  
+
   -- Pricing
   prixMensuelHT DECIMAL(10,2),
-  
+
   -- Period
   dateDebut DATETIME,
   dateFin DATETIME,
   dateProchainRenouvellement DATETIME,
-  
+
   -- Stripe
   stripeSubscriptionId VARCHAR UNIQUE,
   stripePriceId VARCHAR,
   stripeCurrentPeriodStart DATETIME,
   stripeCurrentPeriodEnd DATETIME,
-  
+
   -- Metadata
   dateCreation DATETIME DEFAULT NOW(),
   dateMiseAJour DATETIME DEFAULT NOW() ON UPDATE NOW(),
-  
+
   KEY (profilEtablissementId),
   KEY (statut),
   KEY (plan)
@@ -268,21 +274,21 @@ Each subscription state change creates an event record:
 CREATE TABLE abonnement_evenements (
   id UUID PRIMARY KEY,
   abonnementId UUID NOT NULL REFERENCES abonnements(id),
-  
+
   type ENUM (
     'creation', 'activation', 'renouvellement', 'annulation',
     'expiration', 'mise_en_pause', 'reprise', 'changement_plan',
     'paiement_reussi', 'paiement_echoue', 'remboursement'
   ),
-  
+
   ancienStatut ENUM (...),
   nouveauStatut ENUM (...),
   montantCentimes INT,              -- For payment events
-  
+
   stripeEventId VARCHAR,            -- Stripe event ID
   stripeEventType VARCHAR,          -- e.g., "invoice.paid"
   stripeSubscriptionId VARCHAR,
-  
+
   details JSON,                     -- Extra data
   occurredAt DATETIME DEFAULT NOW()
 );
@@ -294,13 +300,13 @@ CREATE TABLE abonnement_evenements (
 
 The backend listens to these Stripe events:
 
-| Event | Action |
-|-------|--------|
-| `checkout.session.completed` | Create `Abonnement`, statut → `actif`, create `activation` event |
-| `customer.subscription.updated` | Update `stripeCurrentPeriodStart/End`, statut (if changed), create event |
-| `customer.subscription.deleted` | statut → `annule`, create `annulation` event |
-| `invoice.paid` | Update period dates, create `renouvellement` + `paiement_reussi` events, montantCentimes = invoice.total |
-| `invoice.payment_failed` | statut → `en_pause`, create `paiement_echoue` event |
+| Event                           | Action                                                                                                   |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `checkout.session.completed`    | Create `Abonnement`, statut → `actif`, create `activation` event                                         |
+| `customer.subscription.updated` | Update `stripeCurrentPeriodStart/End`, statut (if changed), create event                                 |
+| `customer.subscription.deleted` | statut → `annule`, create `annulation` event                                                             |
+| `invoice.paid`                  | Update period dates, create `renouvellement` + `paiement_reussi` events, montantCentimes = invoice.total |
+| `invoice.payment_failed`        | statut → `en_pause`, create `paiement_echoue` event                                                      |
 
 ### 6.1 Webhook Handler
 
@@ -309,13 +315,13 @@ Located in `renford-api/src/modules/abonnements/abonnement.webhook.ts`:
 ```ts
 export async function handleStripeWebhook(event: Stripe.Event) {
   switch (event.type) {
-    case 'checkout.session.completed':
+    case "checkout.session.completed":
       // Create Abonnement from session
       break;
-    case 'invoice.paid':
+    case "invoice.paid":
       // Update period dates, create events
       break;
-    case 'customer.subscription.deleted':
+    case "customer.subscription.deleted":
       // Mark as annule
       break;
     // ... other cases
@@ -339,6 +345,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
 ```
 
 Response:
+
 ```json
 {
   "abonnementId": "uuid",
@@ -433,7 +440,7 @@ User clicks "Create mission"
     → Mission NOT created
   ↓ Frontend receives 402, shows error toast "Quota atteint"
   ↓ "Create mission" button stays disabled until upgrade
-  
+
   OR if missionsCreated=20 (5 remaining):
     → exceeded = false, remaining = 5
     → Mission creation proceeds

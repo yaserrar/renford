@@ -71,6 +71,9 @@ Lien de paiement en ligne
 {{Lien stripe}}
 
 
+
+
+
 Ce devis est valide jusqu’à 72 heures après la date d’émission. Les services décrits débuteront une fois le paiement intégral confirmé. 
 
 
