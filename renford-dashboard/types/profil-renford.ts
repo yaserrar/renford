@@ -111,7 +111,21 @@ export type ProfilRenfordMissionSimple = {
   };
 };
 
-export type PublicProfilRenford = ProfilRenford & {
+export type PublicProfilRenford = Omit<
+  ProfilRenford,
+  | "disponibilitesLundi"
+  | "disponibilitesMardi"
+  | "disponibilitesMercredi"
+  | "disponibilitesJeudi"
+  | "disponibilitesVendredi"
+  | "disponibilitesSamedi"
+  | "disponibilitesDimanche"
+  | "dureeIllimitee"
+  | "dateDebut"
+  | "dateFin"
+  | "zoneDeplacement"
+  | "renfordDiplomes"
+> & {
   utilisateur: {
     id: string;
     nom: string;
