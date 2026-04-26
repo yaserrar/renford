@@ -8,6 +8,7 @@ import {
   Handshake,
   LogOut,
   CreditCard,
+  Layers,
 } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/common/logo";
@@ -32,6 +33,7 @@ const ADMIN_LINKS = [
   { title: "Accueil", url: "/admin/accueil", icon: Home },
   { title: "Missions", url: "/admin/missions", icon: Handshake },
   { title: "Paiements", url: "/admin/paiements", icon: CreditCard },
+  { title: "Abonnements", url: "/admin/abonnements", icon: Layers },
   { title: "Administrateurs", url: "/admin/administrateurs", icon: Shield },
   { title: "Utilisateurs", url: "/admin/utilisateurs", icon: Users },
   { title: "Messages", url: "/admin/messages", icon: Mail },
@@ -68,7 +70,7 @@ const AdminSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Déconnexion"
-              className="flex justify-start px-3 py-5 rounded-sm text-red-500 hover:text-red-600  active:text-red-600 active:bg-red-50 hover:bg-red-50"
+              className="flex justify-start px-3 py-5 mx-1 rounded-sm text-red-500 hover:text-red-600  active:text-red-600 active:bg-red-50 hover:bg-red-50"
               onClick={handleLogout}
             >
               <LogOut className="mr-1" strokeWidth={2} />

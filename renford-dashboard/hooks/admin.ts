@@ -371,7 +371,7 @@ export const useAdminUnreadNotificationsCount = () => {
         .data as UnreadNotificationsCountResponse;
     },
     staleTime: 1000 * 15,
-    refetchInterval: 1000 * 30,
+    refetchInterval: 1000 * 60 * 5, // auto-refetch every 5 minutes
   });
 };
 

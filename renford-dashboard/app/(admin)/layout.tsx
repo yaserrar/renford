@@ -31,7 +31,7 @@ export default function AdminLayout({ children }: Props) {
           <AdminProvider>
             <SidebarProvider>
               <AdminSidebar />
-              <SidebarInset>
+              <SidebarInset className="w-[200px]">
                 <MobileSidebarToggle />
                 <main className="h-full bg-white px-2">{children}</main>
               </SidebarInset>
