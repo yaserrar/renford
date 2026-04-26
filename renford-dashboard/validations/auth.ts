@@ -14,14 +14,27 @@ export type LoginSchema = z.infer<typeof loginSchema>;
 
 //----------------------------------------------------------------------------------------
 
+const backendPasswordSchema = z
+  .string({ required_error: "Le mot de passe est obligatoire" })
+  .min(8, { message: "8 caractères minimum" })
+  .refine((value) => /^(?=.*[a-z])/.test(value), {
+    message: "Le mot de passe doit contenir au moins une lettre minuscule",
+  })
+  .refine((value) => /^(?=.*[A-Z])/.test(value), {
+    message: "Le mot de passe doit contenir au moins une lettre majuscule",
+  })
+  .refine((value) => /^(?=.*\d)/.test(value), {
+    message: "Le mot de passe doit contenir au moins un chiffre",
+  });
+
+//----------------------------------------------------------------------------------------
+
 export const signupSchema = z.object({
   email: z
     .string({ required_error: "L'email est obligatoire" })
     .email({ message: "L'email est invalide" })
     .max(250, "250 caractères maximum"),
-  password: z
-    .string({ required_error: "Le mot de passe est obligatoire" })
-    .min(8, { message: "8 caractères minimum" }),
+  password: backendPasswordSchema,
   acceptTerms: z.boolean().refine((val) => val === true, {
     message: "Vous devez accepter les conditions générales",
   }),
@@ -58,21 +71,7 @@ export const passwordResetSchema = z.object({
     .string({ required_error: "Le code est obligatoire" })
     .max(6, "Le code est invalide")
     .min(6, "Le code est invalide"),
-  password: z
-    .string({ required_error: "Le nouveau mot de passe est obligatoire" })
-    .min(8, { message: "8 caractères minimum" })
-    .refine((value) => /^(?=.*[a-z])/.test(value), {
-      message: "Le mot de passe doit contenir au moins une lettre minuscule",
-    })
-    .refine((value) => /^(?=.*[A-Z])/.test(value), {
-      message: "Le mot de passe doit contenir au moins une lettre majuscule",
-    })
-    .refine((value) => /^(?=.*\d)/.test(value), {
-      message: "Le mot de passe doit contenir au moins un chiffre",
-    })
-    .refine((value) => /^(?=.*[^\da-zA-Z])/.test(value), {
-      message: "Le mot de passe doit contenir au moins un caractère spécial",
-    }),
+  password: backendPasswordSchema,
 });
 
 export type EmailSchema = z.infer<typeof emailSchema>;

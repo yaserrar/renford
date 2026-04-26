@@ -18,7 +18,7 @@ export default function DeleteAccountSection() {
 
   return (
     <>
-      <div className="bg-white rounded-3xl border border-destructive/30 p-6 space-y-3">
+      <div className="bg-white rounded-3xl border border-input overflow-hidden p-6 space-y-3">
         <h3 className="text-base font-semibold text-destructive">
           Supprimer mon compte
         </h3>
