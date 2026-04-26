@@ -35,37 +35,21 @@ const getRecipientEmails = (to: string | string[]) => {
 const getRecipientFilters = (emails: string[]) =>
   emails.map((email) => ({ email: { equals: email, mode: 'insensitive' as const } }));
 
-const getEtablissementRecipientFilters = (emails: string[]) =>
-  emails.map((email) => ({ emailPrincipal: { equals: email, mode: 'insensitive' as const } }));
-
 const resolveRecipientPhones = async (emails: string[]) => {
   if (!emails.length) {
     return [];
   }
 
-  const [users, etablissements] = await Promise.all([
-    prisma.utilisateur.findMany({
-      where: {
-        OR: getRecipientFilters(emails),
-      },
-      select: {
-        telephone: true,
-      },
-    }),
-    prisma.etablissement.findMany({
-      where: {
-        OR: getEtablissementRecipientFilters(emails),
-      },
-      select: {
-        telephonePrincipal: true,
-      },
-    }),
-  ]);
+  const users = await prisma.utilisateur.findMany({
+    where: {
+      OR: getRecipientFilters(emails),
+    },
+    select: {
+      telephone: true,
+    },
+  });
 
-  const phones = [
-    ...users.map((user) => user.telephone),
-    ...etablissements.map((etablissement) => etablissement.telephonePrincipal),
-  ];
+  const phones = users.map((user) => user.telephone);
 
   const normalized = phones
     .map((phone) => normalizePhoneNumber(phone))

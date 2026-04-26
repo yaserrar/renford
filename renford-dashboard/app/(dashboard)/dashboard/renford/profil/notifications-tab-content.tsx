@@ -156,7 +156,7 @@ export default function NotificationsTabContent({
           </div>
         </div>
 
-        {/* <div className="space-y-5">
+        <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-2">
             <div>
               <h3 className="text-2xl font-semibold">Sur mobile</h3>
@@ -200,7 +200,7 @@ export default function NotificationsTabContent({
                     key={`mobile-${type}`}
                     className={cn(
                       "flex items-center gap-3 text-base",
-                      !notificationsMobile && "text-muted-foreground"
+                      !notificationsMobile && "text-muted-foreground",
                     )}
                   >
                     <Checkbox
@@ -215,7 +215,7 @@ export default function NotificationsTabContent({
               </div>
             </div>
           </div>
-        </div> */}
+        </div>
 
         <div className="flex justify-end">
           <Button type="submit" disabled={isPending}>
