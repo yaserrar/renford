@@ -154,9 +154,10 @@ export const createEtablissementSiteSchema = z
     siret: z
       .string()
       .length(14, 'Le numéro SIRET doit contenir exactement 14 chiffres')
-      .regex(/^\d{14}$/, 'Le numéro SIRET ne doit contenir que des chiffres')
-      .optional(),
-    typeEtablissement: z.enum(TYPE_ETABLISSEMENT).optional(),
+      .regex(/^\d{14}$/, 'Le numéro SIRET ne doit contenir que des chiffres'),
+    typeEtablissement: z.enum(TYPE_ETABLISSEMENT, {
+      required_error: "Le type d'établissement est obligatoire",
+    }),
     emailPrincipal: requiredContactEmailFromInput,
     telephonePrincipal: optionalNullableStringFromInput.optional(),
     nomContactPrincipal: requiredContactStringFromInput('Le nom du contact principal'),

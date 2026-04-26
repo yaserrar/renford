@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Etablissement } from "@/types/etablissement";
+import { TYPE_ETABLISSEMENT_LABELS } from "@/validations/profil-etablissement";
 import { MapPin } from "lucide-react";
 import { useMemo, useState } from "react";
 import SiteFormDialog from "./site-form-dialog";
@@ -22,7 +23,7 @@ export default function SitesTabContent({
 
   const editingSite = useMemo(
     () => etablissements.find((site) => site.id === editingSiteId),
-    [editingSiteId, etablissements]
+    [editingSiteId, etablissements],
   );
 
   return (
@@ -67,6 +68,12 @@ export default function SitesTabContent({
               <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <MapPin className="h-4 w-4" />
                 {site.adresse}, {site.codePostal} {site.ville}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                SIRET : {site.siret}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Type : {TYPE_ETABLISSEMENT_LABELS[site.typeEtablissement]}
               </p>
             </div>
             <Button type="button" onClick={() => setEditingSiteId(site.id)}>

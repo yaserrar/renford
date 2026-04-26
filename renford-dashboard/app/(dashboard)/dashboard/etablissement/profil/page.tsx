@@ -62,7 +62,9 @@ export default function ProfileEtablissementPage() {
         </div>
       </Tabs>
 
-      <DeleteAccountSection />
+      <div className="bg-secondary-background rounded-3xl border m-1 p-6 h-full">
+        <DeleteAccountSection />
+      </div>
     </main>
   );
 }

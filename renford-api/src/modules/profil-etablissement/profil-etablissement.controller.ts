@@ -201,8 +201,6 @@ export const createEtablissementSite = async (
       where: { utilisateurId: userId },
       select: {
         id: true,
-        siret: true,
-        typeEtablissement: true,
         etablissements: {
           select: { id: true },
         },
@@ -232,23 +230,12 @@ export const createEtablissementSite = async (
       villeFacturation,
     } = req.body;
 
-    const finalSiret = siret ?? profil.siret;
-    const finalType = typeEtablissement ?? profil.typeEtablissement;
-
-    if (!finalSiret || !/^\d{14}$/.test(finalSiret)) {
-      return res.status(400).json({ message: 'SIRET invalide pour cet établissement' });
-    }
-
-    if (!finalType) {
-      return res.status(400).json({ message: "Type d'établissement manquant" });
-    }
-
     const etablissement = await prisma.etablissement.create({
       data: {
         profilEtablissementId: profil.id,
         nom,
-        siret: finalSiret,
-        typeEtablissement: finalType,
+        siret,
+        typeEtablissement,
         roleEtablissement: profil.etablissements.length === 0 ? 'principal' : 'secondaire',
         adresse,
         codePostal,
@@ -335,8 +322,8 @@ export const updateEtablissementSite = async (
         ville,
         latitude,
         longitude,
-        ...(siret ? { siret } : {}),
-        ...(typeEtablissement ? { typeEtablissement } : {}),
+        siret,
+        typeEtablissement,
         emailPrincipal: emailPrincipal ?? null,
         telephonePrincipal: telephonePrincipal ?? null,
         nomContactPrincipal: nomContactPrincipal ?? null,

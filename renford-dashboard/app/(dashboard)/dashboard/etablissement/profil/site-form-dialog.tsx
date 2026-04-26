@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Combobox } from "@/components/ui/combobox";
 import ErrorMessage from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,10 @@ import {
   upsertEtablissementSiteSchema,
   UpsertEtablissementSiteSchema,
 } from "@/validations/etablissement";
+import {
+  TYPE_ETABLISSEMENT,
+  TYPE_ETABLISSEMENT_LABELS,
+} from "@/validations/profil-etablissement";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
@@ -128,12 +133,17 @@ export default function SiteFormDialog({
       },
       {
         onSuccess: () => setOpen(false),
-      }
+      },
     );
   };
 
   const title =
     mode === "create" ? "Ajouter un établissement" : "Modifier l’établissement";
+
+  const typeEtablissementOptions = TYPE_ETABLISSEMENT.map((type) => ({
+    value: type,
+    label: TYPE_ETABLISSEMENT_LABELS[type],
+  }));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -155,6 +165,39 @@ export default function SiteFormDialog({
                 {...register("nom")}
               />
               <ErrorMessage>{errors.nom?.message}</ErrorMessage>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="siret">SIRET (14 chiffres)*</Label>
+                <Input
+                  id="siret"
+                  placeholder="12345678901234"
+                  inputMode="numeric"
+                  maxLength={14}
+                  {...register("siret")}
+                />
+                <ErrorMessage>{errors.siret?.message}</ErrorMessage>
+              </div>
+
+              <div>
+                <Label>Type d&apos;établissement*</Label>
+                <Controller
+                  name="typeEtablissement"
+                  control={control}
+                  render={({ field }) => (
+                    <Combobox
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(value as string)}
+                      options={typeEtablissementOptions}
+                      placeholder="Sélectionner..."
+                      searchPlaceholder="Rechercher un type"
+                      emptyMessage="Aucun type trouvé"
+                    />
+                  )}
+                />
+                <ErrorMessage>{errors.typeEtablissement?.message}</ErrorMessage>
+              </div>
             </div>
 
             <div>
@@ -276,7 +319,7 @@ export default function SiteFormDialog({
                 <Label htmlFor="telephonePrincipal">Téléphone principal</Label>
                 <Input
                   id="telephonePrincipal"
-                  placeholder="06 12 34 56 78"
+                  placeholder="+33....."
                   {...register("telephonePrincipal")}
                 />
                 <ErrorMessage>
@@ -349,7 +392,7 @@ export default function SiteFormDialog({
                               shouldDirty: true,
                               shouldTouch: true,
                               shouldValidate: true,
-                            }
+                            },
                           );
                           setValue("villeFacturation", selection.ville, {
                             shouldDirty: true,

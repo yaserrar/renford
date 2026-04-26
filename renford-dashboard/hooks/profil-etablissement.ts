@@ -1,5 +1,8 @@
 import { getErrorMessage } from "@/lib/utils";
-import { UpsertEtablissementSiteSchema } from "@/validations/etablissement";
+import {
+  CreateEtablissementSiteSchema,
+  UpdateEtablissementSiteSchema,
+} from "@/validations/etablissement";
 import {
   UpdateProfilEtablissementAvatarSchema,
   UpdateProfilEtablissementCouvertureSchema,
@@ -91,7 +94,7 @@ export const useCreateEtablissementSite = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: UpsertEtablissementSiteSchema) => {
+    mutationFn: async (data: CreateEtablissementSiteSchema) => {
       return (await axios.post("/profil-etablissement/etablissements", data))
         .data;
     },
@@ -116,12 +119,12 @@ export const useUpdateEtablissementSite = () => {
       data,
     }: {
       etablissementId: string;
-      data: UpsertEtablissementSiteSchema;
+      data: UpdateEtablissementSiteSchema;
     }) => {
       return (
         await axios.put(
           `/profil-etablissement/etablissements/${etablissementId}`,
-          data
+          data,
         )
       ).data;
     },

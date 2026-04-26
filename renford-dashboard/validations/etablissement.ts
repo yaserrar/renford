@@ -18,13 +18,19 @@ const requiredContactString = (fieldLabel: string) =>
     z
       .string({ required_error: `${fieldLabel} est obligatoire` })
       .min(2, `${fieldLabel} doit contenir au moins 2 caractères`)
-      .max(120, `${fieldLabel} ne peut pas dépasser 120 caractères`)
+      .max(120, `${fieldLabel} ne peut pas dépasser 120 caractères`),
   );
 
-const requiredContactEmail = z.preprocess((value) => {
-  if (value === null || value === undefined) return "";
-  return typeof value === "string" ? value.trim() : value;
-}, z.string({ required_error: "L'email principal est obligatoire" }).min(1, "L'email principal est obligatoire").email("Email invalide"));
+const requiredContactEmail = z.preprocess(
+  (value) => {
+    if (value === null || value === undefined) return "";
+    return typeof value === "string" ? value.trim() : value;
+  },
+  z
+    .string({ required_error: "L'email principal est obligatoire" })
+    .min(1, "L'email principal est obligatoire")
+    .email("Email invalide"),
+);
 
 export const upsertEtablissementSiteSchema = z
   .object({
@@ -33,7 +39,7 @@ export const upsertEtablissementSiteSchema = z
       .min(2, "Le nom de l'établissement doit contenir au moins 2 caractères")
       .max(
         120,
-        "Le nom de l'établissement ne peut pas dépasser 120 caractères"
+        "Le nom de l'établissement ne peut pas dépasser 120 caractères",
       ),
     adresse: z
       .string()
@@ -53,16 +59,17 @@ export const upsertEtablissementSiteSchema = z
       .min(-180, "Longitude invalide")
       .max(180, "Longitude invalide"),
     siret: z
-      .string()
+      .string({ required_error: "Le numéro SIRET est obligatoire" })
       .length(14, "Le numéro SIRET doit contenir exactement 14 chiffres")
-      .regex(/^\d{14}$/, "Le numéro SIRET ne doit contenir que des chiffres")
-      .optional(),
-    typeEtablissement: z.enum(TYPE_ETABLISSEMENT).optional(),
+      .regex(/^\d{14}$/, "Le numéro SIRET ne doit contenir que des chiffres"),
+    typeEtablissement: z.enum(TYPE_ETABLISSEMENT, {
+      required_error: "Veuillez sélectionner un type d'établissement",
+    }),
     emailPrincipal: requiredContactEmail,
     telephonePrincipal: optionalNullableString.optional(),
     nomContactPrincipal: requiredContactString("Le nom du contact principal"),
     prenomContactPrincipal: requiredContactString(
-      "Le prénom du contact principal"
+      "Le prénom du contact principal",
     ),
     adresseFacturationDifferente: z.boolean().default(false),
     adresseFacturation: z.string().optional(),
@@ -105,3 +112,6 @@ export const upsertEtablissementSiteSchema = z
 export type UpsertEtablissementSiteSchema = z.infer<
   typeof upsertEtablissementSiteSchema
 >;
+
+export type CreateEtablissementSiteSchema = UpsertEtablissementSiteSchema;
+export type UpdateEtablissementSiteSchema = UpsertEtablissementSiteSchema;
